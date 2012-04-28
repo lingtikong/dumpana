@@ -49,9 +49,10 @@ Driver::Driver(int narg, char** arg)
   while (1){
     printf("\n"); for (int i=0; i<20; i++) printf("====");
     printf("\nPlease select the job to perform:\n");
-    printf("  1. convert to xyz format;\n");
-    printf("  2. compute refined voro index info;\n");
+    printf("  1. compute refined voro index info; inaccurate;\n");
+    printf("  2. refine voro index using qconvex, accurate but extremely slow;\n");
     printf("  3. voronoi surface areas;\n");
+    printf("  4. convert to xyz format;\n");
     printf("  0. Exit;\nYour choice[%d]: ", job);
     fgets(str,MAXLINE,stdin);
 
@@ -60,8 +61,8 @@ Driver::Driver(int narg, char** arg)
     printf("You selected: %d\n", job);
     for (int i=0; i<20; i++) printf("===="); printf("\n");
 
-    if      (job == 1) writexyz();
-    else if (job >= 2 && job <= 3) voro(job);
+    if (job>0&&job<=3) voro(job);
+    else if (job == 4) writexyz();
     else break;
 
     job = 0;
