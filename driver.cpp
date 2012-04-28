@@ -12,6 +12,7 @@ Driver::Driver(int narg, char** arg)
   dump = NULL;
   nframe = 0;
   memory = new Memory();
+  once = 0;
 
   // analyse command line options
   int iarg = 1;
@@ -19,12 +20,16 @@ Driver::Driver(int narg, char** arg)
     if (strcmp(arg[iarg],"-h") == 0){
       help();
 
+    } else if (strcmp(arg[iarg], "-1") == 0){
+      once = 1;
+
     } else {
       break;
     }
 
     iarg++;
   }
+  printf("once = %d\n", once);
   // get dump file name if supplied, othewise assume "dump.lammpstrj"
   if (narg > iarg){
     int n = strlen(arg[iarg])+1;
@@ -40,13 +45,14 @@ Driver::Driver(int narg, char** arg)
 
   // main menu
   char str[MAXLINE];
+  int job = 2;
   while (1){
-    int job = 0;
     printf("\n"); for (int i=0; i<20; i++) printf("====");
     printf("\nPlease select the job to perform:\n");
     printf("  1. convert to xyz format;\n");
     printf("  2. compute refined voro index info;\n");
-    printf("  0. Exit;\nYour choice[0]: ");
+    printf("  3. voronoi surface areas;\n");
+    printf("  0. Exit;\nYour choice[%d]: ", job);
     fgets(str,MAXLINE,stdin);
 
     char *ptr = strtok(str," \n\t\r\f");
@@ -55,8 +61,11 @@ Driver::Driver(int narg, char** arg)
     for (int i=0; i<20; i++) printf("===="); printf("\n");
 
     if      (job == 1) writexyz();
-    else if (job == 2) voro();
+    else if (job >= 2 && job <= 3) voro(job);
     else break;
+
+    job = 0;
+    if (once) break;
   }
 
 return;
@@ -160,6 +169,7 @@ void Driver::setrange()
   }
 
   istr = MAX(0,istr);
+  iend = MIN(iend,nframe-1);
   inc = MAX(1,inc);
 
   printf("Frames from No. %d to No. %d with increment of %d will be analysed.\n", istr+1, iend+1, inc);
