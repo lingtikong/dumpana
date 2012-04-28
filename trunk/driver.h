@@ -11,6 +11,7 @@ public:
   ~Driver();
 
 private:
+  int once; // indicate that the only one analysis is needed
   char *dump;
   int nframe, img;
   int istr, iend, inc;
@@ -20,7 +21,7 @@ private:
 
   void setrange();
   void writexyz();
-  void voro();
+  void voro(const int);
 
   void help();
 
