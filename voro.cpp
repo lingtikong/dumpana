@@ -18,12 +18,14 @@ void Driver::voro()
   // ask for threshold
   char str[MAXLINE];
   double fmin = 0.001;
+  printf("\n"); for (int i=0; i<20; i++) printf("====");
   printf("\nPlease input a threshold for the evaluation of voro neighbors, if the\n");
-  printf("surface area corresponding to an atom takes less ratio than the defined\n");
-  printf("threshold, it will not be seen as a neighbor [%lg]: ", fmin);
+  printf("surface area corresponding to an atom takes less ratio of the whole surface\n");
+  printf("than the defined threshold, it will not be seen as a neighbor [%lg]: ", fmin);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
-  if (ptr) fmin = atof(ptr);
+  if (ptr) fmin = fabs(atof(ptr));
+  printf("\nA threshold of %g will be used.\n\n", fmin);
 
   // now to do the real job
   for (img = istr; img <= iend; img += inc){
@@ -48,7 +50,8 @@ void Driver::voro()
 
     // open file for output
     sprintf(str,"voro_%d.dat ", one->tstep);
-    FILE *fp = fopen(strtok(str," \n\t\r\f"), "w");
+    ptr = strtok(str," \n\t\r\f");
+    FILE *fp = fopen(ptr, "w");
     fprintf(fp,"#Box info: %lg %lg %lg %lg %lg %lg\n", xlo, xhi, ylo, yhi, zlo, zhi);
     fprintf(fp,"# 1 2    3 4 5 6   7         8    9    10\n");
     fprintf(fp,"#id type x y z vol voroindex f5%% NNei NeiList surfaceareas\n");
@@ -58,8 +61,8 @@ void Driver::voro()
     if (cl.start()) do if (con.compute_cell(c,cl)){
       int id;
       double x, y, z;
-      std::vector<int> neigh; neigh.clear();
-      std::vector<double> fs; fs.clear();
+      std::vector<int> neigh;
+      std::vector<double> fs;
        
       cl.pos(x,y,z);
       id = cl.pid();
@@ -104,10 +107,13 @@ void Driver::voro()
       for (int i=0; i<nn; i++) fprintf(fp," %d", neigh[i]);
       for (int i=0; i<nn; i++) fprintf(fp," %lg", fs[i]);
       fprintf(fp,"\n");
+
     } while (cl.inc());
 
     fclose(fp);
+    printf("Frame %d done, voro info written to: %s\n", img+1, ptr);
   }
+  for (int i=0; i<20; i++) printf("====");  printf("\n");
 return;
 }
 /*----------------------------------------------------------------------------*/
