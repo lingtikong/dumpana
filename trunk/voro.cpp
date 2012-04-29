@@ -68,7 +68,7 @@ void Driver::voro(const int job)
         std::vector<int> neigh;    // neigh list
         std::vector<double> fs;    // face areas
         int index[7];
-        for (int i=3; i<7; i++) index[i] = 0;
+        for (int i=0; i<7; i++) index[i] = 0;
          
         cl.pos(x,y,z);
         id = cl.pid();
@@ -106,6 +106,45 @@ void Driver::voro(const int job)
           c2.face_freq_table(ff);
           vol = c2.volume();
 
+          std::vector<double> vcord;
+          std::vector<int>    vlist;
+          double lcut = c2.total_edge_distance()*1.e-5;
+          c2.vertices(vcord);
+          c2.face_vertices(vlist);
+          int nv = vcord.size()/3;
+          int count[nv][nv];
+          for (int i=0; i<nv; i++)
+          for (int j=0; j<nv; j++) count[i][j] = 0;
+
+          for (int i=0; i<nv; i++)
+          for (int j=i+1; j<nv; j++){
+            int ip = i*3;
+            int jp = j*3;
+            double dx = vcord[jp]-vcord[ip];
+            double dy = vcord[jp+1]-vcord[ip+1];
+            double dz = vcord[jp+2]-vcord[ip+2];
+            double r = sqrt(dx*dx+dy*dy+dz*dz);
+            if (r < lcut) count[i][j] = count[j][i] = 1;
+          }
+          nf = fs.size();
+          int ford[nf];
+          for (int i=0; i<nf; i++) ford[i] = 0;
+          int k = 0, iface = 0;
+          while (k < vlist.size()){
+            int ned = vlist[k++];
+            int nuc = 0;
+            for (int ii=0; ii<ned; ii++)
+            for (int jj=ii+1; jj<ned; jj++){
+              int b1 = vlist[k+ii], b2 = vlist[k+jj];
+              nuc += count[b1][b2];
+            }
+            ford[iface++] = ned - nuc;
+            k += ned;
+          }
+          for (int i=0; i<nf; i++){
+            if (ford[i] < 7) index[ford[i]] +=1;
+          }
+
         } else {
           c.face_freq_table(ff);
           vol = c.volume();
@@ -114,7 +153,7 @@ void Driver::voro(const int job)
   
         // output voro index info
         int nn = ff.size()-1;
-        for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
+        //for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
         int nf = fs.size();
         double wf = double(index[5])/double(nf)*100.;
         fprintf(fp,"%d %d %lg %lg %lg %lg %d,%d,%d,%d %g %d", id, one->attyp[id],
@@ -259,6 +298,9 @@ void Driver::voro(const int job)
           fprintf(fpt,"3 %d\n", (int)dx.size());
           for (int i=0; i<dx.size(); i++) fprintf(fpt,"%lg %lg %lg\n", dx[i], dy[i],dz[i]);
           fclose(fpt);
+          //system("qvoronoi p QzV0 < .qconvex_input_tmp > .qconvex_output_intermediate");
+          //fgets(str,MAXLINE,fpt); int ns = atoi(strtok(str, " \n\t\r\f"));
+
           system("qvoronoi p QzV0 < .qconvex_input_tmp |qconvex Fv FS > .qconvex_output_tmp");
           fpt = fopen(".qconvex_output_tmp", "r");
           fgets(str,MAXLINE,fpt); int ns = atoi(strtok(str, " \n\t\r\f"));
