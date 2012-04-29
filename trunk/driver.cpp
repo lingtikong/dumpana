@@ -65,12 +65,12 @@ Driver::Driver(int narg, char** arg)
     switch (job){
     case 1:
       setrange();
-      voro();
+      if (nsel > 0) voro();
       break;
 
     case 2:
       setrange();
-      writexyz();
+      if (nsel > 0) writexyz();
       break;
 
     default:
@@ -160,11 +160,11 @@ void Driver::setrange()
   char str[MAXLINE];
   printf("\n"); for (int i=0; i<20; i++) printf("====");
   printf("\nTotal number of frames read: %d\n", nframe);
-  printf("Please input your desired frame, or frame range to analyse: ");
+  printf("Please input your desired frame, or frame range to analyse [1]: ");
   fgets(str,MAXLINE,stdin);
   int nw = count_words(str);
   if (nw < 1){
-    istr = 0; iend = -1; inc = 1;
+    istr = 0; iend = 0; inc = 1;
 
   } else if (nw == 1){
     istr = iend = atoi(strtok(str, " \n\t\r\f"))-1;
@@ -187,6 +187,8 @@ void Driver::setrange()
 
   printf("Frames from No. %d to No. %d with increment of %d will be analysed.\n", istr+1, iend+1, inc);
   for (int i=0; i<20; i++) printf("===="); printf("\n");
+
+  nsel = (iend-istr+1)/inc;
 
 return;
 }
@@ -235,7 +237,14 @@ return;
  *----------------------------------------------------------------------------*/
 void Driver::help()
 {
-
+  printf("\n  dumpana\nCode to analyse the atom style dump file of lammps.\n");
+  printf("\nUsage:\n    dumpana [options] [file]\n");
+  printf("\nAvailable options:\n");
+  printf("    -h       To display this help info;\n");
+  printf("    -1       To tell the code to exit once an analysis is done;\n");
+  printf("    file     Must be lammps atom style dump file, by default: dump.lammpstrj;\n");
+  printf("\n\n");
+  exit(0);
 return;
 }
 
