@@ -20,6 +20,7 @@ private:
 
   // to define the range of frames to be analysed
   void setrange();
+  int nsel;
 
   // to output selected frames as xyz file
   void writexyz();
