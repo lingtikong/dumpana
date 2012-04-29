@@ -12,7 +12,7 @@ Driver::Driver(int narg, char** arg)
   dump = NULL;
   nframe = 0;
   memory = new Memory();
-  once = 0;
+  int loop = 1;
 
   // analyse command line options
   int iarg = 1;
@@ -20,8 +20,8 @@ Driver::Driver(int narg, char** arg)
     if (strcmp(arg[iarg],"-h") == 0){
       help();
 
-    } else if (strcmp(arg[iarg], "-1") == 0){
-      once = 1;
+    } else if (strcmp(arg[iarg], "-1") == 0){ // just do one analysis
+      loop = 0;
 
     } else {
       break;
@@ -29,7 +29,7 @@ Driver::Driver(int narg, char** arg)
 
     iarg++;
   }
-  printf("once = %d\n", once);
+
   // get dump file name if supplied, othewise assume "dump.lammpstrj"
   if (narg > iarg){
     int n = strlen(arg[iarg])+1;
@@ -39,35 +39,47 @@ Driver::Driver(int narg, char** arg)
     dump = new char[15];
     strcpy(dump,"dump.lammpstrj");
   }
+
   // read dump file
   readdump();
   if (nframe < 1) return;
 
   // main menu
   char str[MAXLINE];
-  int job = 2;
-  while (1){
+  int job = 1;
+  do {
     printf("\n"); for (int i=0; i<20; i++) printf("====");
     printf("\nPlease select the job to perform:\n");
-    printf("  1. compute refined voro index info; inaccurate;\n");
-    printf("  2. refine voro index using qconvex, accurate but extremely slow;\n");
-    printf("  3. voronoi surface areas;\n");
-    printf("  4. convert to xyz format;\n");
-    printf("  0. Exit;\nYour choice[%d]: ", job);
+    for (int i=0; i<20; i++) printf("----"); printf("\n");
+    printf("  1. Voronoi diagram analysis;\n");
+    printf("  2. convert to xyz format;\n");
+    printf("  0. Exit;\nYour choice [%d]: ", job);
     fgets(str,MAXLINE,stdin);
 
     char *ptr = strtok(str," \n\t\r\f");
     if (ptr) job = atoi(ptr);
-    printf("You selected: %d\n", job);
+    printf("Your selection : %d\n", job);
     for (int i=0; i<20; i++) printf("===="); printf("\n");
 
-    if (job>0&&job<=3) voro(job);
-    else if (job == 4) writexyz();
-    else break;
+    // main driver
+    switch (job){
+    case 1:
+      setrange();
+      voro();
+      break;
 
+    case 2:
+      setrange();
+      writexyz();
+      break;
+
+    default:
+      loop = 0;
+      break;
+    }
     job = 0;
-    if (once) break;
-  }
+
+  } while (loop);
 
 return;
 }
@@ -185,8 +197,6 @@ return;
 void Driver::writexyz()
 {
   char str[MAXLINE];
-
-  setrange();
   char *fout;
   printf("\nPlease input the output xyz file name [%s.xyz]: ", dump);
   fgets(str,MAXLINE,stdin);
@@ -215,7 +225,7 @@ void Driver::writexyz()
     }
   }
   fclose(fp);
-  printf("%d frames written to file %s\n", (iend-istr+1)/inc, fout);
+  printf("Mission completed, %d frames written to file: %s\n", (iend-istr+1)/inc, fout);
   delete []fout;
 return;
 }
