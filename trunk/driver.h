@@ -11,18 +11,23 @@ public:
   ~Driver();
 
 private:
-  int once; // indicate that the only one analysis is needed
-  char *dump;
-  int nframe, img;
-  int istr, iend, inc;
-  DumpAtom *one;
-  std::vector<DumpAtom *> all;
-  void readdump();
+  char *dump;                         // input file name
+  int nframe;                         // total # of frames
+  int istr, iend, inc;                // frame range
+  DumpAtom *one;                      // pointer to one frame
+  std::vector<DumpAtom *> all;        // all frames from lammps atom style dump
+  void readdump();                    // to read in the dump file
 
+  // to define the range of frames to be analysed
   void setrange();
-  void writexyz();
-  void voro(const int);
 
+  // to output selected frames as xyz file
+  void writexyz();
+
+  // to do voronoi diagram analysis
+  void voro();
+
+  // help info
   void help();
 
   Memory *memory;
