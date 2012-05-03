@@ -53,6 +53,9 @@ void Driver::voro()
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
 
+    // not possible to evaluate voro info for triclinic box
+    if (one->triclinic) continue;
+
     // set local variables
     double xlo = one->xlo, xhi = one->xhi, lx = one->lx;
     double ylo = one->ylo, yhi = one->yhi, ly = one->ly;

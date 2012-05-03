@@ -1,6 +1,7 @@
 #include "atom.h"
 
 #define MAXLINE 512
+#define ZERO 1.e-8
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
@@ -30,21 +31,22 @@ DumpAtom::DumpAtom(FILE *fp)
   int n = count_words(str);
   xlo = atof(strtok(str, " \n\t\r\f"));
   xhi = atof(strtok(NULL," \n\t\r\f"));
-  if (n == 3){
-    triclinic = 1;
-    xy = atof(strtok(NULL," \n\t\r\f"));
-  }
+  if (n == 3) xy = atof(strtok(NULL," \n\t\r\f"));
 
   fgets(str,MAXLINE, fp);
+  n = count_words(str);
   ylo = atof(strtok(str, " \n\t\r\f"));
   yhi = atof(strtok(NULL," \n\t\r\f"));
-  if (triclinic) xz = atof(strtok(NULL," \n\t\r\f"));
+  if (n == 3) xz = atof(strtok(NULL," \n\t\r\f"));
 
   fgets(str,MAXLINE, fp);
+  n = count_words(str);
   zlo = atof(strtok(str, " \n\t\r\f"));
   zhi = atof(strtok(NULL," \n\t\r\f"));
-  if (triclinic) yz = atof(strtok(NULL," \n\t\r\f"));
+  if (n == 3) yz = atof(strtok(NULL," \n\t\r\f"));
   
+  if (xy*xy+xz*xz+yz*yz > ZERO) triclinic = 1;
+
   fgets(str,MAXLINE, fp);
 
   memory = new Memory();
