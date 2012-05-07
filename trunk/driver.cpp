@@ -243,17 +243,13 @@ return;
  *----------------------------------------------------------------------------*/
 void Driver::avedump()
 {
-  double lx, ly, lz;
-  double **atpos = NULL;
-  int *attyp = NULL, nfirst;
-
   DumpAtom *first = all[istr];
   first->dir2car();
-  lx = first->lx;
-  ly = first->ly;
-  lz = first->lz;
-  nfirst = first->natom;
-  atpos = memory->create(atpos,nfirst+1,3,"avedump:atpos");
+  double lx = first->lx;
+  double ly = first->ly;
+  double lz = first->lz;
+  int nfirst = first->natom;
+  double **atpos = memory->create(atpos,nfirst+1,3,"avedump:atpos");
   for (int i=1; i<=nfirst; i++)
   for (int idim=0; idim<3; idim++) atpos[i][idim] = first->atpos[i][idim];
 
@@ -315,10 +311,12 @@ void Driver::avedump()
   if (nfirst >= 3){
     fprintf(fp,"%d %lg %lg %lg crystal_vector 1 %lg 0. 0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], lx); ii++;
     fprintf(fp,"%d %lg %lg %lg crystal_vector 2 0. %lg 0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], ly); ii++;
-    fprintf(fp,"%d %lg %lg %lg crystal_vector 2 0. %lg 0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], lz); ii++;
+    fprintf(fp,"%d %lg %lg %lg crystal_vector 3 0. 0. %lg\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], lz); ii++;
   }
   for (int i=ii; i<= nfirst; i++) fprintf(fp,"%d %lg %lg %lg\n", first->attyp[i], atpos[i][0], atpos[i][1], atpos[i][2]);
   fclose(fp);
+
+  memory->destroy(atpos);
 
 return;
 }
