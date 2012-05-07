@@ -24,7 +24,7 @@ public:
   Memory *memory;
   double xlo, xhi, ylo, yhi, zlo, zhi;
   double xy, xz, yz;
-  double lx, ly, lz;
+  double lx, ly, lz, box[3], hbox[3];
   int *attyp, *atsel;  // note: atom IDs go from 1 to natom
   int *numtype;
   double **atpos;

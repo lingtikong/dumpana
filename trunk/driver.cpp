@@ -53,6 +53,7 @@ Driver::Driver(int narg, char** arg)
     for (int i=0; i<20; i++) printf("----"); printf("\n");
     printf("  1. Voronoi diagram analysis;\n");
     printf("  2. convert to xyz format;\n");
+    printf("  3. Average over frames;\n");
     printf("  0. Exit;\nYour choice [%d]: ", job);
     fgets(str,MAXLINE,stdin);
 
@@ -71,6 +72,11 @@ Driver::Driver(int narg, char** arg)
     case 2:
       setrange();
       if (nsel > 0) writexyz();
+      break;
+
+    case 3:
+      setrange();
+      if (nsel > 0) avedump();
       break;
 
     default:
@@ -232,6 +238,90 @@ void Driver::writexyz()
 return;
 }
 
+/*------------------------------------------------------------------------------
+ * Method to write one frame of the dump file to a new file
+ *----------------------------------------------------------------------------*/
+void Driver::avedump()
+{
+  double lx, ly, lz;
+  double **atpos = NULL;
+  int *attyp = NULL, nfirst;
+
+  DumpAtom *first = all[istr];
+  first->dir2car();
+  lx = first->lx;
+  ly = first->ly;
+  lz = first->lz;
+  nfirst = first->natom;
+  atpos = memory->create(atpos,nfirst+1,3,"avedump:atpos");
+  for (int i=1; i<=nfirst; i++)
+  for (int idim=0; idim<3; idim++) atpos[i][idim] = first->atpos[i][idim];
+
+  int ncount = 1;
+  for (int img = istr+inc; img<= iend; img += inc){
+    one = all[img];
+    if (one->natom != nfirst) continue;
+
+    one->dir2car();
+
+    lx += one->lx;
+    ly += one->ly;
+    lz += one->lz;
+
+    for (int ii=1; ii<= nfirst; ii++){
+      for (int idim=0; idim<3; idim++){
+        int shift = 0;
+        double dx = one->atpos[ii][idim] - first->atpos[ii][idim];
+        while (dx >= one->hbox[idim]){
+          dx -= one->box[idim]; shift--;
+        }
+        while (dx < -one->hbox[idim]){
+          dx += one->box[idim]; shift++;
+        }
+
+        atpos[ii][idim] += one->atpos[ii][idim] + one->box[idim]*double(shift);
+      }
+    }
+    ncount++;
+  }
+  if (ncount < 1) return;
+
+  for (int ii=1; ii<= nfirst; ii++){
+    atpos[ii][0] /= double(ncount);
+    atpos[ii][1] /= double(ncount);
+    atpos[ii][2] /= double(ncount);
+  }
+
+  lx /= double(ncount);
+  ly /= double(ncount);
+  lz /= double(ncount);
+  
+  char str[MAXLINE];
+  char *fout;
+  printf("\nPlease input the output xyz file name [dumpave.xyz]: ");
+  fgets(str,MAXLINE,stdin);
+  char *ptr = strtok(str, " \n\t\r\f");
+  if (ptr == NULL){
+    strcpy(str,"dumpave.xyz");
+    ptr = strtok(str, " \n\t\r\f");
+  }
+  fout = new char [strlen(ptr)]+1;
+  strcpy(fout, ptr);
+  FILE *fp = fopen(fout, "w");
+  fprintf(fp,"%d\n", nfirst);
+  fprintf(fp,"Averaged over frames from %d to %d with incremental of %d: %lg %lg %lg\n",
+  istr, iend, inc, lx, ly, lz);
+  int ii = 1;
+  if (nfirst >= 3){
+    fprintf(fp,"%d %lg %lg %lg crystal_vector 1 %lg 0. 0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], lx); ii++;
+    fprintf(fp,"%d %lg %lg %lg crystal_vector 2 0. %lg 0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], ly); ii++;
+    fprintf(fp,"%d %lg %lg %lg crystal_vector 2 0. %lg 0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], lz); ii++;
+  }
+  for (int i=ii; i<= nfirst; i++) fprintf(fp,"%d %lg %lg %lg\n", first->attyp[i], atpos[i][0], atpos[i][1], atpos[i][2]);
+  fclose(fp);
+
+return;
+}
 /*------------------------------------------------------------------------------
  * To display help info
  *----------------------------------------------------------------------------*/

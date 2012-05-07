@@ -28,6 +28,9 @@ private:
   // to do voronoi diagram analysis
   void voro();
 
+  // to average up all selected frames
+  void avedump();
+
   // help info
   void help();
 
