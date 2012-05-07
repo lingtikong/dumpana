@@ -65,16 +65,14 @@ DumpAtom::DumpAtom(FILE *fp)
     atpos[id][2] = atof(strtok(NULL," \n\t\r\f"));
   }
 
-  lx = xhi - xlo;
-  ly = yhi - ylo;
-  lz = zhi - zlo;
-  axis[0][0] = lx;
+  lx = box[0] = axis[0][0] = xhi - xlo;
+  ly = box[1] = axis[1][1] = yhi - ylo;
+  lz = box[2] = axis[2][2] = zhi - zlo;
   axis[1][0] = xy;
-  axis[1][1] = ly;
   axis[2][0] = xz;
   axis[2][1] = yz;
-  axis[2][2] = lz;
   axis[0][1] = axis[0][2] = axis[1][2] = 0.;
+  for (int idim=0; idim<3; idim++) hbox[idim] = 0.5*box[idim];
 
   numtype = memory->create(numtype,ntype+1,"numtype");
   for (int i=1; i<=ntype; i++) numtype[i] = 0;
