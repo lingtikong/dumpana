@@ -2,9 +2,9 @@
 # compiler and flags
 CC     = g++ -Wno-unused-result
 LINK   = $(CC)
-CFLAGS = -O3 $(UFLAG) $(DEBUG)
+CFLAGS = -O $(UFLAG) $(DEBUG)
 #
-OFLAGS = -O3 $(DEBUG)
+OFLAGS = -O $(DEBUG)
 INC    = $(FFTINC) $(LPKINC) $(USRINC) $(VoroINC)
 LIB    = $(FFTLIB) $(LPKLIB) $(USRLIB) $(VoroLIB)
 #

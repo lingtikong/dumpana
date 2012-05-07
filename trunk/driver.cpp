@@ -213,7 +213,7 @@ void Driver::writexyz()
     fout = new char[strlen(dump)+5];
     sprintf(fout,"%s.xyz",dump);
   } else {
-    fout = new char [strlen(ptr)]+1;
+    fout = new char [strlen(ptr)+1];
     strcpy(fout, ptr);
   }
   FILE *fp = fopen(fout, "w");
@@ -250,8 +250,8 @@ void Driver::avedump()
   double lz = first->lz;
   int nfirst = first->natom;
   double **atpos = memory->create(atpos,nfirst+1,3,"avedump:atpos");
-  for (int i=1; i<=nfirst; i++)
-  for (int idim=0; idim<3; idim++) atpos[i][idim] = first->atpos[i][idim];
+  for (int ii=1; ii<=nfirst; ii++)
+  for (int idim=0; idim<3; idim++) atpos[ii][idim] = 0.;
 
   int ncount = 1;
   for (int img = istr+inc; img<= iend; img += inc){
@@ -266,16 +266,11 @@ void Driver::avedump()
 
     for (int ii=1; ii<= nfirst; ii++){
       for (int idim=0; idim<3; idim++){
-        int shift = 0;
         double dx = one->atpos[ii][idim] - first->atpos[ii][idim];
-        while (dx >= one->hbox[idim]){
-          dx -= one->box[idim]; shift--;
-        }
-        while (dx < -one->hbox[idim]){
-          dx += one->box[idim]; shift++;
-        }
+        while (dx >= one->hbox[idim]) dx -= one->box[idim];
+        while (dx < -one->hbox[idim]) dx += one->box[idim];
 
-        atpos[ii][idim] += one->atpos[ii][idim] + one->box[idim]*double(shift);
+        atpos[ii][idim] += dx;
       }
     }
     ncount++;
@@ -283,9 +278,9 @@ void Driver::avedump()
   if (ncount < 1) return;
 
   for (int ii=1; ii<= nfirst; ii++){
-    atpos[ii][0] /= double(ncount);
-    atpos[ii][1] /= double(ncount);
-    atpos[ii][2] /= double(ncount);
+    atpos[ii][0] = atpos[ii][0]/double(ncount) + first->atpos[ii][0];
+    atpos[ii][1] = atpos[ii][1]/double(ncount) + first->atpos[ii][1];
+    atpos[ii][2] = atpos[ii][2]/double(ncount) + first->atpos[ii][2];
   }
 
   lx /= double(ncount);
@@ -301,12 +296,12 @@ void Driver::avedump()
     strcpy(str,"dumpave.xyz");
     ptr = strtok(str, " \n\t\r\f");
   }
-  fout = new char [strlen(ptr)]+1;
+  fout = new char [strlen(ptr)+1];
   strcpy(fout, ptr);
   FILE *fp = fopen(fout, "w");
   fprintf(fp,"%d\n", nfirst);
   fprintf(fp,"Averaged over frames from %d to %d with incremental of %d: %lg %lg %lg\n",
-  istr, iend, inc, lx, ly, lz);
+  istr+1, iend+1, inc, lx, ly, lz);
   int ii = 1;
   if (nfirst >= 3){
     fprintf(fp,"%d %lg %lg %lg crystal_vector 1 %lg 0. 0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], lx); ii++;
@@ -317,6 +312,7 @@ void Driver::avedump()
   fclose(fp);
 
   memory->destroy(atpos);
+  delete []fout;
 
 return;
 }
