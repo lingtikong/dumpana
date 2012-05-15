@@ -216,7 +216,7 @@ void Driver::voro()
         for (int i=3; i<7; i++) index[i] = 0;
 
         for (int i=0; i<nf; i++){
-          if (ford[i] < 7) index[ford[i]] += 1;
+          if (ford[i] < 7 && ford[i] > 2) index[ford[i]] += 1;
         }
       }
 
