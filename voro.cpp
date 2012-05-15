@@ -183,40 +183,29 @@ void Driver::voro()
         cell->vertices(vpos);
         cell->face_vertices(vlst);
 
-        int nv = vpos.size()/3;
-        int count[nv][nv];
-        for (int i=0; i<nv; i++)
-        for (int j=0; j<nv; j++) count[i][j] = 0;
-
-        for (int i=0; i<nv; i++)
-        for (int j=i+1; j<nv; j++){
-          int ip = i*3;
-          int jp = j*3;
-          double dx = vpos[jp]  -vpos[ip];
-          double dy = vpos[jp+1]-vpos[ip+1];
-          double dz = vpos[jp+2]-vpos[ip+2];
-          double r2 = dx*dx+dy*dy+dz*dz;
-          if (r2 < lcut2) count[i][j] = count[j][i] = 1;
-        }
-
         int nf = fs.size();
         int ford[nf];
         int k = 0, iface = 0;
         while (k < vlst.size()){
           int ned = vlst[k++];
           int nuc = 0;
-          for (int ii=0; ii<ned; ii++)
-          for (int jj=ii+1; jj<ned; jj++){
-            int b1 = vlst[k+ii], b2 = vlst[k+jj];
-            nuc += count[b1][b2];
+          for (int ii=0; ii<ned; ii++){
+            int jj = (ii+1)%ned;
+            int v1 = vlst[k+ii], v2 = vlst[k+jj];
+            double dx = vpos[v1*3]   - vpos[v2*3];
+            double dy = vpos[v1*3+1] - vpos[v2*3+1];
+            double dz = vpos[v1*3+2] - vpos[v2*3+2];
+            double r2 = dx*dx+dy*dy+dz*dz;
+            //if (v1 > v2) printf("%lg\n", sqrt(r2));
+            if (r2 <= lcut2) nuc++;
           }
           ford[iface++] = ned - nuc;
           k += ned;
         }
-        for (int i=3; i<7; i++) index[i] = 0;
 
+        for (int i=3; i<7; i++) index[i] = 0;
         for (int i=0; i<nf; i++){
-          if (ford[i] < 7 && ford[i] > 2) index[ford[i]] += 1;
+          if (ford[i] < 7) index[ford[i]] += 1;
         }
       }
 
