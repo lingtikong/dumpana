@@ -33,12 +33,28 @@ void Driver::voro()
   printf("\n");
 
   double surf_min = 1.e-4, edge_min = 1.e-6;
+  int flag_min = 0, nminnei = 14;
+
   if (job == 2 || job == 4){
     printf("Please input your criterion for tiny surfaces [%g]: ", surf_min);
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) surf_min = atof(ptr);
     printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", surf_min);
+
+    printf("Would you like to keep a minimum # of neighbors? (y/n)[n]: ");
+    fgets(str,MAXLINE, stdin);
+    ptr = strtok(str, " \n\t\r\f");
+    if (ptr != NULL && strcmp(ptr,"y") == 0){
+      flag_min = 1;
+      printf("Please input your minimum # of neighbors, I would recommend 14 for bcc\n");
+      printf("lattice, 12 for hcp and fcc. please input your number [%d]: ", nminnei);
+      fgets(str,MAXLINE, stdin);
+      ptr = strtok(str, " \n\t\r\f");
+      if (ptr) nminnei = atoi(ptr);
+      printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", nminnei);
+    } else nminnei = 0;
+    printf("\n");
   }
 
   if (job == 3 || job == 4){
@@ -107,11 +123,21 @@ void Driver::voro()
       if ((job == 2 || job == 4) && surf_min > 0.){
         c2.init(-lx,lx,-ly,ly,-lz,lz);
   
+        int nf = fs.size();
+        // sort neighbors by area if asked to keep a minimum # of neighbors
+        if (flag_min){
+          for (int i=0; i<nf; i++)
+          for (int j=i+1; j<nf; j++){
+            if (fs[j] > fs[i]){
+              double dswap = fs[i]; fs[i] = fs[j]; fs[j] = dswap;
+              int ik = neigh[i]; neigh[i] = neigh[j]; neigh[j] = ik;
+            }
+          }
+        }
         // add condition on surface
         double fcut = surf_min * cell->surface_area();
-        int nf = fs.size();
         for (int i=0; i<nf; i++){
-          if (fs[i] > fcut){
+          if (i < nminnei || fs[i] > fcut){
             int j = neigh[i];
   
             // apply pbc

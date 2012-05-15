@@ -136,7 +136,7 @@ void Driver::readdump()
       delete one;
       break;
     }
-    printf("\b%c", flag[++i%4]);
+    printf("\b%c", flag[++i%4]); fflush(stdout);
   }
   fclose(fp);
   nframe = all.size();

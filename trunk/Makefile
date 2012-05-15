@@ -2,9 +2,9 @@
 # compiler and flags
 CC     = g++ -Wno-unused-result
 LINK   = $(CC)
-CFLAGS = -O $(UFLAG) $(DEBUG)
+CFLAGS = -O3 $(UFLAG) $(DEBUG)
 #
-OFLAGS = -O $(DEBUG)
+OFLAGS = -O3 $(DEBUG)
 INC    = $(FFTINC) $(LPKINC) $(USRINC) $(VoroINC)
 LIB    = $(FFTLIB) $(LPKLIB) $(USRLIB) $(VoroLIB)
 #
@@ -23,7 +23,7 @@ VoroLIB = -L/home/konglt/resource/voro_svn/src -lvoro++
 # User flag
 #UFLAG =
 # Debug flags
-DEBUG = -g
+#DEBUG = -g
 #====================================================================
 # executable name
 BASE   = dumpana
