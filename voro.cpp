@@ -65,6 +65,13 @@ void Driver::voro()
     printf("Edges whose length takes less ratio than %lg will be skiped!\n\n", edge_min);
   }
 
+  printf("Please input the prefix for output files [voro]: ");
+  fgets(str,MAXLINE, stdin);
+  ptr = strtok(str, " \n\t\r\f");
+  if (ptr == NULL) {strcpy(str,"voro"); ptr = strtok(str, " \n\t\r\f");}
+  char *prefix = new char[strlen(ptr)+1];
+  strcpy(prefix, ptr);
+  
   // now to do the real job
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
@@ -94,7 +101,7 @@ void Driver::voro()
     for (int i=1; i<= n; i++) con.put(i, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
 
     // open file for output
-    sprintf(str,"voro_%d.dat ", one->tstep);
+    sprintf(str,"%s_%d.dat ", prefix, one->tstep);
     ptr = strtok(str," \n\t\r\f");
     FILE *fp = fopen(ptr, "w");
     fprintf(fp,"#Box info: %lg %lg %lg %lg %lg %lg %d\n", xlo, xhi, ylo, yhi, zlo, zhi, n);
@@ -228,6 +235,7 @@ void Driver::voro()
     printf("Frame %d done, voro info written to: %s\n", img+1, ptr);
   }
 
+  delete []prefix;
   for (int i=0; i<20; i++) printf("===="); printf("\n");
 return;
 }
