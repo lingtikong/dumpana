@@ -28,6 +28,9 @@ private:
   // to do voronoi diagram analysis
   void voro();
 
+  // Chemical short range order based on voronoi neighbors
+  void csro();
+
   // to average up all selected frames
   void avedump();
 

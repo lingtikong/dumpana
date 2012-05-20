@@ -75,7 +75,7 @@ DumpAtom::DumpAtom(FILE *fp)
   for (int idim=0; idim<3; idim++) hbox[idim] = 0.5*box[idim];
 
   numtype = memory->create(numtype,ntype+1,"numtype");
-  for (int i=1; i<=ntype; i++) numtype[i] = 0;
+  for (int i=0; i<=ntype; i++) numtype[i] = 0;
   for (int i=1; i<=natom; i++) numtype[attyp[i]]++;
 
   initialized = 1;

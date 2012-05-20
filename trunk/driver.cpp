@@ -54,6 +54,7 @@ Driver::Driver(int narg, char** arg)
     printf("  1. Voronoi diagram analysis;\n");
     printf("  2. convert to xyz format;\n");
     printf("  3. Average over frames;\n");
+    printf("  4. CSRO based on voronoi neighbors;\n");
     printf("  0. Exit;\nYour choice [%d]: ", job);
     fgets(str,MAXLINE,stdin);
 
@@ -77,6 +78,11 @@ Driver::Driver(int narg, char** arg)
     case 3:
       setrange();
       if (nsel > 0) avedump();
+      break;
+
+    case 4:
+      setrange();
+      if (nsel > 0) csro();
       break;
 
     default:
