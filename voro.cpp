@@ -21,7 +21,7 @@ void Driver::voro()
   printf("  2. Refined Voronoi info, skip tiny surfaces;\n");
   printf("  3. Refined Voronoi info, skip ultra short edges;\n");
   printf("  4. Refined Voronoi info, skip tiny surfaces and short edges;\n");
-  printf("  0. Return;\nYour choice [4]: ");
+  printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
@@ -32,7 +32,7 @@ void Driver::voro()
   }
   printf("\n");
 
-  double surf_min = 1.e-4, edge_min = 1.e-6;
+  double surf_min = 1.e-4, edge_min = 1.e-4;
   int flag_min = 0, nminnei = 14;
 
   if (job == 2 || job == 4){
@@ -141,10 +141,14 @@ void Driver::voro()
             }
           }
         }
+
         // add condition on surface
         double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
+          //printf("%lg\n", fs[i]/cell->surface_area());
+          //if (i<nminnei) printf("%lg\n", fs[i]/cell->surface_area());
           if (i < nminnei || fs[i] > fcut){
+            //printf("%lg\n", fs[i]/cell->surface_area());
             int j = neigh[i];
   
             // apply pbc
@@ -196,7 +200,7 @@ void Driver::voro()
             double dy = vpos[v1*3+1] - vpos[v2*3+1];
             double dz = vpos[v1*3+2] - vpos[v2*3+2];
             double r2 = dx*dx+dy*dy+dz*dz;
-            //if (v1 > v2) printf("%lg\n", sqrt(r2));
+            //if (v1 > v2) printf("%lg\n", sqrt(r2)/cell->total_edge_distance());
             if (r2 <= lcut2) nuc++;
           }
           ford[iface++] = ned - nuc;
