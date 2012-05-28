@@ -26,6 +26,7 @@ private:
   void writexyz();
 
   // to do voronoi diagram analysis
+  int flag_out;
   void voro();
 
   // Chemical short range order based on voronoi neighbors

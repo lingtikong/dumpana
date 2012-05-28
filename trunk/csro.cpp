@@ -9,7 +9,7 @@
 /*------------------------------------------------------------------------------
  * Method to evaluate the chemical short range order based on the
  * voronoi neighbors for selected frames.
- * The chemical short range order is defined as:
+ * The chemical short range order is defined as (Warren-Cowley):
  *  eta = 1. - n_j2i/(N_i*c_j)
  * Where n_j2i is the number of type j neighbors of type i, N_i is the total #
  * of neighbors for type i, c_j is the concentration of type j
