@@ -72,6 +72,10 @@ void Driver::voro()
   char *prefix = new char[strlen(ptr)+1];
   strcpy(prefix, ptr);
   
+  FILE *fpsurf, *fpedge;
+  if (flag_out & 1) fpsurf = fopen("surf_ratio.dat", "w");
+  if (flag_out & 2) fpedge = fopen("edge_ratio.dat", "w");
+
   // now to do the real job
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
@@ -145,7 +149,7 @@ void Driver::voro()
         // add condition on surface
         double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
-          //printf("%lg\n", fs[i]/cell->surface_area());
+          if (flag_out & 1) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
           //if (i<nminnei) printf("%lg\n", fs[i]/cell->surface_area());
           if (i < nminnei || fs[i] > fcut){
             //printf("%lg\n", fs[i]/cell->surface_area());
@@ -200,7 +204,7 @@ void Driver::voro()
             double dy = vpos[v1*3+1] - vpos[v2*3+1];
             double dz = vpos[v1*3+2] - vpos[v2*3+2];
             double r2 = dx*dx+dy*dy+dz*dz;
-            //if (v1 > v2) printf("%lg\n", sqrt(r2)/cell->total_edge_distance());
+            if ((flag_out & 2) && (v1 > v2)) fprintf(fpedge, "%lg\n", sqrt(r2)/cell->total_edge_distance());
             if (r2 <= lcut2) nuc++;
           }
           ford[iface++] = ned - nuc;
@@ -227,6 +231,9 @@ void Driver::voro()
     fclose(fp);
     printf("Frame %d done, voro info written to: %s\n", img+1, ptr);
   }
+
+  if (flag_out & 1) fclose(fpsurf);
+  if (flag_out & 2) fclose(fpedge);
 
   delete []prefix;
   for (int i=0; i<20; i++) printf("===="); printf("\n");

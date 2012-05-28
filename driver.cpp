@@ -12,6 +12,7 @@ Driver::Driver(int narg, char** arg)
   dump = NULL;
   nframe = 0;
   memory = new Memory();
+  flag_out = 0;
   int loop = 1;
 
   // analyse command line options
@@ -22,6 +23,9 @@ Driver::Driver(int narg, char** arg)
 
     } else if (strcmp(arg[iarg], "-1") == 0){ // just do one analysis
       loop = 0;
+
+    } else if (strcmp(arg[iarg], "-o") == 0){ // just do one analysis
+      flag_out = atoi(arg[++iarg]);
 
     } else {
       break;
