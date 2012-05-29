@@ -336,6 +336,8 @@ void Driver::help()
   printf("\nAvailable options:\n");
   printf("    -h       To display this help info;\n");
   printf("    -1       To tell the code to exit once an analysis is done;\n");
+  printf("    -o n     To indicate wether to output the surface area ratio and/or edge length\n");
+  printf("             ratio info or not: n = 0, neither; 1, surface; 2, edge; 3, both. default: 0.\n");
   printf("    file     Must be lammps atom style dump file, by default: dump.lammpstrj;\n");
   printf("\n\n");
   exit(0);
