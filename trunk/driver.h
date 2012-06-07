@@ -35,6 +35,9 @@ private:
   // to average up all selected frames
   void avedump();
 
+  // Hondeycutt-Andersen bond type analysis
+  void honeycutt_andersen();
+
   // help info
   void help();
 

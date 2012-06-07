@@ -59,6 +59,7 @@ Driver::Driver(int narg, char** arg)
     printf("  2. convert to xyz format;\n");
     printf("  3. Average over frames;\n");
     printf("  4. CSRO based on voronoi neighbors;\n");
+    printf("  5. Honeycutt-Andersen bond index analysis;\n");
     printf("  0. Exit;\nYour choice [%d]: ", job);
     fgets(str,MAXLINE,stdin);
 
@@ -87,6 +88,11 @@ Driver::Driver(int narg, char** arg)
     case 4:
       setrange();
       if (nsel > 0) csro();
+      break;
+
+    case 5:
+      setrange();
+      if (nsel > 0) honeycutt_andersen();
       break;
 
     default:
