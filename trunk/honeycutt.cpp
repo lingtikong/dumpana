@@ -49,6 +49,12 @@ void Driver::honeycutt_andersen()
     if (surf_min > 0.) refine = 1;
   }
 
+  int unbond = 0;
+  printf("\nWould you like to analyse un-bonded pairs? (y/n)[n]: ");
+  fgets(str, MAXLINE, stdin);
+  ptr = strtok(str, " \n\t\r\f");
+  if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  unbond = 1;
+
   printf("Please input the file name to output the HA bond index info [ha.dat]: ");
   fgets(str, MAXLINE, stdin);
   char *fname = strtok(str, " \n\t\r\f");
@@ -155,47 +161,68 @@ void Driver::honeycutt_andersen()
     }
     fprintf(fp,"# frame number: %d\n", img);
     // now to analyse the Honeycutt-Andersen bond type info
-    std::vector<int> comms;
     for (int id=1; id<= natom; id++){
-      int nni = neilist[0][id];
-      for (int ii=1; ii<= nni; ii++){
-        int jd = neilist[ii][id];
-        if (jd >= id) continue;
-        int nnj = neilist[0][jd];
-
-        comms.clear();
-        for (int jj=1; jj<=nnj; jj++)
-        for (int kk=1; kk<=nni; kk++) if (neilist[jj][jd] == neilist[kk][id]) comms.push_back(neilist[jj][jd]);
-
-        int ncomm = comms.size();
-        int nbond = 0;
-        for (int mm=0; mm<ncomm; mm++)
-        for (int nn=mm+1; nn<ncomm; nn++) nbond += bonded[comms[mm]][comms[nn]];
-
-        int nconf = 1;
-        // needs to distinct same ncomm-nbond for 144, 142
-        // See Annals of Physics 324(2):332-342, 2009.
-        if (ncomm == 4 && (nbond == 4 || nbond == 2) ){
-          int ned[4]; ned[0] = ned[1] = ned[2] = ned[3] = 0;
-          for (int mm=0; mm<ncomm; mm++)
-          for (int nn=mm+1; nn<ncomm; nn++){
-            int md = comms[mm], nd = comms[nn];
-            ned[mm] += bonded[md][nd];
-            ned[nn] += bonded[md][nd];
-          }
-          int nmin = nbond/2;
-          for (int mm=0; mm<ncomm; mm++) if (ned[mm] < nmin) nconf = 2;
+      if (unbond){
+        for (int jd=id+1; jd<= natom; jd++){
+          count_HA(id, jd, neilist, bonded, fp);
         }
 
-        fprintf(fp,"%d %d 1%d%d%d\n", id, jd, ncomm, nbond, nconf);
+      } else {
+
+        int nni = neilist[0][id];
+        for (int kk=1; kk<= nni; kk++){
+          int jd  = neilist[kk][id];
+          if (id > jd) continue;
+
+          count_HA(id, jd, neilist, bonded, fp);
+        }
       }
     }
+    printf("Frame %d done, HA info written to: %s\n", img+1, fname);
   }
   printf("\n"); for (int i=0; i<20; i++) printf("===="); printf("\n");
   fclose(fp);
 
   memory->destroy(bonded);
   memory->destroy(neilist);
+
+return;
+}
+
+void Driver::count_HA(int id, int jd, int **list, int **pair, FILE * fp)
+{
+  int ibond = 2 - pair[id][jd];
+  int nni = list[0][id];
+  int nnj = list[0][jd];
+
+  std::vector<int> comms;
+  comms.clear();
+  for (int ii=1; ii<= nni; ii++)
+  for (int jj=1; jj<= nnj; jj++) if (list[ii][id] == list[jj][jd]) comms.push_back(list[ii][id]);
+  int ncomm = comms.size();
+
+  if (ibond == 2 && ncomm < 3) return;
+
+  int nbond = 0;
+  for (int mm=0; mm<ncomm; mm++)
+  for (int nn=mm+1; nn<ncomm; nn++) nbond += pair[comms[mm]][comms[nn]];
+
+  int nconf = 1;
+  // needs to distinct same ncomm-nbond for 144, 142
+  // See Annals of Physics 324(2):332-342, 2009.
+  if (ncomm == 4 && (nbond == 4 || nbond == 2) ){
+    int ned[4]; ned[0] = ned[1] = ned[2] = ned[3] = 0;
+    for (int mm=0; mm<ncomm; mm++)
+    for (int nn=mm+1; nn<ncomm; nn++){
+      int md = comms[mm], nd = comms[nn];
+      ned[mm] += pair[md][nd];
+      ned[nn] += pair[md][nd];
+    }
+    int nmin = nbond/2;
+    for (int mm=0; mm<ncomm; mm++) if (ned[mm] < nmin) nconf = 2;
+  }
+
+  fprintf(fp,"%d %d %d%d%d%d\n", id, jd, ibond, ncomm, nbond, nconf);
 
 return;
 }
