@@ -173,8 +173,9 @@ void Driver::honeycutt_andersen()
         for (int nn=mm+1; nn<ncomm; nn++) nbond += bonded[comms[mm]][comms[nn]];
 
         int nconf = 1;
-        // needs to distinct same ncomm-nbond for 144
-        if (ncomm == 4 && nbond == 4){
+        // needs to distinct same ncomm-nbond for 144, 142
+        // See Annals of Physics 324(2):332-342, 2009.
+        if (ncomm == 4 && (nbond == 4 || nbond == 2) ){
           int ned[4]; ned[0] = ned[1] = ned[2] = ned[3] = 0;
           for (int mm=0; mm<ncomm; mm++)
           for (int nn=mm+1; nn<ncomm; nn++){
@@ -182,7 +183,8 @@ void Driver::honeycutt_andersen()
             ned[mm] += bonded[md][nd];
             ned[nn] += bonded[md][nd];
           }
-          for (int mm=0; mm<ncomm; mm++) if (ned[mm] > 2) nconf = 2;
+          int nmin = nbond/2;
+          for (int mm=0; mm<ncomm; mm++) if (ned[mm] < nmin) nconf = 2;
         }
 
         fprintf(fp,"%d %d 1%d%d%d\n", id, jd, ncomm, nbond, nconf);
