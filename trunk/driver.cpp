@@ -60,6 +60,7 @@ Driver::Driver(int narg, char** arg)
     printf("  3. Average over frames;\n");
     printf("  4. CSRO based on voronoi neighbors;\n");
     printf("  5. Honeycutt-Andersen bond index analysis;\n");
+    printf("  6. Common neighbor analysis/parameter;\n");
     printf("  0. Exit;\nYour choice [%d]: ", job);
     fgets(str,MAXLINE,stdin);
 
@@ -93,6 +94,11 @@ Driver::Driver(int narg, char** arg)
     case 5:
       setrange();
       if (nsel > 0) honeycutt_andersen();
+      break;
+
+    case 6:
+      setrange();
+      if (nsel > 0) Compute_CNACNP();
       break;
 
     default:

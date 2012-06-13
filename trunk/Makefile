@@ -23,7 +23,7 @@ VoroLIB = -L/home/konglt/resource/voro_svn/src -lvoro++
 # User flag
 #UFLAG =
 # Debug flags
-#DEBUG = -g
+#DEBUG = -g -O1
 #====================================================================
 # executable name
 BASE   = dumpana
