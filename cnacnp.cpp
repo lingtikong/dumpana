@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "voro++.hh"
+#include "common_neig.h"
 #include "math.h"
 #include <vector>
 
@@ -8,38 +9,37 @@
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
 /*------------------------------------------------------------------------------
- * Method to compute the Honeycutt-Andersen index based on the  voronoi neighbors
- * for selected frames. Only bonded pairs are analysed.
- *
- * The first index 1 means the selected pair are bonded, the second gives the
- * number of common neighbors between these two, and the third gives the number
- * of bonds formed between the common neighbors; the fourth are generally 1, while
- * for 144?, if all common neighbors are linked together, it is set to 2.
+ * Driver to execute the Common neighbor analysis or common neighbor parameter
+ * computations;
+ * Ref: Comp. Phys. Comm. 177:518, (2007).
  *----------------------------------------------------------------------------*/
-void Driver::honeycutt_andersen()
+void Driver::Compute_CNACNP()
 {
   char str[MAXLINE];
-  int job = 2;
+  int job = 1;
   printf("\n"); for (int i=0; i<20; i++) printf("====");
   printf("\nPlease select your desired job:\n");
   for (int i=0; i<20; i++) printf("----"); printf("\n");
-  printf("  1. HA index based on direct Voronoi info;\n");
-  printf("  2. HA index based on refined Voronoi info, skip tiny surfaces;\n");
+  printf("  1. CNA based on direct Voronoi info;\n");
+  printf("  2. CNA based on refined Voronoi info, skip tiny surfaces;\n");
+  printf("  3. CNP based on direct Voronoi info;\n");
+  printf("  4. CNP based on refined Voronoi info, skip tiny surfaces;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
-  if (job < 1 || job > 2){
+  if (job < 1 || job > 4){
     for (int i=0; i<20; i++) printf("===="); printf("\n");
     return;
   }
   printf("\n");
 
   double surf_min = 1.e-4;
-  int refine = 0;
+  int refine = 1-job%2;
+  job = (job+1)/2; // 1, cna; 2, cnp
 
-  if (job == 2){
+  if (refine){
     printf("Please input your criterion for tiny surfaces [%g]: ", surf_min);
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
@@ -48,29 +48,25 @@ void Driver::honeycutt_andersen()
 
     if (surf_min > 0.) refine = 1;
   }
+  
+  char *fname = new char[8];
+  if (job == 1) strcpy(fname, "cna.dat");
+  else strcpy(fname, "cnp.dat");
 
-  int unbond = 0;
-  printf("\nWould you like to analyse un-bonded pairs? (y/n)[n]: ");
+  printf("Please input the file name to output the CNA/CNP info[%s]: ", fname);
   fgets(str, MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
-  if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  unbond = 1;
-
-  int outcomm = 0;
-  printf("\nWould you like to output the common neighbors? (y/n)[n]: ");
-  fgets(str, MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
-  if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  outcomm = 1;
-
-  printf("Please input the file name to output the HA bond index info [ha.dat]: ");
-  fgets(str, MAXLINE, stdin);
-  char *fname = strtok(str, " \n\t\r\f");
-  if (fname == NULL){
-    strcpy(str,"ha.dat\n");
-    fname = strtok(str, " \n\t\r\f");
+  if (ptr){
+    delete []fname;
+    fname = new char[strlen(ptr)+1];
+    strcpy(fname, ptr);
   }
 
   FILE *fp = fopen(fname, "w");
-  fprintf(fp, "# id  jd index\n"); fflush(fp);
+  if (job == 1)
+    fprintf(fp,"# CNA: 1, FCC; 2, HCP; 3, BCC; 4, ICOS; 4, OTHER; 5, UNKNOWN.\n# id x y z cna\n");
+  else fprintf(fp, "# id x y z cnp\n");
+  fflush(fp);
 
   one = all[istr];
   int neimax = 24;
@@ -95,7 +91,6 @@ void Driver::honeycutt_andersen()
     double hx = 0.5*lx, hy = 0.5*ly, hz = 0.5*lz;
 
     int n = one->natom;
-    int *attyp = one->attyp;
     double **atpos = one->atpos;
 
     // reallocated bonded and neilist if different
@@ -124,7 +119,6 @@ void Driver::honeycutt_andersen()
     voro::c_loop_all cl(con);
     if (cl.start()) do if (con.compute_cell(cell,cl)){
       int id = cl.pid();
-      int ip = one->attyp[id];
 
       std::vector<int> neigh;    // neigh list
       cell.neighbors(neigh);
@@ -166,71 +160,18 @@ void Driver::honeycutt_andersen()
       }
     }
     fprintf(fp,"# frame number: %d\n", img);
-    // now to analyse the Honeycutt-Andersen bond type info
-    for (int id=1; id<= natom; id++){
-      if (unbond){
-        for (int jd=id+1; jd<= natom; jd++){
-          count_HA(id, jd, neilist, bonded, fp, outcomm);
-        }
+    // now to compute the CNA/CNP info
+    ComputeCNAAtom *cna = new ComputeCNAAtom(job, natom, neilist, bonded, atpos, one->box, fp);
+    delete cna;
 
-      } else {
-
-        int nni = neilist[0][id];
-        for (int kk=1; kk<= nni; kk++){
-          int jd  = neilist[kk][id];
-          if (id > jd) continue;
-
-          count_HA(id, jd, neilist, bonded, fp, outcomm);
-        }
-      }
-    }
-    printf("Frame %d done, HA info written to: %s\n", img+1, fname);
+    printf("Frame %d done, CNA/CNP info written to: %s\n", img+1, fname);
   }
   printf("\n"); for (int i=0; i<20; i++) printf("===="); printf("\n");
   fclose(fp);
 
   memory->destroy(bonded);
   memory->destroy(neilist);
-
-return;
-}
-
-void Driver::count_HA(int id, int jd, int **list, int **pair, FILE * fp, const int flag)
-{
-  int ibond = 2 - pair[id][jd];
-  int nni = list[0][id];
-  int nnj = list[0][jd];
-
-  std::vector<int> comms;
-  comms.clear();
-  for (int ii=1; ii<= nni; ii++)
-  for (int jj=1; jj<= nnj; jj++) if (list[ii][id] == list[jj][jd]) comms.push_back(list[ii][id]);
-  int ncomm = comms.size();
-
-  if (ibond == 2 && ncomm < 3) return;
-
-  int nbond = 0;
-  for (int mm=0; mm<ncomm; mm++)
-  for (int nn=mm+1; nn<ncomm; nn++) nbond += pair[comms[mm]][comms[nn]];
-
-  int nconf = 1;
-  // needs to distinct same ncomm-nbond for 144, 142
-  // See Annals of Physics 324(2):332-342, 2009.
-  if (ncomm == 4 && (nbond == 4 || nbond == 2) ){
-    int ned[4]; ned[0] = ned[1] = ned[2] = ned[3] = 0;
-    for (int mm=0; mm<ncomm; mm++)
-    for (int nn=mm+1; nn<ncomm; nn++){
-      int md = comms[mm], nd = comms[nn];
-      ned[mm] += pair[md][nd];
-      ned[nn] += pair[md][nd];
-    }
-    int nmin = nbond/2;
-    for (int mm=0; mm<ncomm; mm++) if (ned[mm] < nmin) nconf = 2;
-  }
-
-  fprintf(fp,"%d %d %d%d%d%d", id, jd, ibond, ncomm, nbond, nconf);
-  if (flag) for (int ii=0; ii<ncomm; ii++) fprintf(fp," %d", comms[ii]);
-  fprintf(fp,"\n");
+  delete []fname;
 
 return;
 }
