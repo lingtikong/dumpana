@@ -53,15 +53,16 @@ Driver::Driver(int narg, char** arg)
   int job = 1;
   do {
     printf("\n"); for (int i=0; i<20; i++) printf("====");
-    printf("\nPlease select the job to perform:\n");
+    printf("\nPlease select your desired task to perform:\n");
     for (int i=0; i<20; i++) printf("----"); printf("\n");
-    printf("  1. Voronoi diagram analysis;\n");
-    printf("  2. convert to xyz format;\n");
-    printf("  3. Average over frames;\n");
-    printf("  4. CSRO based on voronoi neighbors;\n");
-    printf("  5. Honeycutt-Andersen bond index analysis;\n");
-    printf("  6. Common neighbor analysis/parameter;\n");
-    printf("  0. Exit;\nYour choice [%d]: ", job);
+    printf("Voronoi based:                         | Others:\n");
+    for (int i=0; i<20; i++) printf("----"); printf("\n");
+    printf("  1. Voronoi diagram analysis;         |   5. Convert to xyz format; \n");
+    printf("  2. Chemical Short Range Order;       |   6. Average over frames;   \n");
+    printf("  3. Honeycutt-Andersen bond index;    |    \n");
+    printf("  4. Common neighbor analysis;         |    \n");
+    for (int i=0; i<20; i++) printf("----"); printf("\n");
+    printf("  0. Exit.\nYour choice [%d]: ", job);
     fgets(str,MAXLINE,stdin);
 
     char *ptr = strtok(str," \n\t\r\f");
@@ -76,27 +77,27 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) voro();
       break;
 
-    case 2:
+    case 5:
       setrange();
       if (nsel > 0) writexyz();
       break;
 
-    case 3:
+    case 6:
       setrange();
       if (nsel > 0) avedump();
       break;
 
-    case 4:
+    case 2:
       setrange();
       if (nsel > 0) csro();
       break;
 
-    case 5:
+    case 3:
       setrange();
       if (nsel > 0) honeycutt_andersen();
       break;
 
-    case 6:
+    case 4:
       setrange();
       if (nsel > 0) Compute_CNACNP();
       break;
