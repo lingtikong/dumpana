@@ -59,7 +59,7 @@ Driver::Driver(int narg, char** arg)
     for (int i=0; i<20; i++) printf("----"); printf("\n");
     printf("  1. Voronoi diagram analysis;         |   5. Convert to xyz format; \n");
     printf("  2. Chemical Short Range Order;       |   6. Average over frames;   \n");
-    printf("  3. Honeycutt-Andersen bond index;    |    \n");
+    printf("  3. Honeycutt-Andersen bond index;    |   7. Pair correlation function;\n");
     printf("  4. Common neighbor analysis;         |    \n");
     for (int i=0; i<20; i++) printf("----"); printf("\n");
     printf("  0. Exit.\nYour choice [%d]: ", job);
@@ -100,6 +100,11 @@ Driver::Driver(int narg, char** arg)
     case 4:
       setrange();
       if (nsel > 0) Compute_CNACNP();
+      break;
+
+    case 7:
+      setrange();
+      if (nsel > 0) paircorr();
       break;
 
     default:
