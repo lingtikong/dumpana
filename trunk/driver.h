@@ -42,6 +42,9 @@ private:
   // Common neighber analysis or common neighbor parameter
   void Compute_CNACNP();
 
+  // Pair Correlation
+  void paircorr();
+
   // help info
   void help();
 
