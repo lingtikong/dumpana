@@ -10,7 +10,7 @@
  *----------------------------------------------------------------------------*/
 void Driver::paircorr()
 {
-  char str[MAXLINE];
+  char str[MAXLINE], header[MAXLINE];
   int job = 1;
   printf("\n"); for (int i=0; i<20; i++) printf("====");
   printf("\nPlease select your desired job:\n");
@@ -64,6 +64,7 @@ void Driver::paircorr()
   // now to do the real job
   if (job == 1){
 
+    sprintf(header,"# g(r) for all, from %g to %g with %d points.\n", rmin, rmax, nbin);
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
   
@@ -71,7 +72,7 @@ void Driver::paircorr()
       one->car2dir();
 
       nused++;
-      const double dg = (one->lx*one->ly*one->lz)/(tpi*delr*one->natom*one->natom);
+      const double dg = one->vol/(tpi*delr*one->natom*one->natom);
 
       // compute G(r)
       for (int i=1; i<= one->natom; i++)
@@ -100,7 +101,15 @@ void Driver::paircorr()
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) srctype = atoi(ptr);
-    srctype = MIN(MAX(1,nbin), all[0]->ntype);
+    srctype = MIN(MAX(1,srctype), all[0]->ntype);
+
+    if (type2atnum == NULL)
+      sprintf(header,"# partial g(r) for type %d from %g to %g with %d points.\n", srctype, rmin, rmax, nbin);
+    else {
+      char ename[3];
+      element->Num2Name(type2atnum[srctype], ename);
+      sprintf(header,"# %s-%s partial g(r) from %g to %g with %d points.\n", ename, ename, rmin, rmax, nbin);
+    }
 
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
@@ -109,7 +118,7 @@ void Driver::paircorr()
       one->car2dir();
 
       nused++;
-      const double dg = (one->lx*one->ly*one->lz)/(tpi*delr*one->numtype[srctype]*one->numtype[srctype]);
+      const double dg = one->vol/(tpi*delr*one->numtype[srctype]*one->numtype[srctype]);
 
       // set local variables
       for (int i=1; i<= one->natom; i++){
@@ -142,7 +151,15 @@ void Driver::paircorr()
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) srctype = atoi(ptr);
-    srctype = MIN(MAX(1,nbin), all[0]->ntype);
+    srctype = MIN(MAX(1,srctype), all[0]->ntype);
+
+    if (type2atnum == NULL)
+      sprintf(header,"# partial g(r) centered on type %d from %g to %g with %d points.\n", srctype, rmin, rmax, nbin);
+    else {
+      char ename[3];
+      element->Num2Name(type2atnum[srctype], ename);
+      sprintf(header,"# %s-all partial g(r) from %g to %g with %d points.\n", ename, rmin, rmax, nbin);
+    }
 
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
@@ -151,7 +168,7 @@ void Driver::paircorr()
       one->car2dir();
 
       nused++;
-      const double dg = (one->lx*one->ly*one->lz)/(2.*tpi*delr*one->numtype[srctype]*one->natom);
+      const double dg = one->vol/(2.*tpi*delr*one->numtype[srctype]*one->natom);
 
       // set local variables
       for (int i=1; i<= one->natom; i++){
@@ -184,13 +201,22 @@ void Driver::paircorr()
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) srctype = atoi(ptr);
-    srctype = MIN(MAX(1,nbin), all[0]->ntype);
+    srctype = MIN(MAX(1,srctype), all[0]->ntype);
 
     printf("please input the atomic type of the neighbors [%d]: ", destype);
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) destype = atoi(ptr);
-    destype = MIN(MAX(1,nbin), all[0]->ntype);
+    destype = MIN(MAX(1,destype), all[0]->ntype);
+
+    if (type2atnum == NULL)
+      sprintf(header,"# partial g(r) for pair %d-%d from %g to %g with %d points.\n", srctype, destype, rmin, rmax, nbin);
+    else {
+      char sname[3], dname[3];
+      element->Num2Name(type2atnum[srctype], sname);
+      element->Num2Name(type2atnum[destype], dname);
+      sprintf(header,"# %s-%s partial g(r) from %g to %g with %d points.\n", sname, dname, rmin, rmax, nbin);
+    }
 
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
@@ -199,7 +225,7 @@ void Driver::paircorr()
       one->car2dir();
 
       nused++;
-      const double dg = (one->lx*one->ly*one->lz)/(2.*tpi*delr*one->numtype[srctype]*one->numtype[destype]);
+      const double dg = one->vol/(2.*tpi*delr*one->numtype[srctype]*one->numtype[destype]);
 
       // set local variables
       for (int i=1; i<= one->natom; i++){
@@ -238,6 +264,7 @@ void Driver::paircorr()
   if (ptr == NULL) strcpy(str, "gr.dat");
   ptr = strtok(str, " \n\t\r\f");
   FILE *fp = fopen(ptr,"w");
+  fprintf(fp,"%s", header);
   fprintf(fp,"# r  g(r)\n");
   r = rmin - 0.5*delr;
   for (int i=0; i<nbin; i++){

@@ -14,6 +14,8 @@ Driver::Driver(int narg, char** arg)
   memory = new Memory();
   flag_out = 0;
   int loop = 1;
+  type2atnum = NULL;
+  element = NULL;
 
   // analyse command line options
   int iarg = 1;
@@ -24,7 +26,7 @@ Driver::Driver(int narg, char** arg)
     } else if (strcmp(arg[iarg], "-1") == 0){ // just do one analysis
       loop = 0;
 
-    } else if (strcmp(arg[iarg], "-o") == 0){ // just do one analysis
+    } else if (strcmp(arg[iarg], "-o") == 0){ // flat for Voronoi surface/edge ratio outputs
       flag_out = atoi(arg[++iarg]);
 
     } else {
@@ -60,7 +62,7 @@ Driver::Driver(int narg, char** arg)
     printf("  1. Voronoi diagram analysis;         |   5. Convert to xyz format; \n");
     printf("  2. Chemical Short Range Order;       |   6. Average over frames;   \n");
     printf("  3. Honeycutt-Andersen bond index;    |   7. Pair correlation function;\n");
-    printf("  4. Common neighbor analysis;         |    \n");
+    printf("  4. Common neighbor analysis;         |   8. Prepare for FEFF9;\n");
     for (int i=0; i<20; i++) printf("----"); printf("\n");
     printf("  0. Exit.\nYour choice [%d]: ", job);
     fgets(str,MAXLINE,stdin);
@@ -107,6 +109,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) paircorr();
       break;
 
+    case 8:
+      setrange();
+      if (nsel > 0) FEFF_main();
+      break;
+
     default:
       loop = 0;
       break;
@@ -124,6 +131,9 @@ return;
 Driver::~Driver()
 {
   if (dump) delete []dump;
+  if (element) delete element;
+  if (type2atnum) memory->destroy(type2atnum);
+  
   for (int img=0; img<nframe; img++){
     one = all[img];
     delete one;
@@ -178,9 +188,10 @@ void Driver::readdump()
     printf("  Number of atoms in last frame: %d\n", one->natom);
     printf("  Number of types in last frame: %d\n", one->ntype);
     printf("  Number of atoms for each type: ");
-    for (int i=1; i<=one->ntype; i++) printf("%d: %d  ", i, one->numtype[i]);
+    for (int i=1; i<=one->ntype; i++) printf("%d, %d; ", i, one->numtype[i]);
     printf("\n");
   }
+  MapType2Elem(0, one->ntype);
   for (int i=0; i<20; i++) printf("===="); printf("\n");
 
 return;
@@ -251,13 +262,27 @@ void Driver::writexyz()
     fprintf(fp,"Frame %d of %s, istep= %d\n", img+1, dump, one->tstep);
 
     one->dir2car();
-    for (int i=1; i<=MIN(3,one->natom); i++){
-      fprintf(fp,"%d %lg %lg %lg crystal_vector %d %lg %lg %lg\n",
-      one->attyp[i], one->atpos[i][0], one->atpos[i][1], one->atpos[i][2], i,
-      one->axis[i-1][0], one->axis[i-1][1], one->axis[i-1][2]);
-    }
-    for (int i=MIN(3,one->natom)+1; i<= one->natom; i++){
-      fprintf(fp,"%d %lg %lg %lg\n", one->attyp[i], one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
+    if (type2atnum == NULL){ // no elements assigned, print atomic type num as element
+      for (int i=1; i<=MIN(3,one->natom); i++){
+        fprintf(fp,"%d %lg %lg %lg crystal_vector %d %lg %lg %lg\n",
+        one->attyp[i], one->atpos[i][0], one->atpos[i][1], one->atpos[i][2], i,
+        one->axis[i-1][0], one->axis[i-1][1], one->axis[i-1][2]);
+      }
+      for (int i=MIN(3,one->natom)+1; i<= one->natom; i++){
+        fprintf(fp,"%d %lg %lg %lg\n", one->attyp[i], one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
+      }
+    } else { // in case elements are assigned, print true element names
+      char ename[3];
+      for (int i=1; i<=MIN(3,one->natom); i++){
+        element->Num2Name(type2atnum[one->attyp[i]], ename);
+        fprintf(fp,"%2s %lg %lg %lg crystal_vector %d %lg %lg %lg\n",
+        ename, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2], i,
+        one->axis[i-1][0], one->axis[i-1][1], one->axis[i-1][2]);
+      }
+      for (int i=MIN(3,one->natom)+1; i<= one->natom; i++){
+        element->Num2Name(type2atnum[one->attyp[i]], ename);
+        fprintf(fp,"%2s %lg %lg %lg\n", ename, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
+      }
     }
   }
   fclose(fp);
@@ -383,5 +408,47 @@ int Driver::count_words(const char *line)
 
   memory->sfree(copy);
   return n;
+}
+
+/*------------------------------------------------------------------------------
+ * Method to get the mapping between atomic type and element names
+ *----------------------------------------------------------------------------*/
+void Driver::MapType2Elem(const int flag, const int ntype)
+{
+  char str[MAXLINE];
+  if (flag == 0){
+    printf("\nWould you like to map the atomic types to elements? (y/n)[n]: ");
+    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      char *ptr = strtok(str," \n\t\r\f");
+      if (strcmp(ptr,"y")!=0 && strcmp(ptr,"Y")!=0) return;
+    } else return;
+  } else printf("Total number of atomic types in the system are %d.\n", ntype);
+
+  if (element) delete element;
+  if (type2atnum) memory->destroy(type2atnum);
+
+  element = new ChemElements();
+  type2atnum = memory->create(type2atnum, ntype+1, "type2atnum");
+
+  printf("Please input the element name for each atomic type in sequence: ");
+  if (count_words(fgets(str,MAXLINE,stdin)) >= ntype){
+    char *ptr = strtok(str," \n\t\r\f");
+    for (int ip=1; ip<= ntype; ip++){
+      type2atnum[ip] =  element->Name2Num(ptr);
+      ptr = strtok(NULL, " \n\t\r\f");
+    }
+    printf("\nThe atomic types are assigned as:");
+    for (int ip=1; ip<=ntype; ip++){
+      char ename[3];
+      int num = type2atnum[ip];
+      element->Num2Name(num, ename);
+      printf(" %d -> %s(%d);", ip, ename, num);
+    } printf("\n");
+  } else {
+    delete element; element = NULL;
+    memory->destroy(type2atnum); type2atnum = NULL;
+  }
+
+return;
 }
 /*----------------------------------------------------------------------------*/

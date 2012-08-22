@@ -1,4 +1,5 @@
 #include "atom.h"
+#include "random.h"
 
 #define MAXLINE 512
 #define ZERO 1.e-8
@@ -14,6 +15,7 @@ DumpAtom::DumpAtom(FILE *fp)
   initialized = cartesian = triclinic = 0;
   xy = xz = yz = 0.;
 
+  realcmd = NULL;
   attyp = atsel = numtype = NULL; atpos = NULL;
 
   char str[MAXLINE];
@@ -68,6 +70,7 @@ DumpAtom::DumpAtom(FILE *fp)
   lx = box[0] = axis[0][0] = xhi - xlo;
   ly = box[1] = axis[1][1] = yhi - ylo;
   lz = box[2] = axis[2][2] = zhi - zlo;
+  vol = lx*ly*lz;
   axis[1][0] = xy;
   axis[2][0] = xz;
   axis[2][1] = yz;
@@ -88,6 +91,7 @@ return;
  *----------------------------------------------------------------------------*/
 DumpAtom::~DumpAtom()
 {
+  if (realcmd) delete []realcmd;
   memory->destroy(attyp);
   memory->destroy(atsel);
   memory->destroy(atpos);
@@ -118,11 +122,7 @@ void DumpAtom::dir2car()
     }
   } else {
     for (int i=1; i<=natom; i++){
-      for (int idim=0; idim<3; idim++){
-        s[idim] = atpos[i][idim];
-        //while (s[idim] >= 1.) s[idim] -= 1.;
-        //while (s[idim] <  0.) s[idim] += 1.;
-      }
+      for (int idim=0; idim<3; idim++) s[idim] = atpos[i][idim];
       atpos[i][0] = s[0]*lx + xlo;
       atpos[i][1] = s[1]*ly + ylo;
       atpos[i][2] = s[2]*lz + zlo;
@@ -177,11 +177,282 @@ return;
 }
 
 /*------------------------------------------------------------------------------
- * Method to convert fractional coordinates into cartesian
+ * Method to select some atoms, not implemented yet
  *----------------------------------------------------------------------------*/
-void DumpAtom::selection(const char *selcmd)
+void DumpAtom::selection(const char *line)
 {
+  int n = strlen(line) + 1;
+  char *selcmd = (char *) memory->smalloc(n*sizeof(char),"selcmd");
+  strcpy(selcmd,line);
 
+  char *key, *oper, *ptr;
+  int ilow, ihigh;
+  double rlow, rhigh;
+  int logand = 1;
+
+  char onecmd[MAXLINE];
+  if (realcmd) delete []realcmd;
+  realcmd = memory->create(realcmd, MAXLINE, "realcmd");
+  strcpy(realcmd," ");
+
+  // by default, all are selected
+  for (int i = 1; i <= natom; i++) atsel[i] = 1;
+
+  key = strtok(selcmd, " \n\t\r\f");
+
+  while (key != NULL){
+    strcpy(onecmd,key);
+
+    if (strcmp(key, "&") == 0){
+      logand = 1; strcat(onecmd," ");
+
+    } else if (strcmp(key, "|") == 0){
+      logand = 0; strcat(onecmd," ");
+
+    } else if (strcmp(key, "type") == 0){ // selection by type
+      oper = strtok(NULL, " \n\t\r\f");
+      if (oper == NULL) break;
+      ptr = strtok(NULL, " \n\t\r\f");
+      if (ptr == NULL) break;
+      ilow = atoi(ptr);
+
+      strcat(onecmd," "); strcat(onecmd,oper);
+      strcat(onecmd," "); strcat(onecmd,ptr);
+
+      if (strcmp(oper, "=") == 0){
+        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i] != ilow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (attyp[i] == ilow) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,">") == 0){
+        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i] <= ilow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (attyp[i] > ilow) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,">=") == 0){
+        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i] < ilow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (attyp[i] >= ilow) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,"<") == 0){
+        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i] >= ilow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (attyp[i] < ilow) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,"<=") == 0){
+        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i] > ilow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (attyp[i] <= ilow) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,"<>") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        ihigh = atoi(ptr);
+        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i]<ilow || attyp[i]>ihigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (attyp[i]>=ilow && attyp[i]<=ihigh) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,"><") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        ihigh = atoi(ptr);
+        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i]>ilow && attyp[i]<ihigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (attyp[i]<=ilow || attyp[i]>=ihigh) atsel[i] = 1;
+        }
+
+      } else break;
+
+    } else if (strcmp(key,"x")==0 || strcmp(key,"y")==0 || strcmp(key,"z")==0 ){
+    // selection by fractional position
+      int dir = key[0]-'x';
+      oper = strtok(NULL, " \n\t\r\f");
+      if (oper == NULL) break;
+      ptr = strtok(NULL, " \n\t\r\f");
+      if (ptr == NULL) break;
+      rlow = atof(ptr);
+
+      strcat(onecmd," "); strcat(onecmd,oper);
+      strcat(onecmd," "); strcat(onecmd,ptr);
+
+      if (strcmp(oper,">")==0 || strcmp(oper,">=")==0){
+        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir] < rlow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir] >= rlow) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,"<")==0 || strcmp(oper,"<=")==0){
+        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir] > rlow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir] <= rlow) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,"<>") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        rhigh = atof(ptr);
+
+        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir]<rlow || atpos[i][dir]>rhigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir]>=rlow && atpos[i][dir]<=rhigh) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,"><") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        rhigh = atof(ptr);
+
+        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir]>rlow && atpos[i][dir]<rhigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir]<=rlow || atpos[i][dir]>=rhigh) atsel[i] = 1;
+        }
+
+      } else break;
+
+    } else if (strcmp(key,"id") == 0) { // selection by atomic id
+      oper = strtok(NULL, " \n\t\r\f");
+      if (oper == NULL) break;
+      ptr = strtok(NULL, " \n\t\r\f");
+      if (ptr == NULL) break;
+      ilow = atoi(ptr);
+
+      strcat(onecmd," "); strcat(onecmd,oper);
+      strcat(onecmd," "); strcat(onecmd,ptr);
+
+      if (strcmp(oper,"=") == 0){
+        if (logand){ for (int i = 1; i <= natom; i++) if (i != ilow) atsel[i] = 0;
+        } else atsel[ilow] = 1;
+
+      } else if (strcmp(oper,">") == 0){
+        if (logand) for (int i = 1; i <= MIN(ilow,natom); i++) atsel[i] = 0;
+        else for (int i = ilow+1; i <= natom; i++) atsel[i] = 1;
+
+      } else if (strcmp(oper,">=") == 0){
+        if (logand) for (int i = 1; i < MIN(ilow,natom); i++) atsel[i] = 0;
+        else for (int i = ilow; i <= natom; i++) atsel[i] = 1;
+
+      } else if (strcmp(oper,"<") == 0){
+        if (logand) for (int i = ilow; i <= natom; i++) atsel[i] = 0;
+        else for (int i = 1; i < MIN(ilow,natom); i++) atsel[i] = 1;
+
+      } else if (strcmp(oper,"<=") == 0){
+        if (logand) for (int i = ilow+1; i <= natom; i++) atsel[i] = 0;
+        else for (int i = 1; i <= MIN(ilow,natom); i++) atsel[i] = 1;
+
+      } else if (strcmp(oper,"<>") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        ihigh = atoi(ptr);
+
+        if (logand){
+          for (int i = 1; i < MIN(ilow,natom); i++) atsel[i] = 0;
+          for (int i = ihigh+1; i <= natom; i++) atsel[i] = 0;
+        } else for (int i = ilow; i <= MIN(ihigh,natom); i++) atsel[i] = 1;
+
+      } else if (strcmp(oper,"><") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        ihigh = atoi(ptr);
+
+        if (logand) for (int i = ilow; i <= MIN(ihigh,natom); i++) atsel[i] = 0;
+        else {
+          for (int i = 1; i < MIN(ilow,natom); i++) atsel[i] = 1;
+          for (int i = ihigh+1; i <= natom; i++) atsel[i] = 1;
+        }
+
+      } else break;
+
+    } else if (strcmp(key,"ran") == 0){ // random selection from current selection
+      ptr = strtok(NULL, " \n\t\r\f");
+      if (ptr == NULL) break;
+      ilow = atoi(ptr);
+
+      strcat(onecmd," "); strcat(onecmd,ptr);
+
+      nsel = 0;
+      for (int i = 1; i <= natom; i++) nsel += atsel[i];
+      int ndel = nsel - ilow;
+      RanPark * random = new RanPark(natom-ndel);
+      while (ndel > 0){
+        int id = random->uniform()*natom;
+        if (atsel[id] == 1){
+          atsel[id] = 0;
+          ndel--;
+        }
+      }
+      delete random;
+
+    } else if (strcmp(key,"all") == 0){ // select all; it will discard all previous selections
+      strcpy(realcmd,"");
+      strcpy(onecmd,key);
+      for (int i = 1; i <= natom; i++) atsel[i] = 1;
+
+    } else break;
+
+    strcat(realcmd," "); strcat(realcmd,onecmd);
+    key = strtok(NULL, " \n\t\r\f");
+  }
+
+  nsel = 0;
+  for (int i = 1; i <= natom; i++) nsel += atsel[i];
+
+return;
+}
+
+/*------------------------------------------------------------------------------
+ * Method to print out selection info
+ *----------------------------------------------------------------------------*/
+void DumpAtom::SelInfo()
+{
+  if (realcmd == NULL) return;
+
+  printf("The realized selection command is: %s\n", realcmd);
+  printf("and %d of %d atoms are in selection.\n", nsel, natom);
+
+return;
+}
+
+/*------------------------------------------------------------------------------
+ * Help info related to the selection function
+ *----------------------------------------------------------------------------*/
+void DumpAtom::SelHelp()
+{
+  printf("\n"); for (int i=0; i<20; i++) printf("----");
+  printf("\nThe grammar for the selection command is:\n\n");
+  printf("  key op values [& key2 op2 values2 [| key3 op3 values3]]\n");
+  printf("\nwhere %ckey%c is either %ctype%c, %cx%c,%cy%c,%cz%c, or %cid%c.\n",
+    char(96),char(39),char(96),char(39),char(96),char(39),char(96),char(39),
+    char(96),char(39),char(96),char(39));
+  printf("It can also be %call%c, which takes no argument and select all atoms;\n",
+    char(96),char(39));
+  printf("or %cran num%c, which takes no other argument and select %cnum%c atoms\n",
+    char(96),char(39), char(96),char(39));
+  printf("from the current selection randomly. The logical operation before it\n");
+  printf("is always assumed to be AND, no matter what is defined.\n");
+  printf("\n%cop%c is either %c=%c (N.A. for %cx-z%c), %c>%c, %c>=%c, %c<%c, %c<=%c, %c<>%c, or %c><%c.\n",
+    char(96),char(39),char(96),char(39),char(96),char(39),char(96),char(39),
+    char(96),char(39),char(96),char(39),char(96),char(39),char(96),char(39),
+    char(96),char(39));
+  printf("\n%cvalues%c can be one or two numbers, depend on the type of %cop%c:\n",
+    char(96),char(39),char(96),char(39));
+  printf("for %c<>%c and %c><%c two numbers are need, otherwise one.\n",
+    char(96),char(39),char(96),char(39));
+  printf("\nMultiple %ckey op values%c could be combined together, by either %c&%c\n",
+    char(96),char(39),char(96),char(39),char(96),char(39));
+  printf("or %c|%c, which means logical %cand%c or %cor%c, respectively. In this case\n",
+    char(96),char(39),char(96),char(39),char(96),char(39));
+  printf("the selections take effect sequentially.\n");
+  printf("\nFor example, %ctype = 1 & x <> 0.1 0.5 & id >< 200 800%c will select atoms\n",
+    char(96),char(39));
+  printf("of type 1 within 0.1 < x < 0.5 (fractional) and has id <= 200 or id >= 800;\n");
+  printf("%ctype = 1 | type = 2%c will select atoms of type 1 or 2; while %ctype = 1 & type = 2%c\n",
+    char(96),char(39),char(96),char(39));
+  printf("will select nothing. %ctype = 1 & ran 100%c will randomly select 100 atoms\n",
+    char(96),char(39));
+  printf("from all of type 1.\n");
+  for (int i=0; i<20; i++) printf("----"); printf("\n\n");
+    
 return;
 }
 

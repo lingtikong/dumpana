@@ -4,6 +4,7 @@
 #include "atom.h"
 #include "memory.h"
 #include <vector>
+#include "elements.h"
 
 class Driver {
 public:
@@ -17,6 +18,11 @@ private:
   DumpAtom *one;                      // pointer to one frame
   std::vector<DumpAtom *> all;        // all frames from lammps atom style dump
   void readdump();                    // to read in the dump file
+
+  // map atomic type to elements
+  ChemElements *element;
+  int *type2atnum;
+  void MapType2Elem(const int, const int);
 
   // to define the range of frames to be analysed
   void setrange();
@@ -44,6 +50,11 @@ private:
 
   // Pair Correlation
   void paircorr();
+
+  // Prepare for FEFF9
+  void FEFF_main();
+  void FEFF_cluster();
+  void FEFF_input();
 
   // help info
   void help();
