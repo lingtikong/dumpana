@@ -17,13 +17,13 @@ public:
   DumpAtom(FILE *fp);
   ~DumpAtom();
 
-  int natom, ntype, tstep;
+  int natom, ntype, tstep, nsel;
   int initialized, cartesian;
   int triclinic;
 
   Memory *memory;
   double xlo, xhi, ylo, yhi, zlo, zhi;
-  double xy, xz, yz;
+  double xy, xz, yz, vol;
   double lx, ly, lz, box[3], hbox[3];
   int *attyp, *atsel;  // note: atom IDs go from 1 to natom
   int *numtype;
@@ -31,10 +31,13 @@ public:
   double axis[3][3];
 
   void selection(const char *);
+  void SelInfo();
+  void SelHelp();
   void car2dir();
   void dir2car();
 
 private:
+  char *realcmd;
   int count_words(const char *);
 };
 #endif

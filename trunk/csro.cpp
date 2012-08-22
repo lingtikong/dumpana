@@ -127,15 +127,35 @@ void Driver::csro()
   for (int i=1; i<= ntype; i++) ntotal += NumType[i];
   for (int i=1; i<= ntype; i++) concentration[i] = double(NumType[i])/double(ntotal);
 
-  printf("\n"); for (int i=0; i<20; i++) printf("____");
-  printf("\nType         :"); for (int ip=1; ip<= ntype; ip++) printf("    %2d    ",ip);
-  printf("\n"); for (int i=0; i<20; i++) printf("----");
-  printf("\nConcentration:"); for (int ip=1; ip<= ntype; ip++) printf("%10.6f", concentration[ip]);
-  printf("\n"); for (int i=0; i<20; i++) printf("____");
-  printf("\nCSRO         :"); for (int jp=1; jp<= ntype; jp++) printf("    %2d    ",jp);
+  printf("\n"); for (int i=0; i<20; i++) printf("____"); printf("\nType         :");
+  if (type2atnum == NULL){
+    for (int ip=1; ip<= ntype; ip++) printf("    %2d    ",ip);
+    printf("\n"); for (int i=0; i<20; i++) printf("----");
+    printf("\nConcentration:"); for (int ip=1; ip<= ntype; ip++) printf("%10.6f", concentration[ip]);
+    printf("\n"); for (int i=0; i<20; i++) printf("____");
+    printf("\nCSRO         :"); for (int jp=1; jp<= ntype; jp++) printf("    %2d    ",jp);
+  } else {
+    char ename[3];
+    for (int ip=1; ip<= ntype; ip++){
+      element->Num2Name(type2atnum[ip],ename);
+      printf("    %2s    ", ename);
+    }
+    printf("\n"); for (int i=0; i<20; i++) printf("----");
+    printf("\nConcentration:"); for (int ip=1; ip<= ntype; ip++) printf("%10.6f", concentration[ip]);
+    printf("\n"); for (int i=0; i<20; i++) printf("____"); printf("\nCSRO         :");
+    for (int jp=1; jp<= ntype; jp++){
+      element->Num2Name(type2atnum[jp],ename);
+      printf("    %2s    ", ename);
+    }
+  }
+
   printf("\n"); for (int i=0; i<20; i++) printf("----");
   for (int ip=1; ip<= ntype; ip++){
-    printf("\n      %2d     :", ip);
+    if (type2atnum == NULL) printf("\n      %2d     :", ip);
+    else {
+      char ename[3]; element->Num2Name(type2atnum[ip], ename);
+      printf("\n      %2s     :", ename);
+    }
     ntotal = 0;
     for (int jp=1; jp<= ntype; jp++) ntotal += NumNei[ip][jp];
     for (int jp=1; jp<= ntype; jp++) printf("%10.6f", 1.-double(NumNei[ip][jp])/double(ntotal)/concentration[jp]);
