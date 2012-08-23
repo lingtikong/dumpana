@@ -1,4 +1,5 @@
 #include "atom.h"
+#include "time.h"
 #include "random.h"
 
 #define MAXLINE 512
@@ -373,7 +374,7 @@ void DumpAtom::selection(const char *line)
       nsel = 0;
       for (int i = 1; i <= natom; i++) nsel += atsel[i];
       int ndel = nsel - ilow;
-      RanPark * random = new RanPark(natom-ndel);
+      RanPark * random = new RanPark(time(NULL));
       while (ndel > 0){
         int id = random->uniform()*natom;
         if (atsel[id] == 1){

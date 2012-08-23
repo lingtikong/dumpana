@@ -117,7 +117,7 @@ void Driver::FEFF_main()
 
   // file DirList records all directories created
   sprintf(fname,"%s/DirList", workdir);
-  FILE *dlist = fopen(fname, "w");
+  FILE *fpx = fopen(fname, "w");
   int ndir = 0;
 
   // real job
@@ -130,7 +130,7 @@ void Driver::FEFF_main()
       // open the feff.inp file for current frame
       sprintf(dirname, "%s/Frame%d", workdir, img+1);
       strcpy(mkdir,"mkdir -p "); strcat(mkdir,dirname);
-      system(mkdir); ndir++; fprintf(dlist, "%s\n", dirname); // create direcotry for current frame
+      system(mkdir); ndir++; fprintf(fpx, "%s\n", dirname); // create direcotry for current frame
       strcpy(fname, dirname); strcat(fname,"/feff.inp");
       fp = fopen(fname, "w");
 
@@ -250,7 +250,7 @@ void Driver::FEFF_main()
         // open the feff.inp file for current frame
         sprintf(dirname, "%s/Frame%d", workdir, img+1);
         strcpy(mkdir,"mkdir -p "); strcat(mkdir,dirname);
-        system(mkdir); ndir++; fprintf(dlist, "%s\n", dirname); // create direcotry for current frame
+        system(mkdir); ndir++; fprintf(fpx, "%s\n", dirname); // create direcotry for current frame
         strcpy(fname, dirname); strcat(fname,"/feff.inp");
         fp = fopen(fname, "w");
   
@@ -301,8 +301,9 @@ void Driver::FEFF_main()
 
           // find atoms in the cluster
           std::list<int> cluster;
-          cluster.clear();
-          FEFF_cluster(0, nshell, neilist, id, cluster);
+          std::map<int,int> shell;
+          cluster.clear(); shell.clear(); shell[id] = 0;
+          FEFF_cluster(0, nshell, neilist, id, cluster, shell);
           
           cluster.sort(); cluster.unique();
           int nclus = cluster.size();
@@ -310,7 +311,7 @@ void Driver::FEFF_main()
           // open the feff.inp file for current frame
           sprintf(dirname, "%s/F%dA%d", workdir, img+1, id);
           strcpy(mkdir,"mkdir -p "); strcat(mkdir,dirname);
-          system(mkdir); ndir++; fprintf(dlist, "%s\n", dirname); // create direcotry for current frame
+          system(mkdir); ndir++; fprintf(fpx, "%s\n", dirname); // create direcotry for current frame
           strcpy(fname, dirname); strcat(fname,"/feff.inp");
           fp = fopen(fname, "w");
   
@@ -333,7 +334,7 @@ void Driver::FEFF_main()
   
           // atomic positions
           one->dir2car();
-          fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot tag dist id\n");
+          fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot tag ishell dist id\n");
           for (std::list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
             int jd = *it;
             int jp = one->attyp[jd];
@@ -346,9 +347,10 @@ void Driver::FEFF_main()
               r2 += dx[idim]*dx[idim];
             }
             element->Num2Name(type2atnum[one->attyp[jd]], ename);
-            fprintf(fp,"%15.8f %15.8f %15.8f %d %s %g %d\n", dx[0], dx[1], dx[2], jp, ename, sqrt(r2), jd);
+            fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], jp, ename, shell[jd], sqrt(r2), jd);
           }
 
+          shell.clear(); cluster.clear();
           // clsoe the file
           fclose(fp);
         }
@@ -359,6 +361,7 @@ void Driver::FEFF_main()
     } // end of loop over frames
   }
 
+  fclose(fpx);
   printf("\nJob done, %d directorys are created and listed in `%s/DirList`.\n", ndir, workdir);
   for (int i=0; i<20; i++) printf("===="); printf("\n");
 return;
@@ -587,7 +590,8 @@ return;
 /*------------------------------------------------------------------------------
  * Recursive method to find neighbors of id upto max shells
  *----------------------------------------------------------------------------*/
-void Driver::FEFF_cluster(int il, int max, int **nlist, int id, std::list<int> &clist)
+void Driver::FEFF_cluster(int il, const int max, int **nlist, int id,
+  std::list<int> &clist, std::map<int,int> &myshell)
 {
   if (++il > max) return;
 
@@ -595,8 +599,10 @@ void Driver::FEFF_cluster(int il, int max, int **nlist, int id, std::list<int> &
   for (int ii=1; ii <= nn; ii++){
     int jd = nlist[ii][id];
     clist.push_back(nlist[ii][id]);
+    if (myshell.count(jd)) myshell[jd] = MIN(myshell[jd], il);
+    else myshell[jd] = il;
 
-    FEFF_cluster(il, max, nlist, jd, clist);
+    FEFF_cluster(il, max, nlist, jd, clist, myshell);
   }
 
 return;
