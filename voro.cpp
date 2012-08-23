@@ -33,7 +33,7 @@ void Driver::voro()
   printf("\n");
 
   double surf_min = 1.e-4, edge_min = 1.e-4;
-  int flag_min = 0, nminnei = 14;
+  int nminnei = 0;
 
   if (job == 2 || job == 4){
     printf("Please input your criterion for tiny surfaces [%g]: ", surf_min);
@@ -42,19 +42,14 @@ void Driver::voro()
     if (ptr) surf_min = atof(ptr);
     printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", surf_min);
 
-    printf("Would you like to keep a minimum # of neighbors? (y/n)[n]: ");
-    fgets(str,MAXLINE, stdin);
-    ptr = strtok(str, " \n\t\r\f");
-    if (ptr != NULL && strcmp(ptr,"y") == 0){
-      flag_min = 1;
-      printf("Please input your minimum # of neighbors, I would recommend 14 for bcc\n");
-      printf("lattice, 12 for hcp and fcc. please input your number [%d]: ", nminnei);
-      fgets(str,MAXLINE, stdin);
-      ptr = strtok(str, " \n\t\r\f");
-      if (ptr) nminnei = atoi(ptr);
+    printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
+    printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
+    printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", nminnei);
+    if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+      nminnei = atoi(strtok(str, " \n\t\r\f"));
+      if (nminnei < 1) nminnei = 0;
       printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", nminnei);
-    } else nminnei = 0;
-    printf("\n");
+    }
   }
 
   if (job == 3 || job == 4){
@@ -136,7 +131,7 @@ void Driver::voro()
   
         int nf = fs.size();
         // sort neighbors by area if asked to keep a minimum # of neighbors
-        if (flag_min){
+        if (nminnei > 0){
           for (int i=0; i<nf; i++)
           for (int j=i+1; j<nf; j++){
             if (fs[j] > fs[i]){
@@ -150,9 +145,7 @@ void Driver::voro()
         double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
           if (flag_out & 1) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
-          //if (i<nminnei) printf("%lg\n", fs[i]/cell->surface_area());
           if (i < nminnei || fs[i] > fcut){
-            //printf("%lg\n", fs[i]/cell->surface_area());
             int j = neigh[i];
   
             // apply pbc
