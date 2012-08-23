@@ -3,6 +3,7 @@
 
 #include "atom.h"
 #include "memory.h"
+#include <map>
 #include <list>
 #include <vector>
 #include "elements.h"
@@ -56,7 +57,7 @@ private:
   void FEFF_main();
   void FEFF_input(int, FILE *);
   void FEFF_voro(int, int &, int **, int *, double *);
-  void FEFF_cluster(int, int, int **, int, std::list<int> &);
+  void FEFF_cluster(int, const int, int **, int, std::list<int> &, std::map<int,int>&);
 
   // help info
   void help();
