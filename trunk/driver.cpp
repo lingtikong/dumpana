@@ -415,23 +415,24 @@ int Driver::count_words(const char *line)
  *----------------------------------------------------------------------------*/
 void Driver::MapType2Elem(const int flag, const int ntype)
 {
+  if (element) delete element; element = NULL;
+  if (type2atnum) memory->destroy(type2atnum); type2atnum = NULL;
+
   char str[MAXLINE];
   if (flag == 0){
-    printf("\nWould you like to map the atomic types to elements? (y/n)[n]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
-      char *ptr = strtok(str," \n\t\r\f");
-      if (strcmp(ptr,"y")!=0 && strcmp(ptr,"Y")!=0) return;
-    } else return;
-  } else printf("Total number of atomic types in the system are %d.\n", ntype);
+    printf("\nIf you want to map the atomic types to element, input the element\n");
+    printf("symbols in sequence now: ");
+  } else {
+    printf("Total number of atomic types in the system are %d.\n", ntype); 
+    printf("Please input the element symbol for each atomic type in sequence: ");
+  }
 
-  if (element) delete element;
-  if (type2atnum) memory->destroy(type2atnum);
-
-  element = new ChemElements();
-  type2atnum = memory->create(type2atnum, ntype+1, "type2atnum");
-
-  printf("Please input the element name for each atomic type in sequence: ");
   if (count_words(fgets(str,MAXLINE,stdin)) >= ntype){
+    if (element) delete element;
+    if (type2atnum) memory->destroy(type2atnum);
+    element = new ChemElements();
+    type2atnum = memory->create(type2atnum, ntype+1, "type2atnum");
+
     char *ptr = strtok(str," \n\t\r\f");
     for (int ip=1; ip<= ntype; ip++){
       type2atnum[ip] =  element->Name2Num(ptr);
@@ -444,9 +445,6 @@ void Driver::MapType2Elem(const int flag, const int ntype)
       element->Num2Name(num, ename);
       printf(" %d -> %s(%d);", ip, ename, num);
     } printf("\n");
-  } else {
-    delete element; element = NULL;
-    memory->destroy(type2atnum); type2atnum = NULL;
   }
 
 return;

@@ -3,6 +3,7 @@
 
 #include "atom.h"
 #include "memory.h"
+#include <list>
 #include <vector>
 #include "elements.h"
 
@@ -53,8 +54,9 @@ private:
 
   // Prepare for FEFF9
   void FEFF_main();
-  void FEFF_cluster();
-  void FEFF_input();
+  void FEFF_input(int, FILE *);
+  void FEFF_voro(int, int, int &, int **, int *);
+  void FEFF_cluster(int, int, int **, int, std::list<int> &);
 
   // help info
   void help();

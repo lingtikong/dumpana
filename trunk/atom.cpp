@@ -56,6 +56,8 @@ DumpAtom::DumpAtom(FILE *fp)
   atsel = memory->create(atsel, natom+1, "atsel");
   atpos = memory->create(atpos, natom+1, 3, "atpos");
   for (int i=1; i<=natom; i++) atsel[i] = 1;
+  realcmd = new char [MAXLINE]; strcpy(realcmd, "all");
+  nsel = natom;
 
   for (int i=0; i<natom; i++){
     fgets(str,MAXLINE, fp);
@@ -191,8 +193,6 @@ void DumpAtom::selection(const char *line)
   int logand = 1;
 
   char onecmd[MAXLINE];
-  if (realcmd) delete []realcmd;
-  realcmd = memory->create(realcmd, MAXLINE, "realcmd");
   strcpy(realcmd," ");
 
   // by default, all are selected
@@ -405,9 +405,7 @@ return;
  *----------------------------------------------------------------------------*/
 void DumpAtom::SelInfo()
 {
-  if (realcmd == NULL) return;
-
-  printf("The realized selection command is: %s\n", realcmd);
+  printf("\nThe realized selection command is: %s,\n", realcmd);
   printf("and %d of %d atoms are in selection.\n", nsel, natom);
 
 return;
@@ -424,11 +422,12 @@ void DumpAtom::SelHelp()
   printf("\nwhere %ckey%c is either %ctype%c, %cx%c,%cy%c,%cz%c, or %cid%c.\n",
     char(96),char(39),char(96),char(39),char(96),char(39),char(96),char(39),
     char(96),char(39),char(96),char(39));
-  printf("It can also be %call%c, which takes no argument and select all atoms;\n",
+  printf("It can also be %call%c, which takes no argument and selects all atoms;\n",
     char(96),char(39));
-  printf("or %cran num%c, which takes no other argument and select %cnum%c atoms\n",
+  printf("or %cran num%c, which takes no other argument and selects %cnum%c atoms\n",
     char(96),char(39), char(96),char(39));
-  printf("from the current selection randomly. The logical operation before it\n");
+  printf("from the current selection randomly. The logical operation before %cran%c\n",
+    char(96),char(39));
   printf("is always assumed to be AND, no matter what is defined.\n");
   printf("\n%cop%c is either %c=%c (N.A. for %cx-z%c), %c>%c, %c>=%c, %c<%c, %c<=%c, %c<>%c, or %c><%c.\n",
     char(96),char(39),char(96),char(39),char(96),char(39),char(96),char(39),
