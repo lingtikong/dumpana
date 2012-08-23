@@ -66,7 +66,7 @@ void Driver::FEFF_main()
   }
 
   // further refining the absorbing atoms by their Voronoi index
-  int flag_voro = 0, vindex[4]; bigint vprod;
+  int flag_voro = 0, vindex[4]; bigint vprod = 0;
   printf("\nIf you want to futher refine the absorbing atoms by their Voronoi index,\n");
   printf("please input the four index numbers now: ");
   if (count_words(fgets(str,MAXLINE,stdin)) >= 4){
@@ -90,7 +90,8 @@ void Driver::FEFF_main()
     char *ptr = strtok(str," \n\t\r\f");
     flag_pbc = atoi(ptr)%2;
   }
-  printf("Your selection : %d\n", 2-flag_pbc); */
+  printf("Your selection : %d\n", 2-flag_pbc);
+*/
 
   // XANES or EXAFS
   int job = 2;
@@ -102,8 +103,8 @@ void Driver::FEFF_main()
   printf("Your selection : %d\n", job);
 
   // working directory: directory to write all output files
-  printf("\nPlease define the working directory, i.e., directory to output all\n");
-  printf("output files [.]: ");
+  printf("\nPlease define the working directory, i.e., directory to write all\n");
+  printf("output files/directories [.]: ");
   if (count_words(fgets(str,MAXLINE,stdin)) > 0){
     char *ptr = strtok(str," \n\t\r\f");
     strcpy(workdir, ptr);
@@ -178,6 +179,47 @@ void Driver::FEFF_main()
 
   } else { // Voronoi needed
 
+    // voro refinement info
+    double voro_mins[3];
+    voro_mins[0] = voro_mins[1] = 1.e-4;
+    voro_mins[2] = 0.;
+  
+    printf("\nRefined Voronoi tesselation will be needed to procceed.\n");
+    printf("Now please input your criterion for tiny surfaces [%g]: ", voro_mins[0]);
+    fgets(str,MAXLINE, stdin);
+    char *ptr = strtok(str, " \n\t\r\f");
+    if (ptr) voro_mins[0] = atof(ptr);
+    printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", voro_mins[0]);
+  
+    printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
+    printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
+    printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", int(voro_mins[2]));
+    if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+      double dum = atof(strtok(str, " \n\t\r\f"));
+      if (dum > 0.) voro_mins[2] = dum;
+      printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", int(voro_mins[2]));
+    }
+  
+    printf("\nPlease input your criterion for ultra short   [%g]: ", voro_mins[1]);
+    fgets(str,MAXLINE, stdin);
+    ptr = strtok(str, " \n\t\r\f");
+    if (ptr) voro_mins[1] = atof(ptr);
+    printf("Edges whose length takes less ratio than %lg will be skiped!\n\n", voro_mins[1]);
+
+    // cluster size related info
+    const int MaxShell = 12;
+    int nshell = 3;
+    if (flag_pbc == 0){
+      printf("\nHow many shells would you like to include into the cluster? (1-%d)[3]: ",MaxShell);
+      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+        char *ptr = strtok(str," \n\t\r\f");
+        nshell = atoi(ptr);
+      }
+      nshell = MIN(MaxShell,MAX(1,nshell));
+      char Nos[][3] = {"","st","nd","rd","th","th","th","th","th","th","th","th","th","th","th"};
+      printf("Atoms upto the %d%s shell will be included into the clsuter.\n", nshell, Nos[nshell]);
+    }
+
     for (int img = istr; img <= iend; img += inc){ // loop over frames
       one = all[img];
       // not possible to evaluate voro info for triclinic box
@@ -193,7 +235,7 @@ void Driver::FEFF_main()
       for (int ii=0; ii<=natom; ii++) cenlist[ii] = 0;
 
       // compute the neighbor list and voro info
-      FEFF_voro(flag_voro, vprod, nmax, neilist, cenlist);
+      FEFF_voro(vprod, nmax, neilist, cenlist, voro_mins);
 
       // analyse the result
       int nc = 0;
@@ -225,6 +267,9 @@ void Driver::FEFF_main()
         element->Num2Name(type2atnum[AbsorberType], ename);
         fprintf(fp,"%4d   %3d  %3s  -1   3\n", one->ntype+1, type2atnum[AbsorberType], ename);
   
+        // write some common info
+        FEFF_input(job, fp);
+
         // reciprocal space calculation
         fprintf(fp,"\n* k-space calculation of crystals\nRECIPROCAL\n");
         fprintf(fp,"\n* Cartesian coordinates, Angstrom units\nCOORDINATES 1\n");
@@ -246,34 +291,18 @@ void Driver::FEFF_main()
         double rmax = pow(3000.*one->vol/(16.*one->natom), 1./3.);
         fprintf(fp,"CFAVERAGE %d %d %g\n", one->ntype+1, nc, rmax);
   
-        // write other common info
-        FEFF_input(job, fp);
-  
         // clsoe the file
         fclose(fp);
   
       } else {
 
-        int const MaxShell = 12;
-        int level = 3;
-        std::list<int> cluster;
-
-        printf("\nHow many shells would you like to include into the cluster? (1-%d)[3]: ",MaxShell);
-        if (count_words(fgets(str,MAXLINE,stdin)) > 0){
-          char *ptr = strtok(str," \n\t\r\f");
-          level = atoi(ptr);
-        }
-        level = MIN(MaxShell,MAX(1,level));
-        char Nos[][3] = {"","st","nd","rd","th","th","th","th","th","th","th","th","th","th","th"};
-        printf("Atoms upto the %d%s shell will be included into the clsuter.\n", level, Nos[level]);
-        
         for (int id=1; id <= one->natom; id++){
           if (cenlist[id] == 0) continue;
 
           // find atoms in the cluster
-          int ilevel = 0;
+          std::list<int> cluster;
           cluster.clear();
-          FEFF_cluster(ilevel, level, neilist, id, cluster);
+          FEFF_cluster(0, nshell, neilist, id, cluster);
           
           cluster.sort(); cluster.unique();
           int nclus = cluster.size();
@@ -298,6 +327,9 @@ void Driver::FEFF_main()
             element->Num2Name(type2atnum[ip], ename);
             fprintf(fp,"%4d   %3d  %3s  -1   3\n", ip, type2atnum[ip], ename);
           }
+
+          // write other common info
+          FEFF_input(job, fp);
   
           // atomic positions
           one->dir2car();
@@ -317,9 +349,6 @@ void Driver::FEFF_main()
             fprintf(fp,"%15.8f %15.8f %15.8f %d %s %g %d\n", dx[0], dx[1], dx[2], jp, ename, sqrt(r2), jd);
           }
 
-          // write other common info
-          FEFF_input(job, fp);
-  
           // clsoe the file
           fclose(fp);
         }
@@ -340,6 +369,7 @@ return;
  *----------------------------------------------------------------------------*/
 void Driver::FEFF_input(int job, FILE *fp)
 {
+  fprintf(fp, "\n* EDGE label s02\n* EDGE K 1.0\n");
   double rfms1 = pow(90.*one->vol/(12.*one->natom), 1./3.);
   double rfms2 = pow(600.*one->vol/(12.*one->natom), 1./3.);
   double rfms3 = 2.2*pow(60.*one->vol/(12.*one->natom), 1./3.);
@@ -354,7 +384,6 @@ void Driver::FEFF_input(int job, FILE *fp)
   }
   fprintf(fp, "* COREHOLE type * type = none, RPA, or FSR (default)\n");
 
-  fprintf(fp, "\n* EDGE label s02\n* EDGE K 1.0\n");
   fprintf(fp, "* REAL\n* RMULTIPLIER 1.00\n");
   fprintf(fp, "\n*    emin emax eimag\n* LDOS -20 20 0.2\n");
   fprintf(fp, "*       ipot ixsph ifms ipaths igenfmt iff2x\n");
@@ -405,7 +434,7 @@ void Driver::FEFF_input(int job, FILE *fp)
   
   fprintf(fp, "\n* *** other ***\n");
   fprintf(fp, "* DIMS nmax lmax\n\n* EGRID\n* grid_type grid_min grid_max grid_step\n");
-  fprintf(fp, "* KMESH nkp usesym symfile\n\n* END\n");
+  fprintf(fp, "* KMESH nkp usesym symfile\n");
 
 return;
 }
@@ -413,39 +442,11 @@ return;
 /*------------------------------------------------------------------------------
  * Method to find the neighbor list based on refined Voronoi calculation
  *----------------------------------------------------------------------------*/
-void Driver::FEFF_voro(int flag, int vp, int &nmax, int **nlist, int *clist)
+void Driver::FEFF_voro(int vp, int &nmax, int **nlist, int *clist, double *mins)
 {
-  char str[MAXLINE];
-  double surf_min = 1.e-4, edge_min = 1.e-4;
-  int flag_min = 0, nminnei = 14;
-
-  printf("\nRefined Voronoi tesselation will be needed to procceed.\n");
-  printf("Now please input your criterion for tiny surfaces [%g]: ", surf_min);
-  fgets(str,MAXLINE, stdin);
-  char *ptr = strtok(str, " \n\t\r\f");
-  if (ptr) surf_min = atof(ptr);
-  printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", surf_min);
-
-  printf("Would you like to keep a minimum # of neighbors? (y/n)[n]: ");
-  fgets(str,MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
-  if (ptr != NULL && strcmp(ptr,"y") == 0){
-    flag_min = 1;
-    printf("Please input your minimum # of neighbors, I would recommend 14 for bcc\n");
-    printf("lattice, 12 for hcp and fcc. please input your number [%d]: ", nminnei);
-    fgets(str,MAXLINE, stdin);
-    ptr = strtok(str, " \n\t\r\f");
-    if (ptr) nminnei = atoi(ptr);
-    printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", nminnei);
-  } else nminnei = 0;
-  printf("\n");
-
-  printf("Please input your criterion for ultra short   [%g]: ", edge_min);
-  fgets(str,MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
-  if (ptr) edge_min = atof(ptr);
-  printf("Edges whose length takes less ratio than %lg will be skiped!\n\n", edge_min);
-
+  double surf_min = mins[0];
+  double edge_min = mins[1];
+  int nminnei = int(mins[2]);
   // set local variables
   double xlo = one->xlo, xhi = one->xhi, lx = one->lx;
   double ylo = one->ylo, yhi = one->yhi, ly = one->ly;
@@ -489,7 +490,7 @@ void Driver::FEFF_voro(int flag, int vp, int &nmax, int **nlist, int *clist)
   
     int nf = fs.size();
     // sort neighbors by area if asked to keep a minimum # of neighbors
-    if (flag_min){
+    if (nminnei){
       for (int i=0; i<nf; i++)
       for (int j=i+1; j<nf; j++){
         if (fs[j] > fs[i]){
@@ -564,7 +565,7 @@ void Driver::FEFF_voro(int flag, int vp, int &nmax, int **nlist, int *clist)
     }
   
     if (one->atsel[id] == 1){
-      if (flag){
+      if (vp){
         int voro = index[3]*1000000 + index[4]*10000 + index[5]*100 + index[6];
         if (voro == vp) clist[id] = 1;
       } else clist[id] = 1;

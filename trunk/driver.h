@@ -55,7 +55,7 @@ private:
   // Prepare for FEFF9
   void FEFF_main();
   void FEFF_input(int, FILE *);
-  void FEFF_voro(int, int, int &, int **, int *);
+  void FEFF_voro(int, int &, int **, int *, double *);
   void FEFF_cluster(int, int, int **, int, std::list<int> &);
 
   // help info
