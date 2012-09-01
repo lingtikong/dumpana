@@ -19,12 +19,13 @@ void Driver::paircorr()
   printf("  2. g(r) of an atomic type;\n");
   printf("  3. g(r) based on an atomic type;\n");
   printf("  4. g(r) between two atomic types;\n");
+  printf("  5. g(r) between two selections;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
-  if (job < 1 || job > 4){
+  if (job < 1 || job > 5){
     for (int i=0; i<20; i++) printf("===="); printf("\n");
     return;
   }
@@ -248,6 +249,99 @@ void Driver::paircorr()
         }
       }
     }
+  } else if (job == 5){ // first selection as source, second selection as neighbors
+
+    one = all[0];
+
+    // local common variables
+    char srcsel[MAXLINE], dessel[MAXLINE];
+
+    // selection commands for atoms
+    // atoms as source
+    while (1){
+      printf("\nPlease input the selection command for source atoms, `h` for help [all]:");
+      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+        strcpy(srcsel, str);
+        char *ptr = strtok(str," \n\t\r\f");
+        if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
+      } else strcpy(srcsel,"all");
+
+      // check the selection command on the first frame
+      one->selection(srcsel); one->SelInfo();
+      if (one->nsel < 1){
+        printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
+        if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+          char *ptr = strtok(str," \n\t\r\f");
+          if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
+        }
+      }
+      break;
+    }
+    // atoms as neighbors
+    while (1){
+      printf("\nPlease input the selection command for neighbors, `h` for help [all]:");
+      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+        strcpy(dessel, str);
+        char *ptr = strtok(str," \n\t\r\f");
+        if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
+      } else strcpy(dessel,"all");
+
+      // check the selection command on the first frame
+      one->selection(dessel); one->SelInfo();
+      if (one->nsel < 1){
+        printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
+        if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+          char *ptr = strtok(str," \n\t\r\f");
+          if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
+        }
+      }
+      break;
+    }
+    int *insrc = memory->create(insrc, one->natom+1, "insrc");
+
+    for (int img = istr; img <= iend; img += inc){
+      one = all[img];
+  
+      // need fractional coordinates
+      one->car2dir();
+
+      // select atoms as source
+      one->selection(srcsel);
+      if (one->nsel < 1) continue;
+      insrc = memory->grow(insrc, one->natom+1, "insrc");
+      for (int ii=1; ii<= one->natom; ii++) insrc[ii] = one->atsel[ii];
+      int nsrc = one->nsel;
+
+      // select atoms as neighbors
+      one->selection(dessel);
+      if (one->nsel < 1) continue;
+
+      nused++;
+      const double dg = one->vol/(2.*tpi*delr*nsrc*one->nsel);
+
+      // set local variables
+      for (int i=1; i<= one->natom; i++){
+        if (insrc[i] == 0) continue;
+
+        for (int j=1; j<= one->natom; j++){
+          if (one->atsel[j] == 0) continue;
+          double dx[3], dr[3];
+          for (int idim=0; idim<3; idim++){
+            dx[idim] = one->atpos[j][idim] - one->atpos[i][idim];
+            while (dx[idim] > 0.5) dx[idim] -= 1.;
+            while (dx[idim] <-0.5) dx[idim] += 1.;
+          }
+          dr[0] = dx[0]*one->lx + dx[1]*one->xy + dx[2]*one->xz;
+          dr[1] = dx[1]*one->ly + dx[2]*one->yz;
+          dr[2] = dx[2]*one->lz;
+          double r = sqrt(dr[0]*dr[0]+dr[1]*dr[1]+dr[2]*dr[2]);
+          int ibin = (r-rmin)*rdr;
+          if (ibin >= 0 && ibin<nbin) gr[ibin] += dg;
+        }
+      }
+    }
+
+    memory->destroy(insrc);
   }
 
   // normalize the g(r)

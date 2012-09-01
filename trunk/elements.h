@@ -15,8 +15,8 @@ public:
   double Num2Mass(const int);
 
 private:
-  static const int NumMax;
-  static const double weight[];
+  static const int NumMax;          // 112
+  static const double weight[];     // g/mol
   static const char   symbol[][3];
 };
 
