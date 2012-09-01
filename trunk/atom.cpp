@@ -263,6 +263,15 @@ void DumpAtom::selection(const char *line)
         } else { for (int i = 1; i <= natom; i++) if (attyp[i]<=ilow || attyp[i]>=ihigh) atsel[i] = 1;
         }
 
+      } else if (strcmp(oper,"%") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        ihigh = atoi(ptr);
+        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i]%ilow != ihigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (attyp[i]%ilow == ihigh) atsel[i] = 1;
+        }
+
       } else break;
 
     } else if (strcmp(key,"x")==0 || strcmp(key,"y")==0 || strcmp(key,"z")==0 ){
@@ -362,6 +371,16 @@ void DumpAtom::selection(const char *line)
           for (int i = ihigh+1; i <= natom; i++) atsel[i] = 1;
         }
 
+      } else if (strcmp(oper,"%") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        ihigh = atoi(ptr);
+
+        if (logand){ for (int i = 1; i <= natom; i++) if (i%ilow != ihigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (i%ilow == ihigh) atsel[i] = 1;
+        }
+
       } else break;
 
     } else if (strcmp(key,"ran") == 0){ // random selection from current selection
@@ -420,36 +439,25 @@ void DumpAtom::SelHelp()
   printf("\n"); for (int i=0; i<20; i++) printf("----");
   printf("\nThe grammar for the selection command is:\n\n");
   printf("  key op values [& key2 op2 values2 [| key3 op3 values3]]\n");
-  printf("\nwhere %ckey%c is either %ctype%c, %cx%c,%cy%c,%cz%c, or %cid%c.\n",
-    char(96),char(39),char(96),char(39),char(96),char(39),char(96),char(39),
-    char(96),char(39),char(96),char(39));
-  printf("It can also be %call%c, which takes no argument and selects all atoms;\n",
-    char(96),char(39));
-  printf("or %cran num%c, which takes no other argument and selects %cnum%c atoms\n",
-    char(96),char(39), char(96),char(39));
-  printf("from the current selection randomly. The logical operation before %cran%c\n",
-    char(96),char(39));
+  printf("\nwhere `key` is either `type`, `x`,`y`,`z`, or `id`.\n");
+  printf("It can also be `all`, which takes no argument and selects all atoms;\n");
+  printf("or `ran num`, which takes no other argument and selects `num` atoms\n");
+  printf("from the current selection randomly. The logical operation before `ran`\n");
   printf("is always assumed to be AND, no matter what is defined.\n");
-  printf("\n%cop%c is either %c=%c (N.A. for %cx-z%c), %c>%c, %c>=%c, %c<%c, %c<=%c, %c<>%c, or %c><%c.\n",
-    char(96),char(39),char(96),char(39),char(96),char(39),char(96),char(39),
-    char(96),char(39),char(96),char(39),char(96),char(39),char(96),char(39),
-    char(96),char(39));
-  printf("\n%cvalues%c can be one or two numbers, depend on the type of %cop%c:\n",
-    char(96),char(39),char(96),char(39));
-  printf("for %c<>%c and %c><%c two numbers are need, otherwise one.\n",
-    char(96),char(39),char(96),char(39));
-  printf("\nMultiple %ckey op values%c could be combined together, by either %c&%c\n",
-    char(96),char(39),char(96),char(39),char(96),char(39));
-  printf("or %c|%c, which means logical %cand%c or %cor%c, respectively. In this case\n",
-    char(96),char(39),char(96),char(39),char(96),char(39));
+  printf("\n`op` is either `=`, `>`, `>=`, `<`, `<=`, `<>`, `><`, or `%%`,\n");
+  printf("while neithor `=` nor `%%` is available for key=`x`, `y`, or `z`.\n");
+  printf("\n`values` can be one or two numbers, depend on the type of `op`:\n");
+  printf("for `<>`, `><`, and `%%` two numbers are need, otherwise one.\n");
+  printf("`key <> num1 num2` selects `num1 <= kye <= num2`, `key >< num1 num2`\n");
+  printf("selects `key <= num1 or key >= num2`, while `key %% num1 num2` selects\n");
+  printf("atoms satisify `key%%num1 == num2`.\n");
+  printf("\nMultiple `key op values` could be combined together, by either `&`\n");
+  printf("or `|`, which means logical `and` or `or`, respectively. In this case\n");
   printf("the selections take effect sequentially.\n");
-  printf("\nFor example, %ctype = 1 & x <> 0.1 0.5 & id >< 200 800%c will select atoms\n",
-    char(96),char(39));
+  printf("\nFor example, `type = 1 & x <> 0.1 0.5 & id >< 200 800` will select atoms\n");
   printf("of type 1 within 0.1 < x < 0.5 (fractional) and has id <= 200 or id >= 800;\n");
-  printf("%ctype = 1 | type = 2%c will select atoms of type 1 or 2; while %ctype = 1 & type = 2%c\n",
-    char(96),char(39),char(96),char(39));
-  printf("will select nothing. %ctype = 1 & ran 100%c will randomly select 100 atoms\n",
-    char(96),char(39));
+  printf("`type = 1 | type = 2` will select atoms of type 1 or 2; while `type = 1 & type = 2`\n");
+  printf("will select nothing. `type = 1 & ran 100` will randomly select 100 atoms\n");
   printf("from all of type 1.\n");
   for (int i=0; i<20; i++) printf("----"); printf("\n\n");
     
