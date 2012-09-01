@@ -264,7 +264,7 @@ void Driver::paircorr()
         strcpy(srcsel, str);
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
-      } else strcpy(srcsel,"all");
+      } else strcpy(srcsel,"all\n");
 
       // check the selection command on the first frame
       one->selection(srcsel); one->SelInfo();
@@ -284,7 +284,7 @@ void Driver::paircorr()
         strcpy(dessel, str);
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
-      } else strcpy(dessel,"all");
+      } else strcpy(dessel,"all\n");
 
       // check the selection command on the first frame
       one->selection(dessel); one->SelInfo();
@@ -298,6 +298,8 @@ void Driver::paircorr()
       break;
     }
     int *insrc = memory->create(insrc, one->natom+1, "insrc");
+
+    sprintf(header,"# g(r) between two selections:\n# source atoms: %s# neighbors: %s", srcsel, dessel);
 
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
@@ -324,7 +326,7 @@ void Driver::paircorr()
         if (insrc[i] == 0) continue;
 
         for (int j=1; j<= one->natom; j++){
-          if (one->atsel[j] == 0) continue;
+          if (one->atsel[j] == 0 || i==j) continue;
           double dx[3], dr[3];
           for (int idim=0; idim<3; idim++){
             dx[idim] = one->atpos[j][idim] - one->atpos[i][idim];
