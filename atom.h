@@ -17,6 +17,7 @@ public:
   DumpAtom(FILE *fp);
   ~DumpAtom();
 
+  int iframe;
   int natom, ntype, tstep, nsel;
   int initialized, cartesian;
   int triclinic;

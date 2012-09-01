@@ -1,6 +1,9 @@
 #include "elements.h"
 #include "string.h"
 
+/* -----------------------------------------------------------------------------
+ * Function to return the atomic number of an input element symbol; 0 if not found
+ * ---------------------------------------------------------------------------*/
 int ChemElements::Name2Num(const char *ename)
 {
   int AtNum;
@@ -10,6 +13,9 @@ int ChemElements::Name2Num(const char *ename)
 return AtNum;
 }
 
+/* -----------------------------------------------------------------------------
+ * Function to return the element symbol for an input atomic number
+ * ---------------------------------------------------------------------------*/
 void ChemElements::Num2Name(const int AtNum, char * ename)
 {
   int num = AtNum;
@@ -17,6 +23,9 @@ void ChemElements::Num2Name(const int AtNum, char * ename)
   strcpy(ename, symbol[num]);
 }
 
+/* -----------------------------------------------------------------------------
+ * Return the molar mass of an input element symbol
+ * ---------------------------------------------------------------------------*/
 double ChemElements::Name2Mass(const char * ename)
 {
   int AtNum = Name2Num(ename);
@@ -24,6 +33,9 @@ double ChemElements::Name2Mass(const char * ename)
 return weight[AtNum];
 }
 
+/* -----------------------------------------------------------------------------
+ * Return the molar mass of an input atomic number
+ * ---------------------------------------------------------------------------*/
 double ChemElements::Num2Mass(const int AtNum)
 {
   int num = AtNum;
@@ -62,6 +74,9 @@ const double ChemElements::weight[] = {0.,                                  // N
   262.12,     265.,       266.,       269.,         272.,      285.         // Bh - Cn
 };
 
+/* -----------------------------------------------------------------------------
+ * Element symbols
+ * ---------------------------------------------------------------------------*/
 const char ChemElements::symbol[][3] = { "X",
     "H",  "He", "Li", "Be", "B",
     "C",  "N",  "O",  "F",  "Ne", "Na",

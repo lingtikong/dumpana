@@ -12,7 +12,7 @@
  *----------------------------------------------------------------------------*/
 DumpAtom::DumpAtom(FILE *fp)
 {
-  natom = ntype = tstep = 0;
+  iframe = natom = ntype = tstep = 0;
   initialized = cartesian = triclinic = 0;
   xy = xz = yz = 0.;
 
@@ -407,7 +407,7 @@ return;
 void DumpAtom::SelInfo()
 {
   printf("\nThe realized selection command is: %s,\n", realcmd);
-  printf("and %d of %d atoms are in selection.\n", nsel, natom);
+  printf("and %d of %d atoms are selected for frame %d.\n", nsel, natom, iframe);
 
 return;
 }

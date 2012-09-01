@@ -169,6 +169,7 @@ void Driver::readdump()
     one = new DumpAtom(fp);
     if (one->initialized){
       all.push_back(one);
+      one->iframe = all.size();
       one = NULL;
     } else {
       delete one;
