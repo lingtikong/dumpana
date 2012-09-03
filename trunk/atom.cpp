@@ -416,6 +416,7 @@ void DumpAtom::selection(const char *line)
 
   nsel = 0;
   for (int i = 1; i <= natom; i++) nsel += atsel[i];
+  memory->destroy(selcmd);
 
 return;
 }
