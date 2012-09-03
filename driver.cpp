@@ -59,10 +59,11 @@ Driver::Driver(int narg, char** arg)
     for (int i=0; i<20; i++) printf("----"); printf("\n");
     printf("Voronoi based:                         | Others:\n");
     for (int i=0; i<20; i++) printf("----"); printf("\n");
-    printf("  1. Voronoi diagram analysis;         |   5. Convert to xyz format; \n");
-    printf("  2. Chemical Short Range Order;       |   6. Average over frames;   \n");
-    printf("  3. Honeycutt-Andersen bond index;    |   7. Pair correlation function;\n");
-    printf("  4. Common neighbor analysis;         |   8. Prepare for FEFF9;\n");
+    printf("  1. Voronoi diagram analysis;         |   6. Convert to xyz format; \n");
+    printf("  2. Chemical Short Range Order;       |   7. Average over frames;   \n");
+    printf("  3. Honeycutt-Andersen bond index;    |   8. Pair correlation function;\n");
+    printf("  4. Common neighbor analysis;         | \n");
+    printf("  5. Prepare for FEFF9;                | \n");
     for (int i=0; i<20; i++) printf("----"); printf("\n");
     printf("  0. Exit.\nYour choice [%d]: ", job);
     fgets(str,MAXLINE,stdin);
@@ -77,16 +78,6 @@ Driver::Driver(int narg, char** arg)
     case 1:
       setrange();
       if (nsel > 0) voro();
-      break;
-
-    case 5:
-      setrange();
-      if (nsel > 0) writexyz();
-      break;
-
-    case 6:
-      setrange();
-      if (nsel > 0) avedump();
       break;
 
     case 2:
@@ -104,14 +95,24 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) Compute_CNACNP();
       break;
 
+    case 5:
+      setrange();
+      if (nsel > 0) FEFF_main();
+      break;
+
+    case 6:
+      setrange();
+      if (nsel > 0) writexyz();
+      break;
+
     case 7:
       setrange();
-      if (nsel > 0) paircorr();
+      if (nsel > 0) avedump();
       break;
 
     case 8:
       setrange();
-      if (nsel > 0) FEFF_main();
+      if (nsel > 0) paircorr();
       break;
 
     default:
