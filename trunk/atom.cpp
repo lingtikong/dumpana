@@ -390,10 +390,17 @@ void DumpAtom::selection(const char *line)
 
       strcat(onecmd," "); strcat(onecmd,ptr);
 
+      ptr = strtok(NULL, " \n\t\r\f");
+      if (ptr == NULL) break;
+      ihigh = atoi(ptr);
+      if (ihigh < 1) ihigh = time(NULL);
+
+      strcat(onecmd," "); strcat(onecmd,ptr);
+
       nsel = 0;
       for (int i = 1; i <= natom; i++) nsel += atsel[i];
       int ndel = nsel - ilow;
-      RanPark * random = new RanPark(time(NULL));
+      RanPark * random = new RanPark(ihigh);
       while (ndel > 0){
         int id = random->uniform()*natom;
         if (atsel[id] == 1){
@@ -404,8 +411,7 @@ void DumpAtom::selection(const char *line)
       delete random;
 
     } else if (strcmp(key,"all") == 0){ // select all; it will discard all previous selections
-      strcpy(realcmd,"");
-      strcpy(onecmd,key);
+      strcpy(realcmd,""); strcpy(onecmd,key);
       for (int i = 1; i <= natom; i++) atsel[i] = 1;
 
     } else break;
@@ -442,8 +448,10 @@ void DumpAtom::SelHelp()
   printf("  key op values [& key2 op2 values2 [| key3 op3 values3]]\n");
   printf("\nwhere `key` is either `type`, `x`,`y`,`z`, or `id`.\n");
   printf("It can also be `all`, which takes no argument and selects all atoms;\n");
-  printf("or `ran num`, which takes no other argument and selects `num` atoms\n");
-  printf("from the current selection randomly. The logical operation before `ran`\n");
+  printf("or `ran num seed`, which takes no other argument and selects `num` atoms\n");
+  printf("from the current selection randomly; `seed` is the seed for the uniform\n");
+  printf("random number generator, if a non-positive number is provided, it will be\n");
+  printf("set automatically based on current time. The logical operation before `ran`\n");
   printf("is always assumed to be AND, no matter what is defined.\n");
   printf("\n`op` is either `=`, `>`, `>=`, `<`, `<=`, `<>`, `><`, or `%%`,\n");
   printf("while neithor `=` nor `%%` is available for key=`x`, `y`, or `z`.\n");
@@ -458,7 +466,7 @@ void DumpAtom::SelHelp()
   printf("\nFor example, `type = 1 & x <> 0.1 0.5 & id >< 200 800` will select atoms\n");
   printf("of type 1 within 0.1 < x < 0.5 (fractional) and has id <= 200 or id >= 800;\n");
   printf("`type = 1 | type = 2` will select atoms of type 1 or 2; while `type = 1 & type = 2`\n");
-  printf("will select nothing. `type = 1 & ran 100` will randomly select 100 atoms\n");
+  printf("will select nothing. `type = 1 & ran 100 0` will randomly select 100 atoms\n");
   printf("from all of type 1.\n");
   for (int i=0; i<20; i++) printf("----"); printf("\n\n");
     
