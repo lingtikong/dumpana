@@ -331,6 +331,14 @@ void Driver::FEFF_main()
 
           // write other common info
           FEFF_input(job, fp);
+
+          // storage for coordination number and dist info
+          int CN[one->ntype+1], CNtot = 0;
+          double nndist[one->ntype+1], nndist2[one->ntype+1];
+          for (int ip = 1; ip <= one->ntype; ip++){
+            CN[ip] = 0;
+            nndist[ip] = nndist2[ip] = 0.;
+          }
   
           // atomic positions
           one->dir2car();
@@ -346,8 +354,27 @@ void Driver::FEFF_main()
               while (dx[idim] <-one->hbox[idim]) dx[idim] += one->box[idim];
               r2 += dx[idim]*dx[idim];
             }
+            double rij = sqrt(r2);
             element->Num2Name(type2atnum[one->attyp[jd]], ename);
-            fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], jp, ename, shell[jd], sqrt(r2), jd);
+            fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], jp, ename, shell[jd], rij, jd);
+
+            if (shell[jd] == 1){
+              CN[jp]++; CNtot++;
+              nndist[jp] += rij;
+              nndist2[jp] += r2;
+            }
+          }
+
+          // write coordination number info
+          fprintf(fp,"\n* Coordination number and nearest neighbor distance info for atom %d,\n", id);
+          fprintf(fp,"* only atoms of the Voronoi neighbors are seen as nearest neighbors.\n* Total: %d\n", CNtot);
+          for (int ip = 1; ip <= one->ntype; ip++){
+            if (CN[ip] > 0){
+              nndist[ip] /= double(CN[ip]);
+              double stdv = sqrt(nndist2[ip]/double(CN[ip])-nndist[ip]*nndist[ip]);
+              element->Num2Name(type2atnum[ip], ename);
+              fprintf(fp,"* %2s  %d  %lg +/- %lg\n", ename, CN[ip], nndist[ip], stdv);
+            }
           }
 
           shell.clear(); cluster.clear();

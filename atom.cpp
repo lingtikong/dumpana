@@ -56,7 +56,7 @@ DumpAtom::DumpAtom(FILE *fp)
   attyp = memory->create(attyp, natom+1, "attyp");
   atsel = memory->create(atsel, natom+1, "atsel");
   atpos = memory->create(atpos, natom+1, 3, "atpos");
-  for (int i=1; i<=natom; i++) atsel[i] = 1;
+  for (int i=1; i<=natom; i++) atsel[i] = 1; atsel[0] = 0;
   realcmd = new char [MAXLINE]; strcpy(realcmd, "all");
   nsel = natom;
 
@@ -392,17 +392,18 @@ void DumpAtom::selection(const char *line)
 
       ptr = strtok(NULL, " \n\t\r\f");
       if (ptr == NULL) break;
-      ihigh = atoi(ptr);
-      if (ihigh < 1) ihigh = time(NULL);
+      int seed = atoi(ptr);
+      if (seed < 1) seed = time(NULL)%54321+1;
 
-      strcat(onecmd," "); strcat(onecmd,ptr);
+      sprintf(onecmd,"%s %d", onecmd, seed);
+
+      RanPark * random = new RanPark(seed);
 
       nsel = 0;
       for (int i = 1; i <= natom; i++) nsel += atsel[i];
       int ndel = nsel - ilow;
-      RanPark * random = new RanPark(ihigh);
       while (ndel > 0){
-        int id = random->uniform()*natom;
+        int id = MIN(random->uniform()*(natom+1), natom);
         if (atsel[id] == 1){
           atsel[id] = 0;
           ndel--;
