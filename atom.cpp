@@ -393,10 +393,11 @@ void DumpAtom::selection(const char *line)
       ptr = strtok(NULL, " \n\t\r\f");
       if (ptr == NULL) break;
       int seed = atoi(ptr);
-      if (seed < 1) seed = time(NULL)%54321+1;
+      if (seed < 1) seed = time(NULL)%86400+1;
 
       sprintf(onecmd,"%s %d", onecmd, seed);
 
+      seed += iframe;
       RanPark * random = new RanPark(seed);
 
       nsel = 0;
