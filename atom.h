@@ -37,8 +37,9 @@ public:
   void car2dir();
   void dir2car();
 
-private:
   char *realcmd;
+
+private:
   int count_words(const char *);
 };
 #endif

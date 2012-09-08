@@ -4,8 +4,10 @@
 #include "atom.h"
 #include "memory.h"
 #include <map>
+#include <set>
 #include <list>
 #include <vector>
+#include <string>
 #include "elements.h"
 
 class Driver {
@@ -56,7 +58,7 @@ private:
   // Prepare for FEFF9
   void FEFF_main();
   void FEFF_input(int, FILE *);
-  void FEFF_voro(int, int &, int **, int *, double *);
+  void FEFF_voro(std::set<std::string>, int &, int **, int *, double *);
   void FEFF_cluster(int, const int, int **, int, std::list<int> &, std::map<int,int>&);
 
   // help info
