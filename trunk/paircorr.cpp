@@ -31,7 +31,7 @@ void Driver::paircorr()
   }
   printf("\n");
 
-  double rmin = 0., rmax = 15.;
+  double rmin = 0., rmax = 0.5*MIN(MIN(all[0]->lx,all[0]->ly), all[0]->lz);
   int nbin = 201;
 
   printf("Please input the lower bound of g(r) [%g]: ", rmin);

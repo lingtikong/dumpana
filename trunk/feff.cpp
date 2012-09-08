@@ -33,7 +33,7 @@ void Driver::FEFF_main()
       strcpy(selcmd, str);
       char *ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
-    } else strcpy(selcmd,"type = 1");
+    } else strcpy(selcmd,"type = 1\n");
 
     // check if `type' is used in the selection command; it is a must unless ntype = 1
     strcpy(str, selcmd);
@@ -66,18 +66,23 @@ void Driver::FEFF_main()
   }
 
   // further refining the absorbing atoms by their Voronoi index
-  int flag_voro = 0, vindex[4]; bigint vprod = 0;
+  int flag_voro = 0;
+  std::set<std::string> voroset; std::string vindex;
   printf("\nIf you want to futher refine the absorbing atoms by their Voronoi index,\n");
-  printf("please input the four index numbers now: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) >= 4){
+  printf("please input the desired Voronoi index now, e.g., 0,6,0,8. if multiple indices\n");
+  printf("are wanted, separate them by space: ");
+  if (count_words(fgets(str,MAXLINE,stdin)) > 0){
     flag_voro = 1;
-    char *ptr = strtok(str," \n\t\r\f");
-    for (int i=0; i<3; i++){vindex[i] = atoi(ptr); ptr = strtok(NULL," \n\t\r\f");}
-    vindex[3] = atoi(ptr);
-    vprod = vindex[0]*1000000 + vindex[1]*10000 + vindex[2]*100 + vindex[3];
+    printf("\nAtoms selected by:%s with Voronoi indices: %s", selcmd, str);
+    printf("will be chosen as absorbing atoms.\n");
 
-    printf("\nAtoms selected by `%s` with index <%d,%d,%d,%d> will be the absorbing atoms.\n",
-      selcmd, vindex[0], vindex[1], vindex[2], vindex[3]);
+    char *ptr = strtok(str," \n\t\r\f");
+    while (ptr){
+      vindex.assign(ptr);
+      voroset.insert(vindex);
+
+      ptr = strtok(NULL," \n\t\r\f");
+    }
   }
 
   // job type, CFAVERAGE or Clusters
@@ -235,7 +240,7 @@ void Driver::FEFF_main()
       for (int ii=0; ii<=natom; ii++) cenlist[ii] = 0;
 
       // compute the neighbor list and voro info
-      FEFF_voro(vprod, nmax, neilist, cenlist, voro_mins);
+      FEFF_voro(voroset, nmax, neilist, cenlist, voro_mins);
 
       // analyse the result
       int nc = 0;
@@ -402,7 +407,7 @@ void Driver::FEFF_input(int job, FILE *fp)
   fprintf(fp, "\n* EDGE label s02\n* EDGE K 1.0\n");
   double rfms1 = pow(90.*one->vol/(12.*one->natom), 1./3.);
   double rfms2 = pow(600.*one->vol/(12.*one->natom), 1./3.);
-  double rfms3 = 2.2*pow(60.*one->vol/(12.*one->natom), 1./3.);
+  double rfms3 = 2.2*pow(50.*one->vol/(12.*one->natom), 1./3.);
   if (job == 1){
     fprintf(fp, "* XANES [xkmax xkstep vixan]\nXANES 5.0\n");
     fprintf(fp, "* SCF rfms1 * rfms1 must be converged for real space calculations\n");
@@ -472,7 +477,7 @@ return;
 /*------------------------------------------------------------------------------
  * Method to find the neighbor list based on refined Voronoi calculation
  *----------------------------------------------------------------------------*/
-void Driver::FEFF_voro(int vp, int &nmax, int **nlist, int *clist, double *mins)
+void Driver::FEFF_voro(std::set<std::string> vlist, int &nmax, int **nlist, int *clist, double *mins)
 {
   double surf_min = mins[0];
   double edge_min = mins[1];
@@ -595,9 +600,11 @@ void Driver::FEFF_voro(int vp, int &nmax, int **nlist, int *clist, double *mins)
     }
   
     if (one->atsel[id] == 1){
-      if (vp){
-        int voro = index[3]*1000000 + index[4]*10000 + index[5]*100 + index[6];
-        if (voro == vp) clist[id] = 1;
+      if (vlist.size() > 0){
+        char str[MAXLINE];
+        sprintf(str,"%d,%d,%d,%d", index[3], index[4], index[5], index[6]);
+        std::string vindex; vindex.assign(str);
+        if (vlist.count(vindex) > 0) clist[id] = 1;
       } else clist[id] = 1;
     }
   
