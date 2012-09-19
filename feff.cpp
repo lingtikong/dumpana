@@ -2,6 +2,8 @@
 #include "voro++.hh"
 #include "math.h"
 #include <list>
+#include "random.h"
+#include "time.h"
 
 #define MAXLINE 1024
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
@@ -66,7 +68,7 @@ void Driver::FEFF_main()
   }
 
   // further refining the absorbing atoms by their Voronoi index
-  int flag_voro = 0;
+  int flag_voro = 0, nmax_voro = 0, seed = 0;
   std::set<std::string> voroset; std::string vindex;
   printf("\nIf you want to futher refine the absorbing atoms by their Voronoi index,\n");
   printf("please input the desired Voronoi index now, e.g., 0,6,0,8. if multiple indices\n");
@@ -82,6 +84,16 @@ void Driver::FEFF_main()
       voroset.insert(vindex);
 
       ptr = strtok(NULL," \n\t\r\f");
+    }
+
+    if (voroset.size() > 0){
+      printf("\nIf you want to limit the # of clusters per frame, input the max # now [0]: ");
+      if (count_words(fgets(str,MAXLINE,stdin)) > 0) nmax_voro = atoi(strtok(str," \n\t\r\f"));
+      if (nmax_voro > 0){
+        printf("Please input the seed of the random generator for refining [%d]: ", seed);
+        if (count_words(fgets(str,MAXLINE,stdin)) > 0) seed = atoi(strtok(str," \n\t\r\f"));
+        if (seed < 1) seed = time(NULL)%86400+1;
+      }
     }
   }
 
@@ -225,6 +237,10 @@ void Driver::FEFF_main()
       printf("Atoms upto the %d%s shell will be included into the clsuter.\n", nshell, Nos[nshell]);
     }
 
+    // random generator for confining the number of clusters when certain voronoi indices are asked
+    RanPark * random;
+    if (nmax_voro > 0) random = new RanPark(seed);
+
     for (int img = istr; img <= iend; img += inc){ // loop over frames
       one = all[img];
       // not possible to evaluate voro info for triclinic box
@@ -249,6 +265,15 @@ void Driver::FEFF_main()
         memory->destroy(neilist);
         memory->destroy(cenlist);
         continue;
+
+      } else if (nmax_voro > 0){
+        // apply limitation on the total number of clusters when certain voronoi indices are expected
+        int ndel = nc - nmax_voro;
+        while (ndel > 0){
+          int id = MIN(random->uniform()*(natom+1), natom);
+          ndel -= cenlist[id];
+          cenlist[id] = 0;
+        }
       }
 
       if (flag_pbc){
