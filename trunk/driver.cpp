@@ -12,7 +12,7 @@ Driver::Driver(int narg, char** arg)
   dump = NULL;
   nframe = 0;
   memory = new Memory();
-  flag_out = 0;
+  flag_out = 4;
   int loop = 1;
   type2atnum = NULL;
   element = NULL;
@@ -26,8 +26,17 @@ Driver::Driver(int narg, char** arg)
     } else if (strcmp(arg[iarg], "-1") == 0){ // just do one analysis
       loop = 0;
 
-    } else if (strcmp(arg[iarg], "-o") == 0){ // flat for Voronoi surface/edge ratio outputs
-      flag_out = atoi(arg[++iarg]);
+    } else if (strcmp(arg[iarg], "-os") == 0){ // flag for Voronoi surface ratio outputs
+      flag_out |= 1;
+
+    } else if (strcmp(arg[iarg], "-oe") == 0){ // flag for Voronoi edge ratio outputs
+      flag_out |= 2;
+
+    } else if (strcmp(arg[iarg], "-ose") == 0){ // flat for Voronoi surface/edge ratio outputs
+      flag_out |= 3;
+
+    } else if (strcmp(arg[iarg], "-s") == 0){ // to skip writting feff.inp data, while just output the CN info
+      flag_out &= 123;
 
     } else {
       break;
@@ -381,8 +390,11 @@ void Driver::help()
   printf("\nAvailable options:\n");
   printf("    -h       To display this help info;\n");
   printf("    -1       To tell the code to exit once an analysis is done;\n");
-  printf("    -o n     To indicate wether to output the surface area ratio and/or edge length\n");
-  printf("             ratio info or not: n = 0, neither; 1, surface; 2, edge; 3, both. default: 0.\n");
+  printf("    -os      To output the surface area ratios;\n");
+  printf("    -oe      To output the edge length ratios;\n");
+  printf("    -ose     To output both the surface area and the edge length ratios;\n");
+  printf("    -s       To skip writing feff.inp files when preparing FEFF for desired voronoi\n");
+  printf("                clusters; instead, output the CN info only.\n");
   printf("    file     Must be lammps atom style dump file, by default: dump.lammpstrj;\n");
   printf("\n\n");
   exit(0);

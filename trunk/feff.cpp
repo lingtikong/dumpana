@@ -129,6 +129,7 @@ void Driver::FEFF_main()
   printf("The working directory will be: %s\n", workdir);
 
   // some common variables
+  char ename[3];
   char dirname[MAXLINE], mkdir[MAXLINE], fname[MAXLINE];
   FILE *fp;
 
@@ -156,7 +157,6 @@ void Driver::FEFF_main()
         img+1, one->tstep, one->ntype, one->natom);
       fprintf(fp,"TITLE Averaged over %d type-%d atoms.\n\n", one->nsel, AbsorberType);
       fprintf(fp,"POTENTIALS\n*  ipot Z   tag lmax1 lmax2\n");
-      char ename[3];
       for (int ip=1; ip <= one->ntype; ip++){
         element->Num2Name(type2atnum[ip], ename);
         fprintf(fp,"%4d   %3d  %3s  -1   3\n", ip, type2atnum[ip], ename);
@@ -279,17 +279,18 @@ void Driver::FEFF_main()
       if (flag_pbc){
         // open the feff.inp file for current frame
         sprintf(dirname, "%s/Frame%d", workdir, img+1);
+        fprintf(fpx, "%s\n", dirname); ndir++;
+
         strcpy(mkdir,"mkdir -p "); strcat(mkdir,dirname);
-        system(mkdir); ndir++; fprintf(fpx, "%s\n", dirname); // create direcotry for current frame
+        system(mkdir);
         strcpy(fname, dirname); strcat(fname,"/feff.inp");
         fp = fopen(fname, "w");
-  
+
         // write the potential part of feff.inp
         fprintf(fp,"TITLE Frame %d (MD steps: %d), %d types, %d atoms.\n",
           img+1, one->tstep, one->ntype, one->natom);
         fprintf(fp,"TITLE Averaged over %d type %d atoms.\n\n", nc, AbsorberType);
         fprintf(fp,"POTENTIALS\n*  ipot Z   tag lmax1 lmax2\n");
-        char ename[3];
         for (int ip=1; ip <= one->ntype; ip++){
           element->Num2Name(type2atnum[ip], ename);
           fprintf(fp,"%4d   %3d  %3s  -1   3\n", ip, type2atnum[ip], ename);
@@ -340,27 +341,29 @@ void Driver::FEFF_main()
 
           // open the feff.inp file for current frame
           sprintf(dirname, "%s/F%dA%d", workdir, img+1, id);
-          strcpy(mkdir,"mkdir -p "); strcat(mkdir,dirname);
-          system(mkdir); ndir++; fprintf(fpx, "%s\n", dirname); // create direcotry for current frame
-          strcpy(fname, dirname); strcat(fname,"/feff.inp");
-          fp = fopen(fname, "w");
+          fprintf(fpx, "%s", dirname); ndir++;
+          if (flag_out & 4){
+            strcpy(mkdir,"mkdir -p "); strcat(mkdir,dirname);
+            system(mkdir);
+            strcpy(fname, dirname); strcat(fname,"/feff.inp");
+            fp = fopen(fname, "w");
   
-          // write the potential part of feff.inp
-          char ename[3];
-          element->Num2Name(type2atnum[one->attyp[id]], ename);
-          fprintf(fp,"TITLE Cluster centered on atom %d (%s) of frame %d (MD steps: %d)\n",
-            id, ename, img+1, one->tstep);
-          fprintf(fp,"TITLE Total number of atoms in cluster: %d\n\n", nclus);
-
-          fprintf(fp,"POTENTIALS\n*  ipot Z   tag lmax1 lmax2\n");
-          fprintf(fp,"%4d   %3d  %3s  -1   3\n", 0, type2atnum[one->attyp[id]], ename);
-          for (int ip=1; ip <= one->ntype; ip++){
-            element->Num2Name(type2atnum[ip], ename);
-            fprintf(fp,"%4d   %3d  %3s  -1   3\n", ip, type2atnum[ip], ename);
+            // write the potential part of feff.inp
+            element->Num2Name(type2atnum[one->attyp[id]], ename);
+            fprintf(fp,"TITLE Cluster centered on atom %d (%s) of frame %d (MD steps: %d)\n",
+              id, ename, img+1, one->tstep);
+            fprintf(fp,"TITLE Total number of atoms in cluster: %d\n\n", nclus);
+  
+            fprintf(fp,"POTENTIALS\n*  ipot Z   tag lmax1 lmax2\n");
+            fprintf(fp,"%4d   %3d  %3s  -1   3\n", 0, type2atnum[one->attyp[id]], ename);
+            for (int ip=1; ip <= one->ntype; ip++){
+              element->Num2Name(type2atnum[ip], ename);
+              fprintf(fp,"%4d   %3d  %3s  -1   3\n", ip, type2atnum[ip], ename);
+            }
+  
+            // write other common info
+            FEFF_input(job, fp);
           }
-
-          // write other common info
-          FEFF_input(job, fp);
 
           // storage for coordination number and dist info
           int CN[one->ntype+1], CNtot = 0;
@@ -372,7 +375,7 @@ void Driver::FEFF_main()
   
           // atomic positions
           one->dir2car();
-          fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot tag ishell dist id\n");
+          if (flag_out & 4) fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot tag ishell dist id\n");
           for (std::list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
             int jd = *it;
             int jp = one->attyp[jd];
@@ -386,7 +389,7 @@ void Driver::FEFF_main()
             }
             double rij = sqrt(r2);
             element->Num2Name(type2atnum[one->attyp[jd]], ename);
-            fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], jp, ename, shell[jd], rij, jd);
+            if (flag_out & 4) fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], jp, ename, shell[jd], rij, jd);
 
             if (shell[jd] == 1){
               CN[jp]++; CNtot++;
@@ -396,20 +399,27 @@ void Driver::FEFF_main()
           }
 
           // write coordination number info
-          fprintf(fp,"\n* Coordination number and nearest neighbor distance info for atom %d,\n", id);
-          fprintf(fp,"* only atoms of the Voronoi neighbors are seen as nearest neighbors.\n* Total: %d\n", CNtot);
+          if (flag_out & 4){
+            fprintf(fp,"\n* Coordination number and nearest neighbor distance info for atom %d,\n", id);
+            fprintf(fp,"* only atoms of the Voronoi neighbors are seen as nearest neighbors.\n* Total: %d\n", CNtot);
+          }
+          fprintf(fpx," %d :", CNtot);
+
           for (int ip = 1; ip <= one->ntype; ip++){
+            double stdv = 0.;
             if (CN[ip] > 0){
               nndist[ip] /= double(CN[ip]);
               double stdv = sqrt(nndist2[ip]/double(CN[ip])-nndist[ip]*nndist[ip]);
-              element->Num2Name(type2atnum[ip], ename);
-              fprintf(fp,"* %2s  %d  %lg +/- %lg\n", ename, CN[ip], nndist[ip], stdv);
             }
+            element->Num2Name(type2atnum[ip], ename);
+            if (flag_out & 4) fprintf(fp,"* %2s  %d  %lg +/- %lg\n", ename, CN[ip], nndist[ip], stdv);
+            fprintf(fpx," %2s %d %lg +/- %lg; ", ename, CN[ip], nndist[ip], stdv);
           }
+          fprintf(fpx,"\n");
 
           shell.clear(); cluster.clear();
           // clsoe the file
-          fclose(fp);
+          if (flag_out & 4) fclose(fp);
         }
       }
 
