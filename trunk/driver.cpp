@@ -3,6 +3,7 @@
 #define MAXLINE 512
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
+
 /*------------------------------------------------------------------------------
  * Constructor of driver, main menu
  *----------------------------------------------------------------------------*/
@@ -12,10 +13,12 @@ Driver::Driver(int narg, char** arg)
   dump = NULL;
   nframe = 0;
   memory = new Memory();
-  flag_out = 4;
+  flag_out = 0;
   int loop = 1;
   type2atnum = NULL;
   element = NULL;
+
+  flag_out |= OutFeff; // by default, feff.inp is written
 
   // analyse command line options
   int iarg = 1;
@@ -27,16 +30,17 @@ Driver::Driver(int narg, char** arg)
       loop = 0;
 
     } else if (strcmp(arg[iarg], "-os") == 0){ // flag for Voronoi surface ratio outputs
-      flag_out |= 1;
+      flag_out |= OutSurf;
 
     } else if (strcmp(arg[iarg], "-oe") == 0){ // flag for Voronoi edge ratio outputs
-      flag_out |= 2;
+      flag_out |= OutEdge;
 
     } else if (strcmp(arg[iarg], "-ose") == 0){ // flat for Voronoi surface/edge ratio outputs
-      flag_out |= 3;
+      flag_out |= OutSurf;
+      flag_out |= OutEdge;
 
     } else if (strcmp(arg[iarg], "-s") == 0){ // to skip writting feff.inp data, while just output the CN info
-      flag_out &= 123;
+      flag_out &= ~OutFeff;
 
     } else {
       break;
