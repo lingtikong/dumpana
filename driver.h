@@ -10,6 +10,10 @@
 #include <string>
 #include "elements.h"
 
+#define OutSurf 1
+#define OutEdge 2
+#define OutFeff 4
+
 class Driver {
 public:
   Driver(int, char**);

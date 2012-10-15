@@ -342,7 +342,7 @@ void Driver::FEFF_main()
           // open the feff.inp file for current frame
           sprintf(dirname, "%s/F%dA%d", workdir, img+1, id);
           fprintf(fpx, "%s", dirname); ndir++;
-          if (flag_out & 4){
+          if (flag_out & OutFeff){
             strcpy(mkdir,"mkdir -p "); strcat(mkdir,dirname);
             system(mkdir);
             strcpy(fname, dirname); strcat(fname,"/feff.inp");
@@ -375,7 +375,7 @@ void Driver::FEFF_main()
   
           // atomic positions
           one->dir2car();
-          if (flag_out & 4) fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot tag ishell dist id\n");
+          if (flag_out & OutFeff) fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot tag ishell dist id\n");
           for (std::list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
             int jd = *it;
             int jp = one->attyp[jd];
@@ -389,7 +389,7 @@ void Driver::FEFF_main()
             }
             double rij = sqrt(r2);
             element->Num2Name(type2atnum[one->attyp[jd]], ename);
-            if (flag_out & 4) fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], jp, ename, shell[jd], rij, jd);
+            if (flag_out & OutFeff) fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], jp, ename, shell[jd], rij, jd);
 
             if (shell[jd] == 1){
               CN[jp]++; CNtot++;
@@ -399,7 +399,7 @@ void Driver::FEFF_main()
           }
 
           // write coordination number info
-          if (flag_out & 4){
+          if (flag_out & OutFeff){
             fprintf(fp,"\n* Coordination number and nearest neighbor distance info for atom %d,\n", id);
             fprintf(fp,"* only atoms of the Voronoi neighbors are seen as nearest neighbors.\n* Total: %d\n", CNtot);
           }
@@ -412,14 +412,14 @@ void Driver::FEFF_main()
               double stdv = sqrt(nndist2[ip]/double(CN[ip])-nndist[ip]*nndist[ip]);
             }
             element->Num2Name(type2atnum[ip], ename);
-            if (flag_out & 4) fprintf(fp,"* %2s  %d  %lg +/- %lg\n", ename, CN[ip], nndist[ip], stdv);
+            if (flag_out & OutFeff) fprintf(fp,"* %2s  %d  %lg +/- %lg\n", ename, CN[ip], nndist[ip], stdv);
             fprintf(fpx," %2s %d %lg +/- %lg; ", ename, CN[ip], nndist[ip], stdv);
           }
           fprintf(fpx,"\n");
 
           shell.clear(); cluster.clear();
           // clsoe the file
-          if (flag_out & 4) fclose(fp);
+          if (flag_out & OutFeff) fclose(fp);
         }
       }
 
