@@ -62,7 +62,7 @@ void Driver::csro()
     one = all[img];
 
     // not possible to evaluate voro info for triclinic box
-    if (one->triclinic) continue;
+    //if (one->triclinic) continue;
 
     // ntype of different frames must be the same
     if (one->ntype != ntype) continue;
@@ -73,7 +73,6 @@ void Driver::csro()
     double zlo = one->zlo, zhi = one->zhi;
     double lx  = one->lx,  ly  = one->ly,  lz = one->lz;
     double xy  = one->xy,  xz  = one->xz,  yz = one->yz;
-    double hx = 0.5*lx, hy = 0.5*ly, hz = 0.5*lz;
 
     int n = one->natom;
     int *attyp = one->attyp;

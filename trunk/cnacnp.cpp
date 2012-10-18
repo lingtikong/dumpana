@@ -70,12 +70,9 @@ void Driver::Compute_CNACNP()
 
   one = all[istr];
   int neimax = 24;
-  int **bonded, **neilist;
+  int **neilist;
   int natom = one->natom;
-  bonded  = memory->create(bonded,natom+1,natom+1,"bonded");
   neilist = memory->create(neilist,neimax+1,natom+1,"neilist");
-  for (int i=0; i<= natom; i++)
-  for (int j=0; j<= natom; j++) bonded[i][j] = 0;
 
   // now to loop over all asked images
   for (int img = istr; img <= iend; img += inc){
@@ -92,13 +89,11 @@ void Driver::Compute_CNACNP()
     int n = one->natom;
     double **atpos = one->atpos;
 
-    // reallocated bonded and neilist if different
+    // reallocated neilist if different
     if (n != natom){
       natom = n;
-      memory->destroy(bonded);
       memory->destroy(neilist);
 
-      bonded  = memory->create(bonded,natom+1,natom+1,"bonded");
       neilist = memory->create(neilist,neimax+1,natom+1,"neilist");
     }
 
@@ -192,20 +187,9 @@ void Driver::Compute_CNACNP()
       } while (cl.inc());
     }
 
-    // to find out if any two atoms are bonded or not
-    for (int i=0; i<= natom; i++)
-    for (int j=0; j<= natom; j++) bonded[i][j] = 0;
-
-    for (int id=1; id<= natom; id++){
-      int nni = neilist[0][id];
-      for (int ii=1; ii<= nni; ii++){
-        int jd = neilist[ii][id];
-        bonded[id][jd] = 1;
-      }
-    }
     fprintf(fp,"# frame number: %d\n", img);
     // now to compute the CNA/CNP info
-    ComputeCNAAtom *cna = new ComputeCNAAtom(job, natom, neilist, bonded, atpos, one->box, fp);
+    ComputeCNAAtom *cna = new ComputeCNAAtom(job, natom, neilist, atpos, one->box, fp);
     delete cna;
 
     printf("Frame %d done, CNA/CNP info written to: %s\n", img+1, fname);
@@ -213,7 +197,6 @@ void Driver::Compute_CNACNP()
   printf("\n"); for (int i=0; i<20; i++) printf("===="); printf("\n");
   fclose(fp);
 
-  memory->destroy(bonded);
   memory->destroy(neilist);
   delete []fname;
 
