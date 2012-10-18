@@ -75,13 +75,11 @@ void Driver::voro()
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
 
-    // not possible to evaluate voro info for triclinic box
-    //if (one->triclinic) continue;
-
     // set local variables
-    double xlo = one->xlo, xhi = one->xhi, lx = one->lx;
-    double ylo = one->ylo, yhi = one->yhi, ly = one->ly;
-    double zlo = one->zlo, zhi = one->zhi, lz = one->lz;
+    double xlo = one->xlo, xhi = one->xhi;
+    double ylo = one->ylo, yhi = one->yhi;
+    double zlo = one->zlo, zhi = one->zhi;
+    double lx  = one->lx,  ly  = one->ly,  lz = one->lz;
     double xy  = one->xy,  xz  = one->xz,  yz = one->yz;
     double hx = 0.5*lx, hy = 0.5*ly, hz = 0.5*lz;
     int n = one->natom;
@@ -106,7 +104,7 @@ void Driver::voro()
 
     if (one->triclinic){
 
-      voro::container_periodic con(one->lx,xy,one->ly,xz,yz,one->lz,nx,ny,nz,8);
+      voro::container_periodic con(lx,xy,ly,xz,yz,lz,nx,ny,nz,8);
       // put atoms into the container
       for (int i=1; i<= n; i++) con.put(i, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
   
