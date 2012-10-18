@@ -51,7 +51,8 @@ private:
 
   // Hondeycutt-Andersen bond type analysis
   void honeycutt_andersen();
-  void count_HA(const int, const int, int **, int**, FILE *, const int);
+  void count_HA(const int, const int, int **, FILE *, const int);
+  int bonded(int, int, int **);
 
   // Common neighber analysis or common neighbor parameter
   void Compute_CNACNP();
