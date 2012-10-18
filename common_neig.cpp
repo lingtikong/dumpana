@@ -6,6 +6,7 @@
 #define MAXNEAR   25
 #define MAXCOMMON 20
 #define MAXLINE   512
+#define ZERO 1.e-10
 
 enum{UNKNOWN,FCC,HCP,BCC,ICOS,OTHER};
 enum{NCOMMON,NBOND,MAXBOND,MINBOND};
@@ -14,14 +15,17 @@ enum{NCOMMON,NBOND,MAXBOND,MINBOND};
  * Reference: Comp. Phys. Comm. 177:518, (2007).
  * ---------------------------------------------------------------------- */
 
-ComputeCNAAtom::ComputeCNAAtom(const int job, const int ntm, int **list, int **pair, double **pos, double *box, FILE *fp)
+ComputeCNAAtom::ComputeCNAAtom(const int job, const int ntm, int **list, double **pos, double *box, FILE *fp)
 {
   x = pos;
   natom   = ntm;
   nearest = list;
-  bonded  = pair;
   L[0] = box[0]; L[1] = box[1]; L[2] = box[2];
+  xy = box[3]; xz = box[4]; yz = box[5];
   for (int i=0; i<3; i++) hL[i] = 0.5*L[i];
+
+  non_ortho_box = 0;
+  if (xy*xy+xz*xz+yz*yz > ZERO) non_ortho_box = 1;
 
   memory = new Memory();
   pattern  = memory->create(pattern, natom+1, "pattern");
@@ -41,7 +45,6 @@ ComputeCNAAtom::~ComputeCNAAtom()
 {
   memory->destroy(pattern);
   nearest = NULL;
-  bonded = NULL;
   x = NULL;
 
   delete memory;
@@ -117,7 +120,7 @@ void ComputeCNAAtom::compute_cna()
 	     j = common[jj];
 	     for (kk = jj+1; kk < ncommon; kk++) {
 	       k = common[kk];
-	       if (bonded[j][k]) {
+	       if (bonded(j,k)) {
 	         nbonds++;
 	         bonds[jj]++;
 	         bonds[kk]++;
@@ -184,21 +187,78 @@ void ComputeCNAAtom::compute_cnp()
       int j = nearest[m][i];
 
       // common = list of neighbors common to atom I and atom J
-      double Rij[3];
+      double Rij[3], xik[3], xjk[3];
       Rij[0] = Rij[1] = Rij[2] = 0.;
 
 	   for (int inear = 1; inear <= nearest[0][i]; inear++)
 	   for (int jnear = 1; jnear <= nearest[0][j]; jnear++){
 	     if (nearest[inear][i] == nearest[jnear][j]) {
           int k = nearest[inear][i];
+          double xik[3], xjk[3];
+          
           for (int idim=0; idim<3; idim++){
-            double xik = x[k][idim] - x[i][idim];
-            double xjk = x[k][idim] - x[j][idim];
-            while (xik > hL[idim]) xik -= L[idim];
-            while (xik <-hL[idim]) xik += L[idim];
-            while (xjk > hL[idim]) xjk -= L[idim];
-            while (xjk <-hL[idim]) xjk += L[idim];
-            Rij[idim] += xik + xjk;
+            xik[idim] = x[k][idim] - x[i][idim];
+            xjk[idim] = x[k][idim] - x[j][idim];
+          }
+          // apply pbc
+          if (non_ortho_box){
+            while (xik[2] > hL[2]){
+              xik[0] -= xz;
+              xik[1] -= yz;
+              xik[2] -= L[2];
+            }
+            while (xik[2] <-hL[2]){
+              xik[0] += xz;
+              xik[1] += yz;
+              xik[2] += L[2];
+            }
+
+            while (xik[1] > hL[1]){
+              xik[0] -= xy;
+              xik[1] -= L[1];
+            }
+            while (xik[1] <-hL[1]){
+              xik[0] += xy;
+              xik[1] += L[1];
+            }
+
+            while (xik[0] > hL[0]) xik[0] -= L[0];
+            while (xik[0] <-hL[0]) xik[0] += L[0];
+
+            while (xjk[2] > hL[2]){
+              xjk[0] -= xz;
+              xjk[1] -= yz;
+              xjk[2] -= L[2];
+            }
+            while (xjk[2] <-hL[2]){
+              xjk[0] += xz;
+              xjk[1] += yz;
+              xjk[2] += L[2];
+            }
+
+            while (xjk[1] > hL[1]){
+              xjk[0] -= xy;
+              xjk[1] -= L[1];
+            }
+            while (xjk[1] <-hL[1]){
+              xjk[0] += xy;
+              xjk[1] += L[1];
+            }
+
+            while (xjk[0] > hL[0]) xjk[0] -= L[0];
+            while (xjk[0] <-hL[0]) xjk[0] += L[0];
+            
+            for (int idim=0; idim<3; idim++) Rij[idim] += xik[idim] + xjk[idim];
+
+          } else {
+            for (int idim=0; idim<3; idim++){
+              while (xik[idim] > hL[idim]) xik[idim] -= L[idim];
+              while (xik[idim] <-hL[idim]) xik[idim] += L[idim];
+              while (xjk[idim] > hL[idim]) xjk[idim] -= L[idim];
+              while (xjk[idim] <-hL[idim]) xjk[idim] += L[idim];
+          
+              Rij[idim] += xik[idim] + xjk[idim];
+            }
           }
         }
 	   }
@@ -217,4 +277,17 @@ void ComputeCNAAtom::output(FILE *fp)
 {
   for (int i=1; i<=natom; i++) fprintf(fp,"%d %lg %lg %lg %lg\n", i, x[i][0], x[i][1], x[i][2], pattern[i]);
 return;
+}
+
+/* ----------------------------------------------------------------------
+ * Private method, to check if two atoms are bonded to each other
+ * ---------------------------------------------------------------------- */
+int ComputeCNAAtom::bonded(int id, int jd)
+{
+  int ni = nearest[0][id];
+  for (int jj=1; jj <= ni; jj++){
+    if (nearest[jj][id] == jd) return 1;
+  }
+
+return 0;
 }

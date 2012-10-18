@@ -8,7 +8,7 @@
 
 class ComputeCNAAtom {
 public:
-  ComputeCNAAtom(const int, const int, int **, int **, double **, double *, FILE *);
+  ComputeCNAAtom(const int, const int, int **, double **, double *, FILE *);
   ~ComputeCNAAtom();
 
 private:
@@ -22,10 +22,12 @@ private:
 
   int natom;
   int **nearest;
-  int **bonded;
+  int non_ortho_box;
   double **x, L[3], hL[3];
+  double xy, xz, yz;
   double *pattern;
 
+  int bonded(int,int);
 };
 
 #endif

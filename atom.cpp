@@ -74,9 +74,9 @@ DumpAtom::DumpAtom(FILE *fp)
   ly = box[1] = axis[1][1] = yhi - ylo;
   lz = box[2] = axis[2][2] = zhi - zlo;
   vol = lx*ly*lz;
-  axis[1][0] = xy;
-  axis[2][0] = xz;
-  axis[2][1] = yz;
+  box[3] = axis[1][0] = xy;
+  box[4] = axis[2][0] = xz;
+  box[5] = axis[2][1] = yz;
   axis[0][1] = axis[0][2] = axis[1][2] = 0.;
   for (int idim=0; idim<3; idim++) hbox[idim] = 0.5*box[idim];
 

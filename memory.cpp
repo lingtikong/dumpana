@@ -12,7 +12,7 @@ void *Memory::smalloc(bigint nbytes, const char *name)
   if (nbytes == 0) return NULL;
 
   void *ptr = malloc(nbytes);
-  if (ptr == NULL) printf("Failed to allocate " BIGINT_FORMAT "bytes for array %s", nbytes,name);
+  if (ptr == NULL) printf("\nFailed to allocate " BIGINT_FORMAT "bytes for array %s\n", nbytes,name);
   return ptr;
 }
 
@@ -27,7 +27,7 @@ void *Memory::srealloc(void *ptr, bigint nbytes, const char *name)
   }
 
   ptr = realloc(ptr,nbytes);
-  if (ptr == NULL) printf("Failed to reallocate " BIGINT_FORMAT "bytes for array %s", nbytes,name);
+  if (ptr == NULL) printf("\nFailed to reallocate " BIGINT_FORMAT "bytes for array %s\n", nbytes,name);
   return ptr;
 }
 
@@ -47,5 +47,5 @@ void Memory::sfree(void *ptr)
 
 void Memory::fail(const char *name)
 {
-  printf("Cannot create/grow a vector/array of pointers for %s",name);
+  printf("\nCannot create/grow a vector/array of pointers for %s\n",name);
 }
