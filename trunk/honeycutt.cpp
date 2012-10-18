@@ -74,12 +74,9 @@ void Driver::honeycutt_andersen()
 
   one = all[istr];
   int neimax = 24;
-  int **bonded, **neilist;
+  int **neilist;
   int natom = one->natom;
-  bonded  = memory->create(bonded,natom+1,natom+1,"bonded");
   neilist = memory->create(neilist,neimax+1,natom+1,"neilist");
-  for (int i=0; i<= natom; i++)
-  for (int j=0; j<= natom; j++) bonded[i][j] = 0;
 
   // now to loop over all asked images
   for (int img = istr; img <= iend; img += inc){
@@ -97,13 +94,11 @@ void Driver::honeycutt_andersen()
     int *attyp = one->attyp;
     double **atpos = one->atpos;
 
-    // reallocated bonded and neilist if different
+    // reallocated neilist if different
     if (n != natom){
       natom = n;
-      memory->destroy(bonded);
       memory->destroy(neilist);
 
-      bonded  = memory->create(bonded,natom+1,natom+1,"bonded");
       neilist = memory->create(neilist,neimax+1,natom+1,"neilist");
     }
 
@@ -198,23 +193,12 @@ void Driver::honeycutt_andersen()
       } while (cl.inc());
     }
 
-    // to find out if any two atoms are bonded or not
-    for (int i=0; i<= natom; i++)
-    for (int j=0; j<= natom; j++) bonded[i][j] = 0;
-
-    for (int id=1; id<= natom; id++){
-      int nni = neilist[0][id];
-      for (int ii=1; ii<= nni; ii++){
-        int jd = neilist[ii][id];
-        bonded[id][jd] = 1;
-      }
-    }
     fprintf(fp,"# frame number: %d\n", img);
     // now to analyse the Honeycutt-Andersen bond type info
     for (int id=1; id<= natom; id++){
       if (unbond){
         for (int jd=id+1; jd<= natom; jd++){
-          count_HA(id, jd, neilist, bonded, fp, outcomm);
+          count_HA(id, jd, neilist, fp, outcomm);
         }
 
       } else {
@@ -224,7 +208,7 @@ void Driver::honeycutt_andersen()
           int jd  = neilist[kk][id];
           if (id > jd) continue;
 
-          count_HA(id, jd, neilist, bonded, fp, outcomm);
+          count_HA(id, jd, neilist, fp, outcomm);
         }
       }
     }
@@ -233,15 +217,17 @@ void Driver::honeycutt_andersen()
   printf("\n"); for (int i=0; i<20; i++) printf("===="); printf("\n");
   fclose(fp);
 
-  memory->destroy(bonded);
   memory->destroy(neilist);
 
 return;
 }
 
-void Driver::count_HA(int id, int jd, int **list, int **pair, FILE * fp, const int flag)
+/*------------------------------------------------------------------------------
+ * Private method to compute the Honeycutt-Andersen index for a pair of atoms
+ *----------------------------------------------------------------------------*/
+void Driver::count_HA(int id, int jd, int **list, FILE * fp, const int flag)
 {
-  int ibond = 2 - pair[id][jd];
+  int ibond = 2 - bonded(id,jd,list);
   int nni = list[0][id];
   int nnj = list[0][jd];
 
@@ -255,7 +241,7 @@ void Driver::count_HA(int id, int jd, int **list, int **pair, FILE * fp, const i
 
   int nbond = 0;
   for (int mm=0; mm<ncomm; mm++)
-  for (int nn=mm+1; nn<ncomm; nn++) nbond += pair[comms[mm]][comms[nn]];
+  for (int nn=mm+1; nn<ncomm; nn++) nbond += bonded(comms[mm],comms[nn], list);
 
   int nconf = 1;
   // needs to distinct same ncomm-nbond for 144, 142
@@ -265,8 +251,8 @@ void Driver::count_HA(int id, int jd, int **list, int **pair, FILE * fp, const i
     for (int mm=0; mm<ncomm; mm++)
     for (int nn=mm+1; nn<ncomm; nn++){
       int md = comms[mm], nd = comms[nn];
-      ned[mm] += pair[md][nd];
-      ned[nn] += pair[md][nd];
+      ned[mm] += bonded(md, nd, list);
+      ned[nn] += bonded(md, nd, list);
     }
     int nmin = nbond/2;
     for (int mm=0; mm<ncomm; mm++) if (ned[mm] < nmin) nconf = 2;
@@ -277,4 +263,17 @@ void Driver::count_HA(int id, int jd, int **list, int **pair, FILE * fp, const i
   fprintf(fp,"\n");
 
 return;
+}
+
+/*------------------------------------------------------------------------------
+ * Private method to check if a pair of atoms are bonded or not
+ *----------------------------------------------------------------------------*/
+int Driver::bonded(int id, int jd, int ** list)
+{
+  int ni = list[0][id];
+  for (int jj=1; jj<= ni; jj++){
+    if (list[jj][id] == jd) return 1;
+  }
+
+return 0;
 }
