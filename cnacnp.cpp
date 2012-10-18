@@ -81,13 +81,12 @@ void Driver::Compute_CNACNP()
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
 
-    // not possible to evaluate voro info for triclinic box
-    if (one->triclinic) continue;
-
     // set local variables
-    double xlo = one->xlo, xhi = one->xhi, lx = one->lx;
-    double ylo = one->ylo, yhi = one->yhi, ly = one->ly;
-    double zlo = one->zlo, zhi = one->zhi, lz = one->lz;
+    double xlo = one->xlo, xhi = one->xhi;
+    double ylo = one->ylo, yhi = one->yhi;
+    double zlo = one->zlo, zhi = one->zhi;
+    double lx  = one->lx,  ly  = one->ly,  lz = one->lz;
+    double xy  = one->xy,  xz  = one->xz,  yz = one->yz;
     double hx = 0.5*lx, hy = 0.5*ly, hz = 0.5*lz;
 
     int n = one->natom;
@@ -109,44 +108,89 @@ void Driver::Compute_CNACNP()
     // compute optimal size for container, and then contrust it
     double l = pow(double(n)/(5.6*lx*ly*lz), 1./3.);
     int nx = int(lx*l+1), ny = int(ly*l+1), nz = int(lz*l+1);
-    voro::container con(xlo,xhi,ylo,yhi,zlo,zhi,nx,ny,nz,true,true,true,8);
 
-    // put atoms into the container
-    for (int i=1; i<= n; i++) con.put(i, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
+    if (one->triclinic){ // non-orthogonal box
 
-    // loop over all particles and compute their voronoi cell
-    voro::voronoicell_neighbor cell;
-    voro::c_loop_all cl(con);
-    if (cl.start()) do if (con.compute_cell(cell,cl)){
-      int id = cl.pid();
-
-      std::vector<int> neigh;    // neigh list
-      cell.neighbors(neigh);
-      int nf = neigh.size();
-
-      if (nf > neimax){
-        neimax = nf + 2;
-        neilist = memory->grow(neilist,neimax+1,natom+1,"neilist");
-      }
-
-      if (refine) { // based on refined voro info
-        double fcut = surf_min * cell.surface_area();
-        std::vector<double> fs;    // face areas
-        cell.face_areas(fs);
-        int nnei = 0;
-        for (int ii=0; ii<nf; ii++){
-          if (fs[ii] < fcut) continue;
-          int jd = neigh[ii];
-          neilist[++nnei][id] = jd;
+      voro::container_periodic con(lx,xy,ly,xz,yz,lz,nx,ny,nz,8);
+  
+      // put atoms into the container
+      for (int i=1; i<= n; i++) con.put(i, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
+  
+      // loop over all particles and compute their voronoi cell
+      voro::voronoicell_neighbor cell;
+      voro::c_loop_all_periodic cl(con);
+      if (cl.start()) do if (con.compute_cell(cell,cl)){
+        int id = cl.pid();
+  
+        std::vector<int> neigh;    // neigh list
+        cell.neighbors(neigh);
+        int nf = neigh.size();
+  
+        if (nf > neimax){
+          neimax = nf + 2;
+          neilist = memory->grow(neilist,neimax+1,natom+1,"neilist");
         }
-        neilist[0][id] = nnei;
+  
+        if (refine) { // based on refined voro info
+          double fcut = surf_min * cell.surface_area();
+          std::vector<double> fs;    // face areas
+          cell.face_areas(fs);
+          int nnei = 0;
+          for (int ii=0; ii<nf; ii++){
+            if (fs[ii] < fcut) continue;
+            int jd = neigh[ii];
+            neilist[++nnei][id] = jd;
+          }
+          neilist[0][id] = nnei;
+  
+        } else { // based on direct voro info
+          neilist[0][id] = nf;
+          for (int ii=0; ii<nf; ii++) neilist[ii+1][id] = neigh[ii];
+        }
+  
+      } while (cl.inc());
 
-      } else { // based on direct voro info
-        neilist[0][id] = nf;
-        for (int ii=0; ii<nf; ii++) neilist[ii+1][id] = neigh[ii];
-      }
+    } else { // orthogonal box
 
-    } while (cl.inc());
+      voro::container con(xlo,xhi,ylo,yhi,zlo,zhi,nx,ny,nz,true,true,true,8);
+  
+      // put atoms into the container
+      for (int i=1; i<= n; i++) con.put(i, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
+  
+      // loop over all particles and compute their voronoi cell
+      voro::voronoicell_neighbor cell;
+      voro::c_loop_all cl(con);
+      if (cl.start()) do if (con.compute_cell(cell,cl)){
+        int id = cl.pid();
+  
+        std::vector<int> neigh;    // neigh list
+        cell.neighbors(neigh);
+        int nf = neigh.size();
+  
+        if (nf > neimax){
+          neimax = nf + 2;
+          neilist = memory->grow(neilist,neimax+1,natom+1,"neilist");
+        }
+  
+        if (refine) { // based on refined voro info
+          double fcut = surf_min * cell.surface_area();
+          std::vector<double> fs;    // face areas
+          cell.face_areas(fs);
+          int nnei = 0;
+          for (int ii=0; ii<nf; ii++){
+            if (fs[ii] < fcut) continue;
+            int jd = neigh[ii];
+            neilist[++nnei][id] = jd;
+          }
+          neilist[0][id] = nnei;
+  
+        } else { // based on direct voro info
+          neilist[0][id] = nf;
+          for (int ii=0; ii<nf; ii++) neilist[ii+1][id] = neigh[ii];
+        }
+  
+      } while (cl.inc());
+    }
 
     // to find out if any two atoms are bonded or not
     for (int i=0; i<= natom; i++)
