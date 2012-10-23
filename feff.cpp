@@ -333,7 +333,8 @@ void Driver::FEFF_main()
           // find atoms in the cluster
           std::list<int> cluster;
           std::map<int,int> shell;
-          cluster.clear(); shell.clear(); shell[id] = 0;
+          cluster.clear(); shell.clear();
+          cluster.push_back(id); shell[id] = 0;
           FEFF_cluster(0, nshell, neilist, id, cluster, shell);
           
           cluster.sort(); cluster.unique();
