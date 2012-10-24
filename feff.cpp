@@ -69,7 +69,7 @@ void Driver::FEFF_main()
 
   // further refining the absorbing atoms by their Voronoi index
   int flag_voro = 0, nmax_voro = 0, seed = 0;
-  std::set<std::string> voroset; std::string vindex;
+  set<string> voroset; string vindex;
   printf("\nIf you want to futher refine the absorbing atoms by their Voronoi index,\n");
   printf("please input the desired Voronoi index now, e.g., 0,6,0,8. if multiple indices\n");
   printf("are wanted, separate them by space: ");
@@ -255,8 +255,9 @@ void Driver::FEFF_main()
       neilist = memory->create(neilist, nmax+1, natom+1, "neilist");
       for (int ii=0; ii<=natom; ii++) cenlist[ii] = 0;
 
+      map<int,string> voroindex; voroindex.clear();
       // compute the neighbor list and voro info
-      FEFF_voro(voroset, nmax, neilist, cenlist, voro_mins);
+      FEFF_voro(voroset, nmax, neilist, cenlist, voro_mins, voroindex);
 
       // analyse the result
       int nc = 0;
@@ -331,8 +332,8 @@ void Driver::FEFF_main()
           if (cenlist[id] == 0) continue;
 
           // find atoms in the cluster
-          std::list<int> cluster;
-          std::map<int,int> shell;
+          list<int> cluster;
+          map<int,int> shell;
           cluster.clear(); shell.clear();
           cluster.push_back(id); shell[id] = 0;
           FEFF_cluster(0, nshell, neilist, id, cluster, shell);
@@ -341,10 +342,10 @@ void Driver::FEFF_main()
           int nclus = cluster.size();
 
           // check atomic types in the cluster
-          std::map<int,int> attyp2pot;
+          map<int,int> attyp2pot;
           attyp2pot.clear(); attyp2pot[0] = 0;
           int npottype = 0;
-          for (std::list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
+          for (list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
             int jd = *it;
             int jp = one->attyp[jd];
             if (jd == id) jp = 0;
@@ -362,12 +363,12 @@ void Driver::FEFF_main()
   
             // write the potential part of feff.inp
             element->Num2Name(type2atnum[one->attyp[id]], ename);
-            fprintf(fp,"TITLE Cluster centered on atom %d (%s) of frame %d (MD steps: %d)\n",
-              id, ename, img+1, one->tstep);
+            fprintf(fp,"TITLE Cluster centered on atom %d (%s, <%s>) of frame %d (MD steps: %d)\n",
+              id, ename, voroindex[id].c_str(), img+1, one->tstep);
             fprintf(fp,"TITLE Total number of atoms in cluster: %d\n\n", nclus);
   
             fprintf(fp,"POTENTIALS\n*  ipot Z   tag lmax1 lmax2\n");
-            for (std::map<int,int>::iterator it = attyp2pot.begin(); it != attyp2pot.end(); it++){
+            for (map<int,int>::iterator it = attyp2pot.begin(); it != attyp2pot.end(); it++){
               int ip = it->first; if (ip == 0) ip = one->attyp[id];
               int IP = it->second;
               element->Num2Name(type2atnum[ip], ename);
@@ -389,7 +390,7 @@ void Driver::FEFF_main()
           // atomic positions
           one->dir2car();
           if (flag_out & OutFeff) fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot tag ishell dist id\n");
-          for (std::list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
+          for (list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
             int jd = *it;
             int jp = one->attyp[jd];
             if (jd == id) jp = 0;
@@ -457,7 +458,7 @@ void Driver::FEFF_main()
             if (flag_out & OutFeff) fprintf(fp,"* %2s  %d  %lg +/- %lg\n", ename, CN[ip], nndist[ip], stdv);
             fprintf(fpx," %2s %d %lg +/- %lg; ", ename, CN[ip], nndist[ip], stdv);
           }
-          fprintf(fpx,"\n");
+          fprintf(fpx," <%s>\n", voroindex[id].c_str());
 
           shell.clear(); cluster.clear();
           // clsoe the file
@@ -465,6 +466,7 @@ void Driver::FEFF_main()
         }
       }
 
+      voroindex.clear();
       memory->destroy(neilist);
       memory->destroy(cenlist);
     } // end of loop over frames
@@ -554,7 +556,7 @@ return;
 /*------------------------------------------------------------------------------
  * Method to find the neighbor list based on refined Voronoi calculation
  *----------------------------------------------------------------------------*/
-void Driver::FEFF_voro(std::set<std::string> vlist, int &nmax, int **nlist, int *clist, double *mins)
+void Driver::FEFF_voro(set<string> vlist, int &nmax, int **nlist, int *clist, double *mins, map<int,string> &vindx)
 {
   double surf_min = mins[0];
   double edge_min = mins[1];
@@ -589,9 +591,9 @@ void Driver::FEFF_voro(std::set<std::string> vlist, int &nmax, int **nlist, int 
     if (cl.start()) do if (con.compute_cell(c1,cl)){
       int id;
       double x, y, z, vol;
-      std::vector<int> ff;       // face_freq
-      std::vector<int> neigh;    // neigh list
-      std::vector<double> fs;    // face areas
+      vector<int> ff;       // face_freq
+      vector<int> neigh;    // neigh list
+      vector<double> fs;    // face areas
       int index[7];
       for (int i=0; i<7; i++) index[i] = 0;
          
@@ -664,8 +666,8 @@ void Driver::FEFF_voro(std::set<std::string> vlist, int &nmax, int **nlist, int 
       for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
         
       // refine the voronoi cell if asked by skipping ultra short edges
-      std::vector<double> vpos;
-      std::vector<int>    vlst;
+      vector<double> vpos;
+      vector<int>    vlst;
       double lcut2 = cell->total_edge_distance()*edge_min;
       lcut2 = lcut2*lcut2;
     
@@ -700,7 +702,7 @@ void Driver::FEFF_voro(std::set<std::string> vlist, int &nmax, int **nlist, int 
         if (vlist.size() > 0){
           char str[MAXLINE];
           sprintf(str,"%d,%d,%d,%d", index[3], index[4], index[5], index[6]);
-          std::string vindex; vindex.assign(str);
+          string vindex; vindex.assign(str);
           if (vlist.count(vindex) > 0) clist[id] = 1;
         } else clist[id] = 1;
       }
@@ -726,9 +728,9 @@ void Driver::FEFF_voro(std::set<std::string> vlist, int &nmax, int **nlist, int 
     if (cl.start()) do if (con.compute_cell(c1,cl)){
       int id;
       double x, y, z, vol;
-      std::vector<int> ff;       // face_freq
-      std::vector<int> neigh;    // neigh list
-      std::vector<double> fs;    // face areas
+      vector<int> ff;       // face_freq
+      vector<int> neigh;    // neigh list
+      vector<double> fs;    // face areas
       int index[7];
       for (int i=0; i<7; i++) index[i] = 0;
          
@@ -785,8 +787,8 @@ void Driver::FEFF_voro(std::set<std::string> vlist, int &nmax, int **nlist, int 
       for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
         
       // refine the voronoi cell if asked by skipping ultra short edges
-      std::vector<double> vpos;
-      std::vector<int>    vlst;
+      vector<double> vpos;
+      vector<int>    vlst;
       double lcut2 = cell->total_edge_distance()*edge_min;
       lcut2 = lcut2*lcut2;
     
@@ -817,12 +819,12 @@ void Driver::FEFF_voro(std::set<std::string> vlist, int &nmax, int **nlist, int 
         if (ford[i] < 7) index[ford[i]] += 1;
       }
     
+      char str[MAXLINE];
+      sprintf(str,"%d,%d,%d,%d", index[3], index[4], index[5], index[6]);
+      vindx[id].assign(str);
       if (one->atsel[id] == 1){
         if (vlist.size() > 0){
-          char str[MAXLINE];
-          sprintf(str,"%d,%d,%d,%d", index[3], index[4], index[5], index[6]);
-          std::string vindex; vindex.assign(str);
-          if (vlist.count(vindex) > 0) clist[id] = 1;
+          if (vlist.count(vindx[id]) > 0) clist[id] = 1;
         } else clist[id] = 1;
       }
     
@@ -843,8 +845,7 @@ return;
 /*------------------------------------------------------------------------------
  * Recursive method to find neighbors of id upto max shells
  *----------------------------------------------------------------------------*/
-void Driver::FEFF_cluster(int il, const int max, int **nlist, int id,
-  std::list<int> &clist, std::map<int,int> &myshell)
+void Driver::FEFF_cluster(int il, const int max, int **nlist, int id, list<int> &clist, map<int,int> &myshell)
 {
   if (++il > max) return;
 
