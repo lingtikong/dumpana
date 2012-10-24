@@ -13,8 +13,14 @@ enum{NCOMMON,NBOND,MAXBOND,MINBOND};
 
 /* ----------------------------------------------------------------------
  * Reference: Comp. Phys. Comm. 177:518, (2007).
+ * ----------------------------------------------------------------------
+ * job  (in)  : 1 for cna; else for cnp
+ * ntm  (in)  : # of atoms
+ * list (in)  : nearest neighbor list
+ * pos  (in)  : atomic positions in cartesian
+ * box  (in)  : box dimensions
+ * fp   (in)  : FILE to output the result
  * ---------------------------------------------------------------------- */
-
 ComputeCNAAtom::ComputeCNAAtom(const int job, const int ntm, int **list, double **pos, double *box, FILE *fp)
 {
   x = pos;
@@ -39,8 +45,9 @@ ComputeCNAAtom::ComputeCNAAtom(const int job, const int ntm, int **list, double 
 return;
 }
 
-/* ---------------------------------------------------------------------- */
-
+/* ----------------------------------------------------------------------
+ * Deconstuctor, free memory
+ * ---------------------------------------------------------------------- */
 ComputeCNAAtom::~ComputeCNAAtom()
 {
   memory->destroy(pattern);

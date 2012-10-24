@@ -224,6 +224,11 @@ return;
 
 /*------------------------------------------------------------------------------
  * Private method to compute the Honeycutt-Andersen index for a pair of atoms
+ *------------------------------------------------------------------------------
+ * id, jd  (in) : ID of the atom pair
+ * list    (in) : neighbor list
+ * fp      (in) : FILE to write the result
+ * flag    (in) : 1, write the common neighors; 0, not write
  *----------------------------------------------------------------------------*/
 void Driver::count_HA(int id, int jd, int **list, FILE * fp, const int flag)
 {

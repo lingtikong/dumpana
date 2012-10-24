@@ -257,7 +257,7 @@ void Driver::FEFF_main()
 
       map<int,string> voroindex; voroindex.clear();
       // compute the neighbor list and voro info
-      FEFF_voro(voroset, nmax, neilist, cenlist, voro_mins, voroindex);
+      FEFF_voro(voroset, voro_mins, nmax, neilist, cenlist, voroindex);
 
       // analyse the result
       int nc = 0;
@@ -480,6 +480,9 @@ return;
 
 /*------------------------------------------------------------------------------
  * Method to generate the common options for XANES or EXAFS calculations.
+ *------------------------------------------------------------------------------
+ * job    (in) : 1 for XANES; 2 for EXAFS
+ * fp     (in) : FILE to write
  *----------------------------------------------------------------------------*/
 void Driver::FEFF_input(int job, FILE *fp)
 {
@@ -555,8 +558,15 @@ return;
 
 /*------------------------------------------------------------------------------
  * Method to find the neighbor list based on refined Voronoi calculation
+ *------------------------------------------------------------------------------
+ * vlist   (in)    : list of voronoi index to select; if empty, select all
+ * mins    (in)    : threshold for surface, edge and minimum neighbors retained
+ * nmax    (inout) : max # of neighbors for each atom
+ * nlist   (out)   : neighbor list
+ * clist   (out)   : status of atoms, 1 if selected, 0 if not.
+ * vindx   (out)   : Voronoi index for each atom
  *----------------------------------------------------------------------------*/
-void Driver::FEFF_voro(set<string> vlist, int &nmax, int **nlist, int *clist, double *mins, map<int,string> &vindx)
+void Driver::FEFF_voro(set<string> vlist, double *mins, int &nmax, int **nlist, int *clist, map<int,string> &vindx)
 {
   double surf_min = mins[0];
   double edge_min = mins[1];
@@ -844,6 +854,12 @@ return;
 
 /*------------------------------------------------------------------------------
  * Recursive method to find neighbors of id upto max shells
+ *------------------------------------------------------------------------------
+ * il    (in)  : current shell level
+ * max   (in)  : max shell #
+ * nlist (in)  : neighbor list
+ * clist (out) : list stores the IDs of atoms in the cluster
+ * myshell (out) : shell # of each atom in the cluster
  *----------------------------------------------------------------------------*/
 void Driver::FEFF_cluster(int il, const int max, int **nlist, int id, list<int> &clist, map<int,int> &myshell)
 {
