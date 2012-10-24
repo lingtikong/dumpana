@@ -312,10 +312,9 @@ return;
 void Driver::avedump()
 {
   DumpAtom *first = all[istr];
-  first->dir2car();
-  double lx = first->lx;
-  double ly = first->ly;
-  double lz = first->lz;
+  first->car2dir();
+  double lx = first->lx, ly = first->ly, lz = first->lz;
+  double xy = first->xy, xz = first->xz, yz = first->yz;
   int nfirst = first->natom;
   double **atpos = memory->create(atpos,nfirst+1,3,"avedump:atpos");
   for (int ii=1; ii<=nfirst; ii++)
@@ -326,17 +325,16 @@ void Driver::avedump()
     one = all[img];
     if (one->natom != nfirst) continue;
 
-    one->dir2car();
+    one->car2dir();
 
-    lx += one->lx;
-    ly += one->ly;
-    lz += one->lz;
+    lx += one->lx; ly += one->ly; lz += one->lz;
+    xy += one->xy; xz += one->xz; yz += one->yz;
 
     for (int ii=1; ii<= nfirst; ii++){
       for (int idim=0; idim<3; idim++){
         double dx = one->atpos[ii][idim] - first->atpos[ii][idim];
-        while (dx >= one->hbox[idim]) dx -= one->box[idim];
-        while (dx < -one->hbox[idim]) dx += one->box[idim];
+        while (dx >= 0.5) dx -= 1.;
+        while (dx < -0.5) dx += 1.;
 
         atpos[ii][idim] += dx;
       }
@@ -351,9 +349,15 @@ void Driver::avedump()
     atpos[ii][2] = atpos[ii][2]/double(ncount) + first->atpos[ii][2];
   }
 
-  lx /= double(ncount);
-  ly /= double(ncount);
-  lz /= double(ncount);
+  lx /= double(ncount); ly /= double(ncount); lz /= double(ncount);
+  xy /= double(ncount); xz /= double(ncount); yz /= double(ncount);
+
+  // convert fractional into cartesian
+  for (int ii=1; ii<= nfirst; ii++){
+    atpos[ii][0] = atpos[ii][0]*lx + atpos[ii][1]*xy + atpos[ii][2]*xz;
+    atpos[ii][1] = atpos[ii][1]*ly + atpos[ii][2]*yz;
+    atpos[ii][2] = atpos[ii][2]*lz;
+  }
   
   char str[MAXLINE];
   char *fout;
@@ -368,13 +372,13 @@ void Driver::avedump()
   strcpy(fout, ptr);
   FILE *fp = fopen(fout, "w");
   fprintf(fp,"%d\n", nfirst);
-  fprintf(fp,"Averaged over frames from %d to %d with incremental of %d: %lg %lg %lg\n",
-  istr+1, iend+1, inc, lx, ly, lz);
+  fprintf(fp,"Averaged over frames from %d to %d with incremental of %d: %lg %lg %lg %lg %lg %lg\n",
+  istr+1, iend+1, inc, lx, ly, lz, xy, xz, yz);
   int ii = 1;
   if (nfirst >= 3){
-    fprintf(fp,"%d %lg %lg %lg crystal_vector 1 %lg 0. 0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], lx); ii++;
-    fprintf(fp,"%d %lg %lg %lg crystal_vector 2 0. %lg 0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], ly); ii++;
-    fprintf(fp,"%d %lg %lg %lg crystal_vector 3 0. 0. %lg\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], lz); ii++;
+    fprintf(fp,"%d %lg %lg %lg crystal_vector 1 %lg 0.   0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], lx); ii++;
+    fprintf(fp,"%d %lg %lg %lg crystal_vector 2 %lg %lg  0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], xy, ly); ii++;
+    fprintf(fp,"%d %lg %lg %lg crystal_vector 3 %lg %lg %lg\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], xz, yz, lz); ii++;
   }
   for (int i=ii; i<= nfirst; i++) fprintf(fp,"%d %lg %lg %lg\n", first->attyp[i], atpos[i][0], atpos[i][1], atpos[i][2]);
   fclose(fp);
