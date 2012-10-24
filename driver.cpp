@@ -434,6 +434,9 @@ int Driver::count_words(const char *line)
 
 /*------------------------------------------------------------------------------
  * Method to get the mapping between atomic type and element names
+ *------------------------------------------------------------------------------
+ * flag  (in)  : 0, called when knows the # of atom types; 1, otherwise
+ * ntype (in)  : total number of atom types
  *----------------------------------------------------------------------------*/
 void Driver::MapType2Elem(const int flag, const int ntype)
 {

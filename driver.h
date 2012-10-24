@@ -65,7 +65,7 @@ private:
   // Prepare for FEFF9
   void FEFF_main();
   void FEFF_input(int, FILE *);
-  void FEFF_voro(set<string>, int &, int **, int *, double *, map<int,string>&);
+  void FEFF_voro(set<string>, double *, int &, int **, int *, map<int,string>&);
   void FEFF_cluster(int, const int, int **, int, list<int> &, map<int,int>&);
 
   // help info
