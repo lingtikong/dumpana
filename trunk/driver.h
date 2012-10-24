@@ -14,6 +14,8 @@
 #define OutEdge 2
 #define OutFeff 4
 
+using namespace std;
+
 class Driver {
 public:
   Driver(int, char**);
@@ -24,7 +26,7 @@ private:
   int nframe;                         // total # of frames
   int istr, iend, inc;                // frame range
   DumpAtom *one;                      // pointer to one frame
-  std::vector<DumpAtom *> all;        // all frames from lammps atom style dump
+  vector<DumpAtom *> all;             // all frames from lammps atom style dump
   void readdump();                    // to read in the dump file
 
   // map atomic type to elements
@@ -63,8 +65,8 @@ private:
   // Prepare for FEFF9
   void FEFF_main();
   void FEFF_input(int, FILE *);
-  void FEFF_voro(std::set<std::string>, int &, int **, int *, double *);
-  void FEFF_cluster(int, const int, int **, int, std::list<int> &, std::map<int,int>&);
+  void FEFF_voro(set<string>, int &, int **, int *, double *, map<int,string>&);
+  void FEFF_cluster(int, const int, int **, int, list<int> &, map<int,int>&);
 
   // help info
   void help();
