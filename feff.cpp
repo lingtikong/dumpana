@@ -340,6 +340,17 @@ void Driver::FEFF_main()
           cluster.sort(); cluster.unique();
           int nclus = cluster.size();
 
+          // check atomic types in the cluster
+          std::map<int,int> attyp2pot;
+          attyp2pot.clear(); attyp2pot[0] = 0;
+          int npottype = 0;
+          for (std::list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
+            int jd = *it;
+            int jp = one->attyp[jd];
+            if (jd == id) jp = 0;
+            if (attyp2pot.count(jp) == 0) attyp2pot[jp] = ++npottype;
+          }
+
           // open the feff.inp file for current frame
           sprintf(dirname, "%s/F%dA%d", workdir, img+1, id);
           fprintf(fpx, "%s", dirname); ndir++;
@@ -356,10 +367,11 @@ void Driver::FEFF_main()
             fprintf(fp,"TITLE Total number of atoms in cluster: %d\n\n", nclus);
   
             fprintf(fp,"POTENTIALS\n*  ipot Z   tag lmax1 lmax2\n");
-            fprintf(fp,"%4d   %3d  %3s  -1   3\n", 0, type2atnum[one->attyp[id]], ename);
-            for (int ip=1; ip <= one->ntype; ip++){
+            for (std::map<int,int>::iterator it = attyp2pot.begin(); it != attyp2pot.end(); it++){
+              int ip = it->first; if (ip == 0) ip = one->attyp[id];
+              int IP = it->second;
               element->Num2Name(type2atnum[ip], ename);
-              fprintf(fp,"%4d   %3d  %3s  -1   3\n", ip, type2atnum[ip], ename);
+              fprintf(fp,"%4d   %3d  %3s  -1   3\n", IP, type2atnum[ip], ename);
             }
   
             // write other common info
@@ -418,7 +430,7 @@ void Driver::FEFF_main()
             }
             double rij = sqrt(r2);
             element->Num2Name(type2atnum[one->attyp[jd]], ename);
-            if (flag_out & OutFeff) fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], jp, ename, shell[jd], rij, jd);
+            if (flag_out & OutFeff) fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], attyp2pot[jp], ename, shell[jd], rij, jd);
 
             if (shell[jd] == 1){
               CN[jp]++; CNtot++;
@@ -426,6 +438,7 @@ void Driver::FEFF_main()
               nndist2[jp] += r2;
             }
           }
+          attyp2pot.clear();
 
           // write coordination number info
           if (flag_out & OutFeff){
@@ -438,7 +451,7 @@ void Driver::FEFF_main()
             double stdv = 0.;
             if (CN[ip] > 0){
               nndist[ip] /= double(CN[ip]);
-              double stdv = sqrt(nndist2[ip]/double(CN[ip])-nndist[ip]*nndist[ip]);
+              stdv = sqrt(nndist2[ip]/double(CN[ip])-nndist[ip]*nndist[ip]);
             }
             element->Num2Name(type2atnum[ip], ename);
             if (flag_out & OutFeff) fprintf(fp,"* %2s  %d  %lg +/- %lg\n", ename, CN[ip], nndist[ip], stdv);
