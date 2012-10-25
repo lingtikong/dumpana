@@ -225,9 +225,9 @@ void Driver::FEFF_main()
 
     // cluster size related info
     const int MaxShell = 12;
-    int nshell = 3;
+    int nshell = 2;
     if (flag_pbc == 0){
-      printf("\nHow many shells would you like to include into the cluster? (1-%d)[3]: ",MaxShell);
+      printf("\nHow many shells would you like to include into the cluster? (1-%d)[%d]: ",MaxShell, nshell);
       if (count_words(fgets(str,MAXLINE,stdin)) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         nshell = atoi(ptr);

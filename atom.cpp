@@ -196,9 +196,6 @@ void DumpAtom::selection(const char *line)
   char onecmd[MAXLINE];
   strcpy(realcmd," ");
 
-  // fractional coordinates are used for selection
-  car2dir();
-
   // by default, all are selected
   for (int i = 1; i <= natom; i++) atsel[i] = 1;
 
@@ -279,6 +276,8 @@ void DumpAtom::selection(const char *line)
 
     } else if (strcmp(key,"x")==0 || strcmp(key,"y")==0 || strcmp(key,"z")==0 ){
     // selection by fractional position
+      car2dir();
+
       int dir = key[0]-'x';
       oper = strtok(NULL, " \n\t\r\f");
       if (oper == NULL) break;
