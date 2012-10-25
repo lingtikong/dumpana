@@ -305,9 +305,6 @@ void Driver::paircorr()
       for (int img = istr; img <= iend; img += inc){
         one = all[img];
     
-        // need fractional coordinates
-        one->car2dir();
-  
         // select atoms as source
         one->selection(srcsel);
         if (one->nsel < 1) continue;
@@ -321,6 +318,9 @@ void Driver::paircorr()
   
         nused++;
         const double dg = one->vol/(2.*tpi*delr*nsrc*one->nsel);
+  
+        // need fractional coordinates
+        one->car2dir();
   
         // set local variables
         for (int i=1; i<= one->natom; i++){

@@ -196,6 +196,9 @@ void DumpAtom::selection(const char *line)
   char onecmd[MAXLINE];
   strcpy(realcmd," ");
 
+  // fractional coordinates are used for selection
+  car2dir();
+
   // by default, all are selected
   for (int i = 1; i <= natom; i++) atsel[i] = 1;
 
