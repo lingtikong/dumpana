@@ -68,6 +68,9 @@ private:
   void FEFF_voro(set<string>, double *, int &, int **, int *, map<int,string>&);
   void FEFF_cluster(int, const int, int **, int, list<int> &, map<int,int>&);
 
+  // Connectivity info for certain clusters; needs FEFF_voro
+  void ClusterConnectivity();
+
   // help info
   void help();
 

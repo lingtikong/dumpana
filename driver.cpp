@@ -72,11 +72,12 @@ Driver::Driver(int narg, char** arg)
     for (int i=0; i<20; i++) printf("----"); printf("\n");
     printf("Voronoi based:                         | Others:\n");
     for (int i=0; i<20; i++) printf("----"); printf("\n");
-    printf("  1. Voronoi diagram analysis;         |   6. Convert to xyz format; \n");
-    printf("  2. Chemical Short Range Order;       |   7. Average over frames;   \n");
-    printf("  3. Honeycutt-Andersen bond index;    |   8. Pair correlation function;\n");
+    printf("  1. Voronoi diagram analysis;         |  11. Convert to xyz format; \n");
+    printf("  2. Chemical Short Range Order;       |  12. Average over frames;   \n");
+    printf("  3. Honeycutt-Andersen bond index;    |  13. Pair correlation function;\n");
     printf("  4. Common neighbor analysis;         | \n");
     printf("  5. Prepare for FEFF9;                | \n");
+    printf("  6. Cluster connectivity info;        | \n");
     for (int i=0; i<20; i++) printf("----"); printf("\n");
     printf("  0. Exit.\nYour choice [%d]: ", job);
     fgets(str,MAXLINE,stdin);
@@ -115,15 +116,20 @@ Driver::Driver(int narg, char** arg)
 
     case 6:
       setrange();
+      if (nsel > 0) ClusterConnectivity();
+      break;
+
+    case 11:
+      setrange();
       if (nsel > 0) writexyz();
       break;
 
-    case 7:
+    case 12:
       setrange();
       if (nsel > 0) avedump();
       break;
 
-    case 8:
+    case 13:
       setrange();
       if (nsel > 0) paircorr();
       break;

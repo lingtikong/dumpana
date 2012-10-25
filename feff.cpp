@@ -263,6 +263,7 @@ void Driver::FEFF_main()
       int nc = 0;
       for (int ii=1; ii<=natom; ii++) nc += cenlist[ii];
       if (nc < 1){
+        voroindex.clear();
         memory->destroy(neilist);
         memory->destroy(cenlist);
         continue;
