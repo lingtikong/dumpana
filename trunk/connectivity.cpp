@@ -80,8 +80,8 @@ void Driver::ClusterConnectivity()
   }
 
   // define output filename
-  FILE *fp; char *fname;
-  fp = NULL; fname = NULL;
+  FILE *fp, *fpx; char *fname;
+  fp = fpx = NULL; fname = NULL;
 
   const int MaxShell = 9;
   int nshell = 1;
@@ -116,18 +116,30 @@ void Driver::ClusterConnectivity()
     fprintf(fp,"\n# frame atom type voronoi-index\n");
 
   } else if (job == 2){
-    printf("\nIf you want to output the cluster info, input the file name now: ");
+    // output filename
+    printf("\nPlease input the output file name [Connectivity.dat]: ");
     if (count_words(fgets(str,MAXLINE,stdin)) > 0){
       ptr = strtok(str," \n\t\r\f");
       fname = new char [strlen(ptr)+1];
       strcpy(fname, ptr);
+    } else {
+      fname = new char [18];
+      sprintf(str,"Connectivity.dat");
+      strcpy(fname, str);
+    }
+    fp = fopen(fname,"w");
+
+    // detailed info is optional
+    printf("If you want to output the cluster info, input the file name now: ");
+    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      ptr = strtok(str," \n\t\r\f");
 
       // open and write header
-      fp = fopen(fname,"w");
-      fprintf(fp,"# Cluster connectivity info for atoms selected by: %s", selcmd);
-      fprintf(fp,"# centered on clsuters:" );
-      for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) fprintf(fp," %s", it->c_str());
-      fprintf(fp,"\n# frame atom SC-id voronoi-index #connected connected-clusters\n");
+      fpx = fopen(ptr,"w");
+      fprintf(fpx,"# Cluster connectivity info for atoms selected by: %s", selcmd);
+      fprintf(fpx,"# centered on clsuters:" );
+      for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) fprintf(fpx," %s", it->c_str());
+      fprintf(fpx,"\n# frame atom SC-id voronoi-index #connected connected-clusters\n");
     }
   }
 
@@ -258,17 +270,17 @@ void Driver::ClusterConnectivity()
       }
 
       // output connectivity info if asked
-      if (fp){
+      if (fpx){
         for (int id=1; id <= natom; id++){
           if (cenlist[id] == 0) continue;
 
-          fprintf(fp,"%d %d %d %s %d", img+1, id, SCid[id], voroindex[id].c_str(), nconn[id]);
+          fprintf(fpx,"%d %d %d %s %d", img+1, id, SCid[id], voroindex[id].c_str(), nconn[id]);
           for (int ii=1; ii<= nconn[id]; ii++){
             int jd = conns[(id-1)*natom+ii];
             int ct = connt[(id-1)*natom+jd];
-            fprintf(fp," %d-(%s):%d", jd, voroindex[jd].c_str(), ct);
+            fprintf(fpx," %d-(%s):%d", jd, voroindex[jd].c_str(), ct);
           }
-          fprintf(fp,"\n");
+          fprintf(fpx,"\n");
         }
       }
       nconn.clear(); SCid.clear(); conns.clear(); connt.clear();
@@ -286,10 +298,30 @@ void Driver::ClusterConnectivity()
     printf("\n"); for (int i=0; i<20; i++) printf("----");
     printf("\nNClus NSuper Niso NLinked Vertex%% Edge%% Face%% Penetrate%%\n");
     printf("%d %d  %d %d", nclus, nsuper, niso, nsuper-niso); counts[0] = MAX(1,counts[0]);
-    for (int ii=1; ii<5; ii++) printf(" %g", double(counts[ii])/double(counts[0])*100.); printf("\n");
+    for (int ii=1; ii<5; ii++) printf(" %g", double(counts[ii])/double(counts[0])*100.);
+    printf("\n"); for (int i=0; i<20; i++) printf("----"); printf("\n");
+    
+    fprintf(fp,"# Connectivity info for clusters:");
+    for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) fprintf(fp," %s", it->c_str());
+    fprintf(fp,"\n#"); for (int i=0; i<20; i++) fprintf(fp,"----");
+    fprintf(fp,"\n# Definitions\n#  NClus      : total number of clusters;\n");
+    fprintf(fp,"#  NSuper     : total number of super clusters;\n");
+    fprintf(fp,"#  Niso       : total number of isolated clusters, ie, not linked;\n");
+    fprintf(fp,"#  NLinked    : total number of linked clusters, Niso + NLinked = NSuper;\n");
+    fprintf(fp,"#  Vertex%%    : for linked clusters, the percentage of shared via vertex;\n");
+    fprintf(fp,"#  Edge%%      : for linked clusters, the percentage of shared via edge;\n");
+    fprintf(fp,"#  Face%%      : for linked clusters, the percentage of shared via face;\n");
+    fprintf(fp,"#  Penetrate%% : for linked clusters, the percentage of shared via volume,\n");
+    fprintf(fp,"#                i.e., nearby cluster centers are bonded to each other;\n#");
+    for (int i=0; i<20; i++) fprintf(fp,"----");
+    fprintf(fp,"\n#NClus NSuper Niso NLinked Vertex%% Edge%% Face%% Penetrate%%\n");
+    fprintf(fp,"%d %d  %d %d", nclus, nsuper, niso, nsuper-niso); counts[0] = MAX(1,counts[0]);
+    for (int ii=1; ii<5; ii++) fprintf(fp," %g", double(counts[ii])/double(counts[0])*100.); fprintf(fp,"\n");
   }
 
-  if (fp) fclose(fp);
+  fclose(fp);
+  if (fpx) fclose(fpx);
+  printf("\nJob done, the results are written to file: %s.\n", fname); delete []fname;
   for (int i=0; i<20; i++) printf("===="); printf("\n");
 
 return;
