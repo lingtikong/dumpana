@@ -6,7 +6,7 @@
 
 /*------------------------------------------------------------------------------
  * Constructor of driver, main menu
- *----------------------------------------------------------------------------*/
+ *------------------------------------------------------------------------------ */
 Driver::Driver(int narg, char** arg)
 {
   one = NULL; all.clear();
@@ -147,7 +147,7 @@ return;
 
 /*------------------------------------------------------------------------------
  * Method to count # of words in a string, without destroying the string
- *----------------------------------------------------------------------------*/
+ *------------------------------------------------------------------------------ */
 Driver::~Driver()
 {
   if (dump) delete []dump;
@@ -167,7 +167,7 @@ return;
 
 /*------------------------------------------------------------------------------
  * Method to read the dump file from lammps
- *----------------------------------------------------------------------------*/
+ *------------------------------------------------------------------------------ */
 void Driver::readdump()
 {
   // open file
@@ -220,7 +220,7 @@ return;
 
 /*------------------------------------------------------------------------------
  * Method to set the frame range for further analysis
- *----------------------------------------------------------------------------*/
+ *------------------------------------------------------------------------------ */
 void Driver::setrange()
 {
   char str[MAXLINE];
@@ -261,7 +261,7 @@ return;
 
 /*------------------------------------------------------------------------------
  * Method to convert the dump file into xyz format
- *----------------------------------------------------------------------------*/
+ *------------------------------------------------------------------------------ */
 void Driver::writexyz()
 {
   char str[MAXLINE];
@@ -314,7 +314,7 @@ return;
 
 /*------------------------------------------------------------------------------
  * Method to write one frame of the dump file to a new file
- *----------------------------------------------------------------------------*/
+ *------------------------------------------------------------------------------ */
 void Driver::avedump()
 {
   DumpAtom *first = all[istr];
@@ -394,9 +394,10 @@ void Driver::avedump()
 
 return;
 }
+
 /*------------------------------------------------------------------------------
  * To display help info
- *----------------------------------------------------------------------------*/
+ *------------------------------------------------------------------------------ */
 void Driver::help()
 {
   printf("\n  dumpana\nCode to analyse the atom style dump file of lammps.\n");
@@ -404,9 +405,10 @@ void Driver::help()
   printf("\nAvailable options:\n");
   printf("    -h       To display this help info;\n");
   printf("    -1       To tell the code to exit once an analysis is done;\n");
-  printf("    -os      To output the surface area ratios;\n");
-  printf("    -oe      To output the edge length ratios;\n");
-  printf("    -ose     To output both the surface area and the edge length ratios;\n");
+  printf("    -os      To output the surface area ratios when analyze Voronoi diagram;\n");
+  printf("    -oe      To output the edge length ratios when analyze Voronoi diagram;\n");
+  printf("    -ose     To output both the surface area and the edge length ratios\n");
+  printf("                 when analyze Voronoi diagram;\n");
   printf("    -s       To skip writing feff.inp files when preparing FEFF for desired voronoi\n");
   printf("                clusters; instead, output the CN info only.\n");
   printf("    file     Must be lammps atom style dump file, by default: dump.lammpstrj;\n");
@@ -417,7 +419,7 @@ return;
 
 /*------------------------------------------------------------------------------
  * Method to count # of words in a string, without destroying the string
- *----------------------------------------------------------------------------*/
+ *------------------------------------------------------------------------------ */
 int Driver::count_words(const char *line)
 {
   int n = strlen(line) + 1;
@@ -443,7 +445,7 @@ int Driver::count_words(const char *line)
  *------------------------------------------------------------------------------
  * flag  (in)  : 0, called when knows the # of atom types; 1, otherwise
  * ntype (in)  : total number of atom types
- *----------------------------------------------------------------------------*/
+ *------------------------------------------------------------------------------ */
 void Driver::MapType2Elem(const int flag, const int ntype)
 {
   if (element) delete element; element = NULL;
