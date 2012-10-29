@@ -167,7 +167,7 @@ void Driver::ClusterConnectivity()
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) voro_mins[1] = atof(ptr);
-  printf("Edges whose length takes less ratio than %lg will be skiped!\n\n", voro_mins[1]);
+  printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", voro_mins[1]);
 
   // variables for connectivity info
   int nclus, nsuper, niso, counts[5];

@@ -59,8 +59,9 @@ private:
   // Common neighber analysis or common neighbor parameter
   void Compute_CNACNP();
 
-  // Pair Correlation
+  // Pair Correlation and static structure factor
   void paircorr();
+  void strfac();
 
   // Prepare for FEFF9
   void FEFF_main();
