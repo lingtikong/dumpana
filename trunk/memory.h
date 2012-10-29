@@ -8,6 +8,7 @@
 #include "stdint.h"
 #include "inttypes.h"
 #include <math.h>
+#include <complex>
 
 typedef int64_t bigint;
 #define BIGINT_FORMAT "%" PRId64

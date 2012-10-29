@@ -57,7 +57,7 @@ void Driver::voro()
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) edge_min = atof(ptr);
-    printf("Edges whose length takes less ratio than %lg will be skiped!\n\n", edge_min);
+    printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", edge_min);
   }
 
   printf("Please input the prefix for output files [voro]: ");
