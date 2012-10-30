@@ -63,9 +63,9 @@ void Driver::strfac()
   skall = memory->create(skall, 2*nk[0]+1, 2*nk[1]+1, 2*nk[2]+1, "skall");
   Sk  = memory->create(Sk,  nbin, "Sk");
   hit = memory->create(hit, nbin, "hit");
-  for (int i= 0; i< nk[0]; i++)
-  for (int j= 0; j< nk[1]; j++)
-  for (int k= 0; k< nk[2]; k++) skall[i+nk[0]][j+nk[1]][k+nk[2]] = 0.;
+  for (int i= -nk[0]; i<= nk[0]; i++)
+  for (int j= -nk[1]; j<= nk[1]; j++)
+  for (int k= -nk[2]; k<= nk[2]; k++) skall[i+nk[0]][j+nk[1]][k+nk[2]] = 0.;
 
   for (int i=0; i< nbin; i++) Sk[i]  = 0.;
   for (int i=0; i< nbin; i++) hit[i] = 0;
@@ -149,7 +149,7 @@ void Driver::strfac()
         kyry[inext][y] = exp(-ky*one->atpos[ii][1]);
       }
 
-      for (int iz = -nk[2]; iz < nk[2]; iz++){
+      for (int iz = -nk[2]; iz <= nk[2]; iz++){
         complex<double> kz = double(iz) * dq[2];
         int z = iz + nk[2];
 
@@ -188,7 +188,8 @@ void Driver::strfac()
     int x = ix + nk[0];
     int y = iy + nk[1];
     int z = iz + nk[2];
-    double q[3]; q[0] = ix*dk[0]; q[1] = iy*dk[1]; q[2] = iz*dk[2];
+    double q[3];
+    q[0] = ix*dk[0]; q[1] = iy*dk[1]; q[2] = iz*dk[2];
     double sknow = skall[x][y][z]*fac;
 
     fprintf(fp,"%g %g %g %lg\n", q[0], q[1], q[2], sknow);
