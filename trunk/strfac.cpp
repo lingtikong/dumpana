@@ -9,12 +9,14 @@
 
 /*------------------------------------------------------------------------------
  * Method to compute the static structure factor of the system
+ *
+ * Currently it works for orthogonal box only.
  *----------------------------------------------------------------------------*/
 void Driver::strfac()
 {
   char str[MAXLINE], header[MAXLINE], *ptr;
   double kmax[3], dk[3], qmax, rdq;
-  int nk[3], nbin = 201;
+  int nk[3], nbin = 101;
 
   kmax[0] = kmax[1] = kmax[2] = 15.;
   printf("Please input the upper bound of the k-vectors [15 15 15]: ");
@@ -113,6 +115,8 @@ void Driver::strfac()
     one->selection(selcmd);
     if (one->nsel < 1) continue;
 
+    printf("\b%c", flag[nused%4]); fflush(stdout);
+
     // cartesian coordinate needed
     one->car2dir();
 
@@ -126,7 +130,6 @@ void Driver::strfac()
     // loops over k
     int inext = 0;
     complex<double> dq[3];
-    //const double tpi = 8.*atan(1.);
     for (int idim=0; idim<3; idim++) dq[idim] = dk[idim]*one->box[idim]*I0;
 
     for (int ii=1; ii<= one->natom; ii++){
@@ -160,13 +163,11 @@ void Driver::strfac()
     for (int iy = -nk[1]; iy <= nk[1]; iy++){ int y = iy + nk[1];
     for (int iz = -nk[2]; iz <= nk[2]; iz++){ int z = iz + nk[2];
       complex<double> skone = complex<double>(0.,0.);
-
       for (int i=0; i< one->nsel; i++) skone += kxrx[i][x]*kyry[i][y]*kzrz[i][z];
       skall[x][y][z] += real(skone * conj(skone));
     }}}
 
     nused++; nnorm += one->nsel;
-    printf("\b%c", flag[nused%4]); fflush(stdout);
   }
   memory->destroy(kxrx);
   memory->destroy(kyry);
@@ -213,6 +214,7 @@ void Driver::strfac()
   fclose(fp);
   
   memory->destroy(skall);
+  memory->destroy(hit);
   memory->destroy(Sk);
   printf("\n%d images were used in the evaluation of S(k), which is written to %s\n", nused, ptr);
 
