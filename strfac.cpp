@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "math.h"
 #include <complex>
+#include "timer.h"
 
 #define MAXLINE 512
 #define ZERO 1.e-8
@@ -14,7 +15,7 @@
  *----------------------------------------------------------------------------*/
 void Driver::strfac()
 {
-  char str[MAXLINE], header[MAXLINE], *ptr;
+  char str[MAXLINE], *ptr;
   double kmax[3], dk[3], qmax, rdq;
   int nk[3], nbin = 101;
 
@@ -93,9 +94,9 @@ void Driver::strfac()
 
   // space for exp(-i*K_a*r_a)
   complex<double> **kxrx, **kyry, **kzrz;
-  kxrx = memory->create(kxrx, one->nsel, nk[0], "kxrx");
-  kyry = memory->create(kyry, one->nsel, nk[1], "kyry");
-  kzrz = memory->create(kzrz, one->nsel, nk[2], "kzrz");
+  kxrx = memory->create(kxrx, nk[0], one->nsel+1, "kxrx");
+  kyry = memory->create(kyry, nk[1], one->nsel+1, "kyry");
+  kzrz = memory->create(kzrz, nk[2], one->nsel+1, "kzrz");
   int nprev = one->nsel;
 
   // S(k) is only valid for k > pi/L_min; here we use LMax instead for practical reason
@@ -105,9 +106,9 @@ void Driver::strfac()
   int nused = 0, nnorm = 0;
   const complex<double> I0 = complex<double>(0,1.);
 
-  char flag[4];
-  flag[0] = '-'; flag[1] = '\\'; flag[2] = '|'; flag[3] = '/';
-  printf("\nComputing, it takes time ... "); fflush(stdout);
+  // timer
+  Timer * timer = new Timer();
+  printf("\nStructure factor calculation takes time, please be patient.\n");
 
   // loop over all frames
   for (int img = istr; img <= iend; img += inc){
@@ -120,16 +121,20 @@ void Driver::strfac()
     one->selection(selcmd);
     if (one->nsel < 1) continue;
 
-    printf("\b%c", flag[nused%4]); fflush(stdout);
+    printf("  Now to process frame %d... ", img+1); fflush(stdout);
 
     // factional coordinate needed
     one->car2dir();
     LMax += MAX(one->box[0], MAX(one->box[1], one->box[2]));
 
     if (one->nsel != nprev){
-      kxrx = memory->grow(kxrx, one->nsel, nk[0], "kxrx");
-      kyry = memory->grow(kyry, one->nsel, nk[1], "kyry");
-      kzrz = memory->grow(kzrz, one->nsel, nk[2], "kzrz");
+      memory->destroy(kxrx);
+      memory->destroy(kyry);
+      memory->destroy(kzrz);
+
+      kxrx = memory->create(kxrx, nk[0], one->nsel, "kxrx");
+      kyry = memory->create(kyry, nk[1], one->nsel, "kyry");
+      kzrz = memory->create(kzrz, nk[2], one->nsel, "kzrz");
       nprev = one->nsel;
     }
 
@@ -141,42 +146,47 @@ void Driver::strfac()
     for (int ii=1; ii<= one->natom; ii++){
       if (one->atsel[ii] == 0) continue;
 
-      for (int ix = 0; ix < nk[0]; ix++){
-        complex<double> kx = double(ix) * dq[0];
+      for (int i = 0; i < nk[0]; i++){
+        complex<double> kx = double(i) * dq[0];
 
-        kxrx[inext][ix] = exp(-kx*one->atpos[ii][0]);
+        kxrx[i][inext] = exp(kx*one->atpos[ii][0]);
       }
 
-      for (int iy = 0; iy < nk[1]; iy++){
-        complex<double> ky = double(iy) * dq[1];
+      for (int j = 0; j < nk[1]; j++){
+        complex<double> ky = double(j) * dq[1];
 
-        kyry[inext][iy] = exp(-ky*one->atpos[ii][1]);
+        kyry[j][inext] = exp(ky*one->atpos[ii][1]);
       }
 
-      for (int iz = 0; iz < nk[2]; iz++){
-        complex<double> kz = double(iz) * dq[2];
+      for (int k = 0; k < nk[2]; k++){
+        complex<double> kz = double(k) * dq[2];
 
-        kzrz[inext][iz] = exp(-kz*one->atpos[ii][2]);
+        kzrz[k][inext] = exp(kz*one->atpos[ii][2]);
       }
 
       inext++;
     }
 
-    complex<double> skone;
-    for (int ix = 0; ix < nk[0]; ix++)
-    for (int iy = 0; iy < nk[1]; iy++)
-    for (int iz = 0; iz < nk[2]; iz++){
-      skone = complex<double>(0.,0.);
-      for (int i=0; i< one->nsel; i++) skone += kxrx[i][ix]*kyry[i][iy]*kzrz[i][iz];
+    for (int i = 0; i < nk[0]; i++)
+    for (int j = 0; j < nk[1]; j++)
+    for (int k = 0; k < nk[2]; k++){
+      complex<double> skone = complex<double>(0.,0.);
+      for (int ii = 0; ii < one->nsel; ii++) skone += kxrx[i][ii]*kyry[j][ii]*kzrz[k][ii];
 
-      skall[ix][iy][iz] += real(skone * conj(skone));
+      skall[i][j][k] += real(skone*conj(skone));
     }
 
     nused++; nnorm += one->nsel;
+    printf("Done! Time used: %g seconds.\n", timer->sincelast());
   }
   memory->destroy(kxrx);
   memory->destroy(kyry);
   memory->destroy(kzrz);
+  timer->stop();
+  printf("Total CPU time used: %g seconds.\n", timer->cpu_time());
+  delete timer;
+
+  if (nused < 1) return;
 
   double fac = 1./double(nnorm);
   // output the result, and compute S(k)
@@ -186,27 +196,30 @@ void Driver::strfac()
   for (int i=0; i< nbin; i++) Sk[i]  = 0.;
   for (int i=0; i< nbin; i++) hit[i] = 0;
 
-  printf("\bDone!\n\nPlease input the file to output S(kx,ky,kz) [Skv.dat]: ");
+  printf("\nPlease input the file name to output S(kx,ky,kz) [Skv.dat]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) strcpy(str, "Skv.dat");
   ptr = strtok(str, " \n\t\r\f");
   FILE *fp = fopen(ptr,"w");
   fprintf(fp,"# kx ky kz  S(k)\n");
-  for (int ix = 0; ix < nk[0]; ix++){
-  for (int iy = 0; iy < nk[1]; iy++){
-  for (int iz = 0; iz < nk[2]; iz++){
-    double sknow = skall[ix][iy][iz]*fac;
-    double q[3];
-    q[0] = double(ix)*dk[0]; q[1] = double(iy)*dk[1]; q[2] = double(iz)*dk[2];
+  double q[3];
+  for (int i = 0; i < nk[0]; i++){ q[0] = double(i)*dk[0];
+  for (int j = 0; j < nk[1]; j++){ q[1] = double(j)*dk[1];
+  for (int k = 0; k < nk[2]; k++){ q[2] = double(k)*dk[2];
+
+    double sknow = skall[i][j][k]*fac;
     fprintf(fp,"%g %g %g %lg\n", q[0], q[1], q[2], sknow);
 
     int ibin = int(sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])*rdq + 0.5);
-    if (ibin < nbin){ Sk[ibin] += sknow; hit[ibin]++;}
+    if (ibin < nbin){
+      Sk[ibin]  += sknow;
+      hit[ibin] ++;
+    }
   } fprintf(fp,"\n"); }}
   fclose(fp);
 
-  printf("Please input the file to output S(k) [Sk.dat]: ");
+  printf("Please input the file name to output S(k) [Sk.dat]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) strcpy(str, "Sk.dat");
@@ -215,11 +228,10 @@ void Driver::strfac()
   fprintf(fp,"# k S(k)\n");
 
   int nmin = int(double(nused)*4.*atan(1.)/LMax*rdq + 0.5);
-  double dq = 1./rdq, q = double(nmin)*dq;
+  double dq = 1./rdq, qr = double(nmin)*dq;
   for (int i=nmin; i<nbin; i++){
-    if (hit[i] > 0) fprintf(fp,"%lg %lg\n", q, Sk[i]/double(hit[i]));
-    else fprintf(fp,"%lg %lg\n", q, 0.);
-    q += dq;
+    if (hit[i] > 0) fprintf(fp,"%lg %lg\n", qr, Sk[i]/double(hit[i]));
+    qr += dq;
   }
   fclose(fp);
   
