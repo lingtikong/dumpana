@@ -66,7 +66,7 @@ void Driver::strfac()
   one = all[0];
   char selcmd[MAXLINE];
   while (1){
-    printf("\nPlease input the selection command for atoms, `h` for help [all]:");
+    printf("\nPlease input the atom selection command, `h` for help [all]: ");
     if (count_words(fgets(str,MAXLINE,stdin)) > 0){
       strcpy(selcmd, str);
       ptr = strtok(str," \n\t\r\f");
@@ -196,10 +196,10 @@ void Driver::strfac()
   for (int i=0; i< nbin; i++) Sk[i]  = 0.;
   for (int i=0; i< nbin; i++) hit[i] = 0;
 
-  printf("\nPlease input the file name to output S(kx,ky,kz) [Skv.dat]: ");
+  printf("\nPlease input the file name to output S(kx,ky,kz) [skv.dat]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
-  if (ptr == NULL) strcpy(str, "Skv.dat");
+  if (ptr == NULL) strcpy(str, "skv.dat");
   ptr = strtok(str, " \n\t\r\f");
   FILE *fp = fopen(ptr,"w");
   fprintf(fp,"# kx ky kz  S(k)\n");
@@ -219,10 +219,10 @@ void Driver::strfac()
   } fprintf(fp,"\n"); }}
   fclose(fp);
 
-  printf("Please input the file name to output S(k) [Sk.dat]: ");
+  printf("Please input the file name to output S(k) [sk.dat]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
-  if (ptr == NULL) strcpy(str, "Sk.dat");
+  if (ptr == NULL) strcpy(str, "sk.dat");
   ptr = strtok(str, " \n\t\r\f");
   fp = fopen(ptr,"w");
   fprintf(fp,"# k S(k)\n");
