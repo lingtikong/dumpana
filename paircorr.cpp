@@ -24,6 +24,7 @@ void Driver::paircorr()
     printf("  3. g(r) based on an atomic type;\n");
     printf("  4. g(r) between two atomic types;\n");
     printf("  5. g(r) between two selections;\n");
+    printf("  6. g(r) of selected atoms with certain voronoi index;\n");
     printf("  0. Return;\nYour choice [%d]: ", job);
     fgets(str,MAXLINE, stdin);
     char *ptr = strtok(str, " \n\t\r\f");
@@ -345,6 +346,135 @@ void Driver::paircorr()
       }
   
       memory->destroy(insrc);
+    } else if (job == 6){ // selected atoms of certain voronoi type
+
+      one = all[0];
+  
+      // local common variables
+      char selcmd[MAXLINE];
+  
+      // selection commands for atoms
+      while (1){
+        printf("\nPlease input the selection command for atoms, `h` for help [all]: ");
+        if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+          strcpy(selcmd, str);
+          char *ptr = strtok(str," \n\t\r\f");
+          if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
+        } else strcpy(selcmd,"all\n");
+  
+        // check the selection command on the first frame
+        one->selection(selcmd); one->SelInfo();
+        if (one->nsel < 1){
+          printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
+          if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+            char *ptr = strtok(str," \n\t\r\f");
+            if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
+          }
+        }
+        break;
+      }
+
+      // voro refinement info
+      double voro_mins[3];
+      voro_mins[0] = voro_mins[1] = 1.e-4;
+      voro_mins[2] = 0.;
+      
+      printf("\nRefined Voronoi tesselation will be needed to procceed.\n");
+      printf("Now please input your criterion for tiny surfaces [%g]: ", voro_mins[0]);
+      fgets(str,MAXLINE, stdin); ptr = strtok(str, " \n\t\r\f");
+      if (ptr) voro_mins[0] = atof(ptr);
+      printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", voro_mins[0]);
+    
+      printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
+      printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
+      printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", int(voro_mins[2]));
+      if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+        double dum = atof(strtok(str, " \n\t\r\f"));
+        if (dum > 0.) voro_mins[2] = dum;
+        printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", int(voro_mins[2]));
+      }
+    
+      printf("\nPlease input your criterion for ultra short edge [%g]: ", voro_mins[1]);
+      fgets(str,MAXLINE, stdin);
+      ptr = strtok(str, " \n\t\r\f");
+      if (ptr) voro_mins[1] = atof(ptr);
+      printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", voro_mins[1]);
+
+      // set clusters to analyse
+      set<std::string> voroset; std::string vindex;
+      printf("\nPlease input the Voronoi index of the desired clusters, e.g., 0,6,0,8.\n");
+      printf("If multiple indices are wanted, separate them by space: ");
+      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+        printf("\nClusters centered on Atoms with Voronoi indices: %s will be analysed.\n", str);
+     
+        char *ptr = strtok(str," \n\t\r\f");
+        while (ptr){
+          vindex.assign(ptr);
+          voroset.insert(vindex);
+     
+          ptr = strtok(NULL," \n\t\r\f");
+        }
+      }
+    
+      // work space for Voronoi
+      int nmax = 24, **neilist, *cenlist;
+      int natom = one->natom;
+      cenlist = memory->create(cenlist, natom+1, "cenlist");
+      neilist = memory->create(neilist, nmax+1, natom+1, "neilist");
+
+      for (int img = istr; img <= iend; img += inc){ // loop over frames
+        one = all[img];
+        one->selection(selcmd);
+
+        // work space for Voronoi
+        if (one->natom > natom){
+          cenlist = memory->grow(cenlist, natom+1, "cenlist");
+
+          memory->destroy(neilist);
+          neilist = memory->create(neilist, nmax+1, natom+1, "neilist");
+        }
+        natom = one->natom;
+        for (int ii=0; ii<=natom; ii++) cenlist[ii] = 0;
+    
+        map<int,std::string> voroindex; voroindex.clear();
+        // compute the neighbor list and voro info
+        FEFF_voro(voroset, voro_mins, nmax, neilist, cenlist, voroindex);
+        voroindex.clear(); // they are not needed here
+    
+        // check the # of selected clusters
+        int nc = 0;
+        for (int ii=1; ii<=natom; ii++) nc += cenlist[ii];
+        if (nc > 1){
+          nused++;
+          const double dg = one->vol/(2.*tpi*delr*nc*nc);
+  
+          // need fractional coordinates
+          one->car2dir();
+  
+          // set local variables
+          for (int i=1; i<= one->natom; i++){
+            if (cenlist[i] == 0) continue;
+  
+            for (int j=1; j<= one->natom; j++){
+              if (cenlist[j] == 0 || i==j) continue;
+              double dx[3], dr[3];
+              for (int idim=0; idim<3; idim++){
+                dx[idim] = one->atpos[j][idim] - one->atpos[i][idim];
+                while (dx[idim] > 0.5) dx[idim] -= 1.;
+                while (dx[idim] <-0.5) dx[idim] += 1.;
+              }
+              dr[0] = dx[0]*one->lx + dx[1]*one->xy + dx[2]*one->xz;
+              dr[1] = dx[1]*one->ly + dx[2]*one->yz;
+              dr[2] = dx[2]*one->lz;
+              double r = sqrt(dr[0]*dr[0]+dr[1]*dr[1]+dr[2]*dr[2]);
+              int ibin = (r-rmin)*rdr;
+              if (ibin >= 0 && ibin<nbin) gr[ibin] += dg;
+            }
+          }
+        }
+      } // end loop over frames for job == 6
+      memory->destroy(cenlist);
+      memory->destroy(neilist);
     }
   
     // normalize the g(r)

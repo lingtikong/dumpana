@@ -173,15 +173,24 @@ void Driver::ClusterConnectivity()
   int nclus, nsuper, niso, counts[5];
   nclus = nsuper = niso = counts[0] = counts[1] = counts[2] = counts[3] = counts[4] = 0;
 
+  // work space for Voronoi
+  int nmax = 24, **neilist, *cenlist;
+  int natom = one->natom;
+  cenlist = memory->create(cenlist, natom+1, "cenlist");
+  neilist = memory->create(neilist, nmax+1, natom+1, "neilist");
+
   for (int img = istr; img <= iend; img += inc){ // loop over frames
     one = all[img];
     one->selection(selcmd);
 
     // work space for Voronoi
-    int nmax = 24, **neilist, *cenlist;
-    int natom = one->natom;
-    cenlist = memory->create(cenlist, natom+1, "cenlist");
-    neilist = memory->create(neilist, nmax+1, natom+1, "neilist");
+    if (natom > one->natom){
+      cenlist = memory->grow(cenlist, natom+1, "cenlist");
+
+      memory->destroy(neilist);
+      neilist = memory->create(neilist, nmax+1, natom+1, "neilist");
+    }
+    natom = one->natom;
     for (int ii=0; ii<=natom; ii++) cenlist[ii] = 0;
 
     map<int,std::string> voroindex; voroindex.clear();
@@ -192,13 +201,7 @@ void Driver::ClusterConnectivity()
     // check the # of selected clusters
     int nc = 0;
     for (int ii=1; ii<=natom; ii++) nc += cenlist[ii];
-    if (nc < 1){
-      voroindex.clear();
-      memory->destroy(neilist);
-      memory->destroy(cenlist);
-
-      continue;
-    }
+    if (nc < 1) continue;
 
     // analyse the result
     if (job == 1){ // Voronoi index for neighbors of selected clusters
@@ -287,9 +290,9 @@ void Driver::ClusterConnectivity()
     }
 
     voroindex.clear();
-    memory->destroy(neilist);
-    memory->destroy(cenlist);
   }
+  memory->destroy(neilist);
+  memory->destroy(cenlist);
 
   if (job == 2){
     printf("\n"); for (int i=0; i<20; i++) printf("----");
