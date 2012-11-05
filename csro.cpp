@@ -21,23 +21,24 @@ void Driver::csro()
   printf("\n"); for (int i=0; i<20; i++) printf("====");
   printf("\nPlease select your desired job:\n");
   for (int i=0; i<20; i++) printf("----"); printf("\n");
-  printf("  1. CSRO based on direct Voronoi info;\n");
-  printf("  2. CSRO based on refined Voronoi info, skip tiny surfaces;\n");
+  printf("  1. Overall CSRO based on direct Voronoi info;\n");
+  printf("  2. Overall CSRO based on refined Voronoi info, skip tiny surfaces;\n");
+  printf("  3. Per atom CSRO based on refined Voronoi info;");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
-  if (job < 1 || job > 2){
+  if (job < 1 || job > 3){
     for (int i=0; i<20; i++) printf("===="); printf("\n");
     return;
   }
   printf("\n");
 
+  // refinement info
   double surf_min = 1.e-4;
   int refine = 0;
-
-  if (job == 2){
+  if (job >= 2){
     printf("Please input your criterion for tiny surfaces [%g]: ", surf_min);
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
@@ -49,23 +50,41 @@ void Driver::csro()
 
   one = all[istr];
   int ntype = one->ntype;
-  bigint *NumType, **NumNei;
+
+  // output file name for per atom CSRO
+  FILE *fp; fp = NULL;
+  if (job == 3){
+    printf("Please input the output file name [csro.dat]: ");
+    if (count_words(fgets(str,MAXLINE, stdin)) < 1) strcpy(str,"csro.dat");
+    ptr = strtok(str, " \n\t\r\f");
+    fp = fopen(ptr, "w");
+  }
+
+  // work spaces
+  bigint *NumType, **NumNei, *nnei;
+  nnei   = memory->create(nnei, ntype+1, "csro:nnei"); // per atom info
   NumType= memory->create(NumType,ntype+1,"csro:NumType");
   NumNei = memory->create(NumNei,ntype+1,ntype+1,"csro:NumNei");
   for (int i=0; i<= ntype; i++){
     NumType[i] = 0;
     for (int j=0; j<= ntype; j++) NumNei[i][j] = 0;
   }
+  // chemical composition for each frame
+  double *cc;
+  cc = new double [ntype+1];
 
   // now to do the real job
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
 
-    // not possible to evaluate voro info for triclinic box
-    //if (one->triclinic) continue;
-
     // ntype of different frames must be the same
     if (one->ntype != ntype) continue;
+
+    if (job == 3){
+      fprintf(fp, "# Per atom CSRO info for frame %d; istep = %d\n# id type", img+1, one->tstep);
+      for (int jp=1; jp<=ntype; jp++) fprintf(fp," csro-%d", jp);
+      fprintf(fp,"\n");
+    }
 
     // set local variables
     double xlo = one->xlo, xhi = one->xhi;
@@ -78,6 +97,7 @@ void Driver::csro()
     int *attyp = one->attyp;
     double **atpos = one->atpos;
     for (int i=1; i<=ntype; i++) NumType[i] += one->numtype[i];
+    for (int i=1; i<=ntype; i++) cc[i] = double(one->numtype[i])/double(one->natom);
 
     // need cartesian coordinates
     one->dir2car();
@@ -104,6 +124,9 @@ void Driver::csro()
         cell.neighbors(neigh);
         int nf = neigh.size();
   
+        // zero per atom info
+        for (int jp=1; jp<= ntype; jp++) nnei[jp] = 0;
+
         if (refine) { // based on refined voro info
           double fcut = surf_min * cell.surface_area();
           std::vector<double> fs;    // face areas
@@ -112,17 +135,29 @@ void Driver::csro()
             if (fs[ii] < fcut) continue;
             int jd = neigh[ii];
             int jp = one->attyp[jd];
-            NumNei[ip][jp]++;
+            nnei[jp]++;
           }
   
         } else { // based on direct voro info
           for (int ii=0; ii<nf; ii++){
             int jd = neigh[ii];
             int jp = one->attyp[jd];
-            NumNei[ip][jp]++;
+            nnei[jp]++;
           }
         }
   
+        // accumulate overall info
+        for (int jp=1; jp<= ntype; jp++) NumNei[ip][jp] += nnei[jp];
+
+        // output per atom info if needed
+        if (job == 3){
+          fprintf(fp,"%d %d", id, ip);
+          int nn = 0;
+          for (int jp=1; jp<= ntype; jp++) nn += nnei[jp];
+          for (int jp=1; jp<= ntype; jp++) fprintf(fp," %g", 1.-double(nnei[jp])/(double(nn)*cc[jp]));
+          fprintf(fp,"\n");
+        }
+
       } while (cl.inc());
 
     } else { // orthogonal box
@@ -143,6 +178,9 @@ void Driver::csro()
         cell.neighbors(neigh);
         int nf = neigh.size();
   
+        // zero per atom info
+        for (int jp=1; jp<= ntype; jp++) nnei[jp] = 0;
+
         if (refine) { // based on refined voro info
           double fcut = surf_min * cell.surface_area();
           std::vector<double> fs;    // face areas
@@ -151,21 +189,35 @@ void Driver::csro()
             if (fs[ii] < fcut) continue;
             int jd = neigh[ii];
             int jp = one->attyp[jd];
-            NumNei[ip][jp]++;
+            nnei[jp]++;
           }
   
         } else { // based on direct voro info
           for (int ii=0; ii<nf; ii++){
             int jd = neigh[ii];
             int jp = one->attyp[jd];
-            NumNei[ip][jp]++;
+            nnei[jp]++;
           }
         }
   
+        // accumulate overall info
+        for (int jp=1; jp<= ntype; jp++) NumNei[ip][jp] += nnei[jp];
+
+        // output per atom info if needed
+        if (job == 3){
+          fprintf(fp,"%d %d", id, ip);
+          int ntot = 0;
+          for (int jp=1; jp<= ntype; jp++) ntot += nnei[jp]; ntot = MAX(1,ntot);
+          for (int jp=1; jp<= ntype; jp++) fprintf(fp," %g", 1.-double(nnei[jp])/(double(ntot)*cc[jp]));
+          fprintf(fp,"\n");
+        }
+
       } while (cl.inc());
     }
   }
   
+  if (job == 3) fclose(fp);
+
   bigint ntotal = 0;
   double concentration[ntype+1];
   for (int i=1; i<= ntype; i++) ntotal += NumType[i];
@@ -206,6 +258,7 @@ void Driver::csro()
   }
   printf("\n"); for (int i=0; i<20; i++) printf("===="); printf("\n");
 
+  memory->destroy(nnei);
   memory->destroy(NumType);
   memory->destroy(NumNei);
 return;
