@@ -30,7 +30,7 @@ void Driver::paircorr()
     char *ptr = strtok(str, " \n\t\r\f");
     if (ptr) job = atoi(ptr);
     printf("Your selection : %d\n", job);
-    if (job < 1 || job > 5){
+    if (job < 1 || job > 6){
       for (int i=0; i<20; i++) printf("===="); printf("\n");
       return;
     }
@@ -405,7 +405,7 @@ void Driver::paircorr()
       printf("\nPlease input the Voronoi index of the desired clusters, e.g., 0,6,0,8.\n");
       printf("If multiple indices are wanted, separate them by space: ");
       if (count_words(fgets(str,MAXLINE,stdin)) > 0){
-        printf("\nClusters centered on Atoms with Voronoi indices: %s will be analysed.\n", str);
+        printf("\n  Clusters centered on Atoms with Voronoi indices: %s  will be analysed.\n", str);
      
         char *ptr = strtok(str," \n\t\r\f");
         while (ptr){
@@ -416,6 +416,11 @@ void Driver::paircorr()
         }
       }
     
+      // header of g(r)
+      sprintf(header,"# g(r) for atoms selected by: %s# with voronoi indices: ", selcmd);
+      for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) sprintf(header,"%s %s", header, it->c_str());
+      sprintf(header,"%s\n", header);
+
       // work space for Voronoi
       int nmax = 24, **neilist, *cenlist;
       int natom = one->natom;
@@ -481,7 +486,7 @@ void Driver::paircorr()
     double r = rmin - 0.5*delr;
     for (int i=0; i<nbin; i++){
       r += delr;
-      gr[i] /= r*r*nused;
+      gr[i] /= r*r*MAX(1,nused);
     }
   
     // output the result
