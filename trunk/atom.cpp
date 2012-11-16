@@ -296,6 +296,52 @@ void DumpAtom::selection(const char *line)
 
       } else break;
 
+    } else if (strcmp(key,"X")==0 || strcmp(key,"Y")==0 || strcmp(key,"Z")==0 ){
+    // selection by cartesian position
+      dir2car();
+
+      int dir = key[0]-'x';
+      oper = strtok(NULL, " \n\t\r\f");
+      if (oper == NULL) break;
+      ptr = strtok(NULL, " \n\t\r\f");
+      if (ptr == NULL) break;
+      rlow = atof(ptr);
+
+      strcat(onecmd," "); strcat(onecmd,oper);
+      strcat(onecmd," "); strcat(onecmd,ptr);
+
+      if (strcmp(oper,">")==0 || strcmp(oper,">=")==0){
+        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir] < rlow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir] >= rlow) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,"<")==0 || strcmp(oper,"<=")==0){
+        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir] > rlow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir] <= rlow) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,"<>") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        rhigh = atof(ptr);
+
+        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir]<rlow || atpos[i][dir]>rhigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir]>=rlow && atpos[i][dir]<=rhigh) atsel[i] = 1;
+        }
+
+      } else if (strcmp(oper,"><") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        rhigh = atof(ptr);
+
+        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir]>rlow && atpos[i][dir]<rhigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir]<=rlow || atpos[i][dir]>=rhigh) atsel[i] = 1;
+        }
+
+      } else break;
+
     } else if (strcmp(key,"id") == 0) { // selection by atomic id
       oper = strtok(NULL, " \n\t\r\f");
       if (oper == NULL) break;
@@ -461,7 +507,8 @@ void DumpAtom::SelHelp()
   printf("\n"); for (int i=0; i<20; i++) printf("----");
   printf("\nThe grammar for the selection command is:\n\n");
   printf("  key op values [& key2 op2 values2 [| key3 op3 values3]]\n");
-  printf("\nwhere `key` is either `type`, `x`,`y`,`z`, or `id`.\n");
+  printf("\nwhere `key` is either `type`, `x`,`X', `y`, 'Y', `z`, 'Z',\n");
+  printf("or `id`. Lower case indicates fractional while upper Cartesian.\n");
   printf("It can also be `all`, which takes no argument and selects all atoms;\n");
   printf("or `ran num seed`, which takes no other argument and selects `num` atoms\n");
   printf("from the current selection randomly; `seed` is the seed for the uniform\n");
@@ -475,7 +522,7 @@ void DumpAtom::SelHelp()
   printf("defines the # of Voronoi indices that will follow; and the following `NVoroIndex'\n");
   printf("arguments should be the Voronoi indices, for example: 0,6,0,8\n");
   printf("\n`op` is either `=`, `>`, `>=`, `<`, `<=`, `<>`, `><`, or `%%`,\n");
-  printf("while neithor `=` nor `%%` is available for key=`x`, `y`, or `z`.\n");
+  printf("while neithor `=` nor `%%` is available for key=`x-z, X-Z`.\n");
   printf("\n`values` can be one or two numbers, depend on the type of `op`:\n");
   printf("for `<>`, `><`, and `%%` two numbers are need, otherwise one.\n");
   printf("`key <> num1 num2` selects `num1 <= kye <= num2`, `key >< num1 num2`\n");
@@ -488,8 +535,8 @@ void DumpAtom::SelHelp()
   printf("of type 1 within 0.1 < x < 0.5 (fractional) and has id <= 200 or id >= 800;\n");
   printf("`type = 1 | type = 2` will select atoms of type 1 or 2; while `type = 1 & type = 2`\n");
   printf("will select nothing. `type = 1 & ran 100 0` will randomly select 100 atoms\n");
-  printf("from all of type 1. `voro 0 0 0 1 0,0,12,0' will select all atoms that have\n");
-  printf("a Voronoi index of 0,0,12,0.\n");
+  printf("from all of type 1. `X <> 0 10 & voro 0 0 0 1 0,0,12,0' will select all atoms\n");
+  printf("that have a Voronoi index of 0,0,12,0 with [0,10] along the x direction.\n");
   for (int i=0; i<20; i++) printf("----"); printf("\n\n");
     
 return;
