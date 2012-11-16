@@ -71,7 +71,7 @@ void Driver::voro()
     one->ComputeVoro(mins, fp, fpsurf, fpedge);
 
     fclose(fp);
-    printf("Frame %d done, voro info written to: %s\n", img+1, ptr);
+    printf("  Frame %d done, voro info written to: %s\n", img+1, ptr);
   }
 
   if (flag_out & OutSurf) fclose(fpsurf);

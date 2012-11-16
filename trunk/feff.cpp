@@ -210,7 +210,7 @@ void Driver::FEFF_main()
         int jd = *it;
         int jp = one->attyp[jd];
         if (jd == id) jp = 0;
-        double dx[3], r2; r2 = 0.;
+        double dx[3];
         for (int idim=0; idim<3; idim++){
           dx[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
           while (dx[idim] > 0.5) dx[idim] -= 1.;
@@ -220,6 +220,7 @@ void Driver::FEFF_main()
         dx[1] = dx[1]*one->ly + dx[2]*one->yz;
         dx[2] = dx[2]*one->lz;
  
+        double r2 = dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2];
         double rij = sqrt(r2);
         element->Num2Name(type2atnum[one->attyp[jd]], ename);
         if (flag_out & OutFeff) fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], attyp2pot[jp], ename, shell[jd], rij, jd);
