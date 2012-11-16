@@ -66,8 +66,6 @@ Driver::Driver(int narg, char** arg)
     printf("\n"); for (int i=0; i<20; i++) printf("====");
     printf("\nPlease select your desired task to perform:\n");
     for (int i=0; i<20; i++) printf("----"); printf("\n");
-    printf("Voronoi based:                         | Others:\n");
-    for (int i=0; i<20; i++) printf("----"); printf("\n");
     printf("  1. Voronoi diagram analysis;         |  11. Convert to xyz format; \n");
     printf("  2. Chemical Short Range Order;       |  12. Average over frames;   \n");
     printf("  3. Honeycutt-Andersen bond index;    |  13. Pair correlation function;\n");
