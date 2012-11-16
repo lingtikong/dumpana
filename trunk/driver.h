@@ -2,6 +2,7 @@
 #define DRIVER_H
 
 #include "atom.h"
+#include "global.h"
 #include "memory.h"
 #include <map>
 #include <set>
@@ -10,9 +11,6 @@
 #include <string>
 #include "elements.h"
 
-#define OutSurf 1
-#define OutEdge 2
-#define OutFeff 4
 
 using namespace std;
 
@@ -66,8 +64,6 @@ private:
   // Prepare for FEFF9
   void FEFF_main();
   void FEFF_input(int, FILE *);
-  void FEFF_voro(set<string>, double *, int &, int **, int *, map<int,string>&); // get the neighbor list, list of atoms with selected voronoi index, and the voronoi index for all atoms
-  void FEFF_cluster(int, const int, int **, int, list<int> &, map<int,int>&);    // get the list of atoms upto required shell of an atom, and their shell number
 
   // Connectivity info for certain clusters; needs FEFF_voro
   void ClusterConnectivity();

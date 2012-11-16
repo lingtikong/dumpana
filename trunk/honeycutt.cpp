@@ -1,11 +1,6 @@
 #include "driver.h"
-#include "voro++.hh"
 #include "math.h"
 #include <vector>
-
-#define MAXLINE 512
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
 
 /*------------------------------------------------------------------------------
  * Method to compute the Honeycutt-Andersen index based on the  voronoi neighbors
@@ -19,35 +14,16 @@
 void Driver::honeycutt_andersen()
 {
   char str[MAXLINE];
-  int job = 2;
-  printf("\n"); for (int i=0; i<20; i++) printf("====");
-  printf("\nPlease select your desired job:\n");
-  for (int i=0; i<20; i++) printf("----"); printf("\n");
-  printf("  1. HA index based on direct Voronoi info;\n");
-  printf("  2. HA index based on refined Voronoi info, skip tiny surfaces;\n");
-  printf("  0. Return;\nYour choice [%d]: ", job);
+  printf("\n"); for (int i=0; i<5; i++) printf("====");
+  printf("   Honeycutt-Andersen  Bond  Analysis   ");
+  for (int i=0; i<5; i++) printf("===="); printf("\n");
+
+  double mins[3]; mins[0] = 1.e-2; mins[1] = 1.e-4; mins[2] = 0.;
+  printf("Please input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
   fgets(str,MAXLINE, stdin);
-  char *ptr = strtok(str, " \n\t\r\f");
-  if (ptr) job = atoi(ptr);
-  printf("Your selection : %d\n", job);
-  if (job < 1 || job > 2){
-    for (int i=0; i<20; i++) printf("===="); printf("\n");
-    return;
-  }
-  printf("\n");
-
-  double surf_min = 1.e-4;
-  int refine = 0;
-
-  if (job == 2){
-    printf("Please input your criterion for tiny surfaces [%g]: ", surf_min);
-    fgets(str,MAXLINE, stdin);
-    ptr = strtok(str, " \n\t\r\f");
-    if (ptr) surf_min = atof(ptr);
-    printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", surf_min);
-
-    if (surf_min > 0.) refine = 1;
-  }
+  char * ptr = strtok(str, " \n\t\r\f");
+  if (ptr) mins[0] = atof(ptr);
+  printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
 
   int unbond = 0;
   printf("\nWould you like to analyse un-bonded pairs? (y/n)[n]: ");
@@ -72,143 +48,29 @@ void Driver::honeycutt_andersen()
   FILE *fp = fopen(fname, "w");
   fprintf(fp, "# id  jd index\n"); fflush(fp);
 
-  one = all[istr];
-  int neimax = 24;
-  int **neilist;
-  int natom = one->natom;
-  neilist = memory->create(neilist,neimax+1,natom+1,"neilist");
-
   // now to loop over all asked images
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
 
-    // set local variables
-    double xlo = one->xlo, xhi = one->xhi;
-    double ylo = one->ylo, yhi = one->yhi;
-    double zlo = one->zlo, zhi = one->zhi;
-    double lx  = one->lx,  ly  = one->ly,  lz = one->lz;
-    double xy  = one->xy,  xz  = one->xz,  yz = one->yz;
-    double hx = 0.5*lx, hy = 0.5*ly, hz = 0.5*lz;
-
-    int n = one->natom;
-    int *attyp = one->attyp;
-    double **atpos = one->atpos;
-
-    // reallocated neilist if different
-    if (n != natom){
-      natom = n;
-      memory->destroy(neilist);
-
-      neilist = memory->create(neilist,neimax+1,natom+1,"neilist");
-    }
-
-    // need cartesian coordinates
-    one->dir2car();
-
-    // compute optimal size for container, and then contrust it
-    double l = pow(double(n)/(5.6*lx*ly*lz), 1./3.);
-    int nx = int(lx*l+1), ny = int(ly*l+1), nz = int(lz*l+1);
-
-    if (one->triclinic){
-
-      voro::container_periodic con(lx,xy,ly,xz,yz,lz,nx,ny,nz,8);
-      // put atoms into the container
-      for (int i=1; i<= n; i++) con.put(i, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
-  
-      // loop over all particles and compute their voronoi cell
-      voro::voronoicell_neighbor cell;
-      voro::c_loop_all_periodic cl(con);
-      if (cl.start()) do if (con.compute_cell(cell,cl)){
-        int id = cl.pid();
-        int ip = one->attyp[id];
-  
-        std::vector<int> neigh;    // neigh list
-        cell.neighbors(neigh);
-        int nf = neigh.size();
-  
-        if (nf > neimax){
-          neimax = nf + 2;
-          neilist = memory->grow(neilist,neimax+1,natom+1,"neilist");
-        }
-  
-        if (refine) { // based on refined voro info
-          double fcut = surf_min * cell.surface_area();
-          std::vector<double> fs;    // face areas
-          cell.face_areas(fs);
-          int nnei = 0;
-          for (int ii=0; ii<nf; ii++){
-            if (fs[ii] < fcut) continue;
-            int jd = neigh[ii];
-            neilist[++nnei][id] = jd;
-          }
-          neilist[0][id] = nnei;
-  
-        } else { // based on direct voro info
-          neilist[0][id] = nf;
-          for (int ii=0; ii<nf; ii++) neilist[ii+1][id] = neigh[ii];
-        }
-  
-      } while (cl.inc());
-
-    } else { // orthogonal box
-
-      voro::container con(xlo,xhi,ylo,yhi,zlo,zhi,nx,ny,nz,true,true,true,8);
-  
-      // put atoms into the container
-      for (int i=1; i<= n; i++) con.put(i, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
-  
-      // loop over all particles and compute their voronoi cell
-      voro::voronoicell_neighbor cell;
-      voro::c_loop_all cl(con);
-      if (cl.start()) do if (con.compute_cell(cell,cl)){
-        int id = cl.pid();
-        int ip = one->attyp[id];
-  
-        std::vector<int> neigh;    // neigh list
-        cell.neighbors(neigh);
-        int nf = neigh.size();
-  
-        if (nf > neimax){
-          neimax = nf + 2;
-          neilist = memory->grow(neilist,neimax+1,natom+1,"neilist");
-        }
-  
-        if (refine) { // based on refined voro info
-          double fcut = surf_min * cell.surface_area();
-          std::vector<double> fs;    // face areas
-          cell.face_areas(fs);
-          int nnei = 0;
-          for (int ii=0; ii<nf; ii++){
-            if (fs[ii] < fcut) continue;
-            int jd = neigh[ii];
-            neilist[++nnei][id] = jd;
-          }
-          neilist[0][id] = nnei;
-  
-        } else { // based on direct voro info
-          neilist[0][id] = nf;
-          for (int ii=0; ii<nf; ii++) neilist[ii+1][id] = neigh[ii];
-        }
-  
-      } while (cl.inc());
-    }
+    // Compute Voronoi neighbor info
+    one->ComputeVoro(mins);
 
     fprintf(fp,"# frame number: %d\n", img);
     // now to analyse the Honeycutt-Andersen bond type info
-    for (int id=1; id<= natom; id++){
+    for (int id=1; id<= one->natom; id++){
       if (unbond){
-        for (int jd=id+1; jd<= natom; jd++){
-          count_HA(id, jd, neilist, fp, outcomm);
+        for (int jd=id+1; jd<= one->natom; jd++){
+          count_HA(id, jd, one->neilist, fp, outcomm);
         }
 
       } else {
 
-        int nni = neilist[0][id];
+        int nni = one->neilist[0][id];
         for (int kk=1; kk<= nni; kk++){
-          int jd  = neilist[kk][id];
+          int jd  = one->neilist[kk][id];
           if (id > jd) continue;
 
-          count_HA(id, jd, neilist, fp, outcomm);
+          count_HA(id, jd, one->neilist, fp, outcomm);
         }
       }
     }
@@ -216,8 +78,6 @@ void Driver::honeycutt_andersen()
   }
   printf("\n"); for (int i=0; i<20; i++) printf("===="); printf("\n");
   fclose(fp);
-
-  memory->destroy(neilist);
 
 return;
 }

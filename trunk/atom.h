@@ -9,6 +9,10 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include <map>
+#include <set>
+#include <list>
+#include <string>
 
 using namespace std;
 
@@ -19,25 +23,38 @@ public:
 
   int iframe;
   int natom, ntype, tstep, nsel;
-  int initialized, cartesian;
+  int initialized;
   int triclinic;
 
   Memory *memory;
   double xlo, xhi, ylo, yhi, zlo, zhi;
   double xy, xz, yz, vol;
   double lx, ly, lz, box[6], hbox[3];
-  int *attyp, *atsel;  // note: atom IDs go from 1 to natom
+  int *attyp, *atsel;  // note: atom IDs go from 1 to natom; type ID from 1 to ntype
   int *numtype;
   double **atpos;
   double axis[3][3];
 
+  int **neilist;         // Voronoi neighbor list, only available if voro is computed
+  map<int,string> voro;  // Voronoi index for each atom
+
+  void ComputeVoro(double *); // compute the Voronoi info
+  void ComputeVoro(double *, FILE *, FILE *, FILE *);                  // compute the Voronoi info
+  void voro_cluster(int, const int, int, list<int> &, map<int,int> &); // find neighbors of an atom upto certain Voronoi shells
+
   void selection(const char *);
   void SelInfo();
   void SelHelp();
+
   void car2dir();
   void dir2car();
 
 private:
+  int MaxNei;
+  double vmins[3];
+
+  double **x, **s;
+
   char *realcmd;
   int count_words(const char *);
 };

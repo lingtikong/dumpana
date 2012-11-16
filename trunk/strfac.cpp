@@ -3,11 +3,6 @@
 #include <complex>
 #include "timer.h"
 
-#define MAXLINE 512
-#define ZERO 1.e-8
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-
 /*------------------------------------------------------------------------------
  * Method to compute the static structure factor of the system
  *
@@ -19,6 +14,9 @@ void Driver::strfac()
   double kmax[3], dk[3], qmax, rdq;
   int nk[3], nbin = 101;
 
+  printf("\n"); for (int i=0; i<6; i++) printf("====");
+  printf("    Static  Structure  Factor   ");
+  for (int i=0; i<6; i++) printf("====");
   // ask for the max value of k's
   kmax[0] = kmax[1] = kmax[2] = 10.;
   printf("Please input the upper bound of the k-vectors [%g %g %g]: ", kmax[0], kmax[1], kmax[2]);
@@ -239,6 +237,8 @@ void Driver::strfac()
   memory->destroy(hit);
   memory->destroy(Sk);
   printf("\n%d images were used in the evaluation of S(k), which is written to %s\n", nused, ptr);
+
+  for (int i=0; i<20; i++) printf("===="); printf("\n");
 
 return;
 }
