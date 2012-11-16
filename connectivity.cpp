@@ -5,10 +5,6 @@
 #include "random.h"
 #include "time.h"
 
-#define MAXLINE 1024
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-
 /*------------------------------------------------------------------------------
  * Method to check the connectivity of certain clusters
  *----------------------------------------------------------------------------*/
@@ -30,6 +26,31 @@ void Driver::ClusterConnectivity()
     for (int i=0; i<20; i++) printf("===="); printf("\n");
     return;
   } else for (int i=0; i<20; i++) printf("----"); printf("\n");
+
+  // voro refinement info
+  double mins[3];
+  mins[0] = 1.e-2; mins[1] = 1.e-4; mins[2] = 0.;
+  
+  printf("\nRefined Voronoi tesselation will be needed to procceed.\n");
+  printf("Now please input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
+  fgets(str,MAXLINE, stdin); ptr = strtok(str, " \n\t\r\f");
+  if (ptr) mins[0] = atof(ptr);
+  printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
+
+  printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
+  printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
+  printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", int(mins[2]));
+  if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+    double dum = atof(strtok(str, " \n\t\r\f"));
+    if (dum > 0.) mins[2] = dum;
+    printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", int(mins[2]));
+  }
+
+  printf("\nPlease input your criterion for ultra short edge [%g]: ", mins[1]);
+  fgets(str,MAXLINE, stdin);
+  ptr = strtok(str, " \n\t\r\f");
+  if (ptr) mins[1] = atof(ptr);
+  printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", mins[1]);
 
   // selection of atoms for each frame
   char selcmd[MAXLINE];
@@ -54,6 +75,7 @@ void Driver::ClusterConnectivity()
     }
     break;
   }
+
   // set clusters to analyse
   set<std::string> voroset; std::string vindex;
   printf("\nPlease input the Voronoi index of the desired clusters, e.g., 0,6,0,8.\n");
@@ -110,6 +132,7 @@ void Driver::ClusterConnectivity()
     }
     // open and write header
     fp = fopen(fname,"w");
+    fprintf(fp,"#Voronoi refinement info: surf_min%% = %g, edge_min%% = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
     fprintf(fp,"#Voronoi indices of the %d%s shell neighbors of atoms selected by: %s", nshell, Nos[nshell], selcmd);
     fprintf(fp,"# centered on clusters: ");
     for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) fprintf(fp," %s", it->c_str());
@@ -136,6 +159,7 @@ void Driver::ClusterConnectivity()
 
       // open and write header
       fpx = fopen(ptr,"w");
+      fprintf(fp,"#Voronoi refinement info: surf_min%% = %g, edge_min%% = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
       fprintf(fpx,"# Cluster connectivity info for atoms selected by: %s", selcmd);
       fprintf(fpx,"# centered on clsuters:" );
       for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) fprintf(fpx," %s", it->c_str());
@@ -143,60 +167,36 @@ void Driver::ClusterConnectivity()
     }
   }
 
-  // voro refinement info
-  double voro_mins[3];
-  voro_mins[0] = voro_mins[1] = 1.e-4;
-  voro_mins[2] = 0.;
-  
-  printf("\nRefined Voronoi tesselation will be needed to procceed.\n");
-  printf("Now please input your criterion for tiny surfaces [%g]: ", voro_mins[0]);
-  fgets(str,MAXLINE, stdin); ptr = strtok(str, " \n\t\r\f");
-  if (ptr) voro_mins[0] = atof(ptr);
-  printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", voro_mins[0]);
-
-  printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
-  printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
-  printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", int(voro_mins[2]));
-  if (count_words(fgets(str,MAXLINE, stdin)) > 0){
-    double dum = atof(strtok(str, " \n\t\r\f"));
-    if (dum > 0.) voro_mins[2] = dum;
-    printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", int(voro_mins[2]));
-  }
-
-  printf("\nPlease input your criterion for ultra short edge [%g]: ", voro_mins[1]);
-  fgets(str,MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
-  if (ptr) voro_mins[1] = atof(ptr);
-  printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", voro_mins[1]);
-
   // variables for connectivity info
   int nclus, nsuper, niso, counts[5];
   nclus = nsuper = niso = counts[0] = counts[1] = counts[2] = counts[3] = counts[4] = 0;
 
   // work space for Voronoi
-  int nmax = 24, **neilist, *cenlist;
+  int *cenlist;
   int natom = one->natom;
   cenlist = memory->create(cenlist, natom+1, "cenlist");
-  neilist = memory->create(neilist, nmax+1, natom+1, "neilist");
 
   for (int img = istr; img <= iend; img += inc){ // loop over frames
     one = all[img];
     one->selection(selcmd);
 
     // work space for Voronoi
-    if (natom > one->natom){
-      cenlist = memory->grow(cenlist, natom+1, "cenlist");
+    if (natom > one->natom) cenlist = memory->grow(cenlist, natom+1, "cenlist");
 
-      memory->destroy(neilist);
-      neilist = memory->create(neilist, nmax+1, natom+1, "neilist");
-    }
     natom = one->natom;
     for (int ii=0; ii<=natom; ii++) cenlist[ii] = 0;
 
-    map<int,std::string> voroindex; voroindex.clear();
-
     // compute the neighbor list and voro info
-    FEFF_voro(voroset, voro_mins, nmax, neilist, cenlist, voroindex);
+    one->ComputeVoro(mins);
+
+    // look for the list of desired centeral atoms
+    natom = one->natom;
+    for (int ii=1; ii<=natom; ii++){
+      cenlist[ii] = 0;
+      if (one->atsel[ii] == 0) continue;
+
+      if (voroset.count(one->voro[ii]) > 0) cenlist[ii] = 1;
+    }
 
     // check the # of selected clusters
     int nc = 0;
@@ -214,13 +214,13 @@ void Driver::ClusterConnectivity()
         map<int,int> shell;
         cluster.clear(); shell.clear();
         cluster.push_back(id); shell[id] = 0;
-        FEFF_cluster(0, nshell, neilist, id, cluster, shell);
+        one->voro_cluster(0, nshell, id, cluster, shell);
           
         cluster.sort(); cluster.unique();
 
         for (list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
           int jd = *it;
-          if (shell[jd] == nshell) fprintf(fp,"%d %d %d %s\n", img+1, jd, one->attyp[jd], voroindex[jd].c_str());
+          if (shell[jd] == nshell) fprintf(fp,"%d %d %d %s\n", img+1, jd, one->attyp[jd], one->voro[jd].c_str());
         }
       }
 
@@ -243,13 +243,13 @@ void Driver::ClusterConnectivity()
           if (cenlist[jd] == 0) continue;
 
           int ncomm = 0, paired = 0;
-          int ni = neilist[0][id];
-          int nj = neilist[0][jd];
+          int ni = one->neilist[0][id];
+          int nj = one->neilist[0][jd];
           for (int ii=1; ii<= ni; ii++){
-            int iid = neilist[ii][id];
+            int iid = one->neilist[ii][id];
             if (iid == jd) paired = 1;
             for (int jj=1; jj<= nj; jj++){
-              int jjd = neilist[jj][jd];
+              int jjd = one->neilist[jj][jd];
               if (iid == jjd) ncomm++;
             }
           }
@@ -277,11 +277,11 @@ void Driver::ClusterConnectivity()
         for (int id=1; id <= natom; id++){
           if (cenlist[id] == 0) continue;
 
-          fprintf(fpx,"%d %d %d %s %d", img+1, id, SCid[id], voroindex[id].c_str(), nconn[id]);
+          fprintf(fpx,"%d %d %d %s %d", img+1, id, SCid[id], one->voro[id].c_str(), nconn[id]);
           for (int ii=1; ii<= nconn[id]; ii++){
             int jd = conns[(id-1)*natom+ii];
             int ct = connt[(id-1)*natom+jd];
-            fprintf(fpx," %d-(%s):%d", jd, voroindex[jd].c_str(), ct);
+            fprintf(fpx," %d-(%s):%d", jd, one->voro[jd].c_str(), ct);
           }
           fprintf(fpx,"\n");
         }
@@ -289,9 +289,7 @@ void Driver::ClusterConnectivity()
       nconn.clear(); SCid.clear(); conns.clear(); connt.clear();
     }
 
-    voroindex.clear();
   }
-  memory->destroy(neilist);
   memory->destroy(cenlist);
 
   if (job == 2){

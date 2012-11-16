@@ -1,22 +1,18 @@
 #include "driver.h"
-#include "voro++.hh"
 #include "math.h"
-#include <list>
 #include "random.h"
 #include "time.h"
-
-#define MAXLINE 1024
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#include "voro++.hh"
 
 /*------------------------------------------------------------------------------
  * Method to prepare for the FEFF9 input for XANES or EXAFS calculations.
  *----------------------------------------------------------------------------*/
 void Driver::FEFF_main()
 {
+  char str[MAXLINE];
   printf("\n"); for (int i=0; i<9; i++) printf("===="); printf("  FEFF  ");
   for (int i=0; i<9; i++) printf("===="); printf("\n");
-  one = all[0];
+  one = all[istr];
 
   // map atomic type to elements
   if (type2atnum == NULL){
@@ -24,11 +20,39 @@ void Driver::FEFF_main()
     MapType2Elem(1, one->ntype); printf("\n");
   }
 
+  // voro refinement info
+  double mins[3];
+  mins[0] = 1.e-2; mins[1] = 1.e-4; mins[2] = 0.;
+
+  printf("\nRefined Voronoi tesselation will be needed to procceed.\n");
+  printf("Now please input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
+  fgets(str,MAXLINE, stdin);
+  char *ptr = strtok(str, " \n\t\r\f");
+  if (ptr) mins[0] = atof(ptr);
+  printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
+
+  printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
+  printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
+  printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", int(mins[2]));
+  if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+    double dum = atof(strtok(str, " \n\t\r\f"));
+    if (dum > 0.) mins[2] = dum;
+    printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", int(mins[2]));
+  }
+
+  printf("\nPlease input your criterion for ultra short   [%g]: ", mins[1]);
+  fgets(str,MAXLINE, stdin);
+  ptr = strtok(str, " \n\t\r\f");
+  if (ptr) mins[1] = atof(ptr);
+  printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", mins[1]);
+
   int AbsorberType = 0;
   // selection of atoms for each frame
-  char str[MAXLINE], selcmd[MAXLINE], workdir[MAXLINE];
+  char selcmd[MAXLINE], workdir[MAXLINE];
   printf("Please define the absorbing atoms, which are usually of a specific type.\n");
   printf("However you can restrict to a fraction of a type by a selection command.\n");
+  printf("NOTE: for selection option `voro', if negative MINs are provided, their\n");
+  printf("respective default/previous values will be used.\n");
   while (1){
     printf("Please input your selection command, `h` for help [type = 1]: ");
     if (count_words(fgets(str,MAXLINE,stdin)) > 0){
@@ -67,49 +91,6 @@ void Driver::FEFF_main()
     break;
   }
 
-  // further refining the absorbing atoms by their Voronoi index
-  int flag_voro = 0, nmax_voro = 0, seed = 0;
-  set<string> voroset; string vindex;
-  printf("\nIf you want to futher refine the absorbing atoms by their Voronoi index,\n");
-  printf("please input the desired Voronoi index now, e.g., 0,6,0,8. if multiple indices\n");
-  printf("are wanted, separate them by space: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) > 0){
-    flag_voro = 1;
-    printf("\nAtoms selected by:%s with Voronoi indices: %s", selcmd, str);
-    printf("will be chosen as absorbing atoms.\n");
-
-    char *ptr = strtok(str," \n\t\r\f");
-    while (ptr){
-      vindex.assign(ptr);
-      voroset.insert(vindex);
-
-      ptr = strtok(NULL," \n\t\r\f");
-    }
-
-    if (voroset.size() > 0){
-      printf("\nIf you want to limit the # of clusters per frame, input the max # now [0]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0) nmax_voro = atoi(strtok(str," \n\t\r\f"));
-      if (nmax_voro > 0){
-        printf("Please input the seed of the random generator for refining [%d]: ", seed);
-        if (count_words(fgets(str,MAXLINE,stdin)) > 0) seed = atoi(strtok(str," \n\t\r\f"));
-        if (seed < 1) seed = time(NULL)%86400+1;
-      }
-    }
-  }
-
-  // job type, CFAVERAGE or Clusters
-  int flag_pbc = 0;
-  // disable this, since it does not work with FEFF
-/*
-  printf("\nWould you like to run (1), an auto `average` over all absorbing atoms for\n");
-  printf("each frame, or (2), individual calculations for each cluster? (1/2)[2]: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) > 0){
-    char *ptr = strtok(str," \n\t\r\f");
-    flag_pbc = atoi(ptr)%2;
-  }
-  printf("Your selection : %d\n", 2-flag_pbc);
-*/
-
   // XANES or EXAFS
   int job = 2;
   printf("\nWould you like to do a (1) XANES or (2) EXAFS calculation? (1/2)[%d]: ", job);
@@ -138,338 +119,141 @@ void Driver::FEFF_main()
   FILE *fpx = fopen(fname, "w");
   int ndir = 0;
 
-  // real job
-  if (flag_pbc==1 && flag_voro == 0){ // no Voronoi needed
+  // cluster size related info
+  const int MaxShell = 12;
+  int nshell = 2;
+  printf("\nHow many shells would you like to include into the cluster? (1-%d)[%d]: ",MaxShell, nshell);
+  if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    char *ptr = strtok(str," \n\t\r\f");
+    nshell = atoi(ptr);
+  }
+  nshell = MIN(MaxShell,MAX(1,nshell));
+  char Nos[][3] = {"","st","nd","rd","th","th","th","th","th","th","th","th","th","th","th"};
+  printf("Atoms upto the %d%s shell will be included into the clsuter.\n", nshell, Nos[nshell]);
 
-    for (int img = istr; img <= iend; img += inc){
-      one = all[img];
-      one->selection(selcmd);
-  
-      // open the feff.inp file for current frame
-      sprintf(dirname, "%s/Frame%d", workdir, img+1);
-      strcpy(mkdir,"mkdir -p "); strcat(mkdir,dirname);
-      system(mkdir); ndir++; fprintf(fpx, "%s\n", dirname); // create direcotry for current frame
-      strcpy(fname, dirname); strcat(fname,"/feff.inp");
-      fp = fopen(fname, "w");
+  // now to do the real job: analyse the selected clusters frame by frame
+  for (int img = istr; img <= iend; img += inc){ // loop over frames
+    one = all[img];
 
-      // write the potential part of feff.inp
-      fprintf(fp,"TITLE Frame %d (MD steps: %d), %d types, %d atoms.\n",
-        img+1, one->tstep, one->ntype, one->natom);
-      fprintf(fp,"TITLE Averaged over %d type-%d atoms.\n\n", one->nsel, AbsorberType);
-      fprintf(fp,"POTENTIALS\n*  ipot Z   tag lmax1 lmax2\n");
-      for (int ip=1; ip <= one->ntype; ip++){
-        element->Num2Name(type2atnum[ip], ename);
-        fprintf(fp,"%4d   %3d  %3s  -1   3\n", ip, type2atnum[ip], ename);
-      }
-      element->Num2Name(type2atnum[AbsorberType], ename);
-      fprintf(fp,"%4d   %3d  %3s  -1   3\n", one->ntype+1, type2atnum[AbsorberType], ename);
+    // compute the Voronoi info, so as to get all related info
+    one->ComputeVoro(mins);
 
-      // reciprocal space calculation
-      fprintf(fp,"\n* k-space calculation of crystals\nRECIPROCAL\n");
-      fprintf(fp,"\n* Cartesian coordinates, Angstrom units\nCOORDINATES 1\n");
-      fprintf(fp,"\n* Core-hole by RPA\nCOREHOLE RPA\n");
-      fprintf(fp,"\n* KMesh needed\nKMESH 100 0\n");
+    // make selection
+    one->selection(selcmd);
+    if (one->nsel < 1) continue;
+
+    // loop over all selected absorbing atoms
+    for (int id=1; id <= one->natom; id++){
+      if (one->atsel[id] == 0) continue;
+
+      // find atoms in the cluster
+      list<int> cluster;
+      map<int,int> shell;
+      cluster.clear(); shell.clear();
+      cluster.push_back(id); shell[id] = 0;
+      one->voro_cluster(0, nshell, id, cluster, shell);
       
-      // lattice and atomic positions
-      fprintf(fp,"\n* the lattice info\nLATTICE P 1.0\n");
-      for (int idim=0; idim<3; idim++) fprintf(fp,"%15.8f %15.8f %15.8f\n",
-        one->axis[idim][0], one->axis[idim][1], one->axis[idim][2]);
+      cluster.sort(); cluster.unique();
+      int nclus = cluster.size();
 
-      one->dir2car();
-      fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot\n");
-      for (int i=1; i <= one->natom; i++){
-        int ip = one->attyp[i];
-        if (one->atsel[i] == 1 && ip == AbsorberType) ip = one->ntype+1;
-        fprintf(fp,"%15.8f %15.8f %15.8f %d\n", one->atpos[i][0], one->atpos[i][1], one->atpos[i][2], ip);
-      }
-      fprintf(fp,"\n* XAFS is computed by averaging over the following type\n");
-      // suitable r for CFAVERAGE
-      double rmax = pow(3000.*one->vol/(16.*one->natom), 1./3.);
-      fprintf(fp,"CFAVERAGE %d %d %g\n", one->ntype+1, one->nsel, rmax);
-
-      // write other common info
-      FEFF_input(job, fp);
-
-      // clsoe the file
-      fclose(fp);
-    }
-
-  } else { // Voronoi needed
-
-    // voro refinement info
-    double voro_mins[3];
-    voro_mins[0] = voro_mins[1] = 1.e-4;
-    voro_mins[2] = 0.;
-  
-    printf("\nRefined Voronoi tesselation will be needed to procceed.\n");
-    printf("Now please input your criterion for tiny surfaces [%g]: ", voro_mins[0]);
-    fgets(str,MAXLINE, stdin);
-    char *ptr = strtok(str, " \n\t\r\f");
-    if (ptr) voro_mins[0] = atof(ptr);
-    printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", voro_mins[0]);
-  
-    printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
-    printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
-    printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", int(voro_mins[2]));
-    if (count_words(fgets(str,MAXLINE, stdin)) > 0){
-      double dum = atof(strtok(str, " \n\t\r\f"));
-      if (dum > 0.) voro_mins[2] = dum;
-      printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", int(voro_mins[2]));
-    }
-  
-    printf("\nPlease input your criterion for ultra short   [%g]: ", voro_mins[1]);
-    fgets(str,MAXLINE, stdin);
-    ptr = strtok(str, " \n\t\r\f");
-    if (ptr) voro_mins[1] = atof(ptr);
-    printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", voro_mins[1]);
-
-    // cluster size related info
-    const int MaxShell = 12;
-    int nshell = 2;
-    if (flag_pbc == 0){
-      printf("\nHow many shells would you like to include into the cluster? (1-%d)[%d]: ",MaxShell, nshell);
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
-        char *ptr = strtok(str," \n\t\r\f");
-        nshell = atoi(ptr);
-      }
-      nshell = MIN(MaxShell,MAX(1,nshell));
-      char Nos[][3] = {"","st","nd","rd","th","th","th","th","th","th","th","th","th","th","th"};
-      printf("Atoms upto the %d%s shell will be included into the clsuter.\n", nshell, Nos[nshell]);
-    }
-
-    // random generator for confining the number of clusters when certain voronoi indices are asked
-    RanPark * random;
-    if (nmax_voro > 0) random = new RanPark(seed);
-
-    for (int img = istr; img <= iend; img += inc){ // loop over frames
-      one = all[img];
-      // not possible to evaluate voro info for triclinic box
-      //if (one->triclinic) continue;
-      one->selection(selcmd);
-      if (one->nsel < 1) continue;
-
-      // work space for Voronoi
-      int nmax = 24, **neilist, *cenlist;
-      int natom = one->natom;
-      cenlist = memory->create(cenlist, natom+1, "cenlist");
-      neilist = memory->create(neilist, nmax+1, natom+1, "neilist");
-      for (int ii=0; ii<=natom; ii++) cenlist[ii] = 0;
-
-      map<int,string> voroindex; voroindex.clear();
-      // compute the neighbor list and voro info
-      FEFF_voro(voroset, voro_mins, nmax, neilist, cenlist, voroindex);
-
-      // analyse the result
-      int nc = 0;
-      for (int ii=1; ii<=natom; ii++) nc += cenlist[ii];
-      if (nc < 1){
-        voroindex.clear();
-        memory->destroy(neilist);
-        memory->destroy(cenlist);
-        continue;
-
-      } else if (nmax_voro > 0){
-        // apply limitation on the total number of clusters when certain voronoi indices are expected
-        int ndel = nc - nmax_voro;
-        while (ndel > 0){
-          int id = MIN(random->uniform()*(natom+1), natom);
-          ndel -= cenlist[id];
-          cenlist[id] = 0;
-        }
+      // check atomic types in the cluster
+      map<int,int> attyp2pot;
+      attyp2pot.clear(); attyp2pot[0] = 0;
+      int npottype = 0;
+      for (list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
+        int jd = *it;
+        int jp = one->attyp[jd];
+        if (jd == id) jp = 0;
+        if (attyp2pot.count(jp) == 0) attyp2pot[jp] = ++npottype;
       }
 
-      if (flag_pbc){
-        // open the feff.inp file for current frame
-        sprintf(dirname, "%s/Frame%d", workdir, img+1);
-        fprintf(fpx, "%s\n", dirname); ndir++;
-
+      // open the feff.inp file for current frame
+      sprintf(dirname, "%s/F%dA%d", workdir, img+1, id);
+      fprintf(fpx, "%s", dirname); ndir++;
+      if (flag_out & OutFeff){
         strcpy(mkdir,"mkdir -p "); strcat(mkdir,dirname);
         system(mkdir);
         strcpy(fname, dirname); strcat(fname,"/feff.inp");
         fp = fopen(fname, "w");
 
         // write the potential part of feff.inp
-        fprintf(fp,"TITLE Frame %d (MD steps: %d), %d types, %d atoms.\n",
-          img+1, one->tstep, one->ntype, one->natom);
-        fprintf(fp,"TITLE Averaged over %d type %d atoms.\n\n", nc, AbsorberType);
+        element->Num2Name(type2atnum[one->attyp[id]], ename);
+        fprintf(fp,"TITLE Cluster centered on atom %d (%s, <%s>) of frame %d (MD steps: %d)\n",
+          id, ename, one->voro[id].c_str(), img+1, one->tstep);
+        fprintf(fp,"TITLE Total number of atoms in cluster: %d\n\n", nclus);
+
         fprintf(fp,"POTENTIALS\n*  ipot Z   tag lmax1 lmax2\n");
-        for (int ip=1; ip <= one->ntype; ip++){
+        for (map<int,int>::iterator it = attyp2pot.begin(); it != attyp2pot.end(); it++){
+          int ip = it->first; if (ip == 0) ip = one->attyp[id];
+          int IP = it->second;
           element->Num2Name(type2atnum[ip], ename);
-          fprintf(fp,"%4d   %3d  %3s  -1   3\n", ip, type2atnum[ip], ename);
+          fprintf(fp,"%4d   %3d  %3s  -1   3\n", IP, type2atnum[ip], ename);
         }
-        element->Num2Name(type2atnum[AbsorberType], ename);
-        fprintf(fp,"%4d   %3d  %3s  -1   3\n", one->ntype+1, type2atnum[AbsorberType], ename);
-  
-        // write some common info
+
+        // write other common info
         FEFF_input(job, fp);
-
-        // reciprocal space calculation
-        fprintf(fp,"\n* k-space calculation of crystals\nRECIPROCAL\n");
-        fprintf(fp,"\n* Cartesian coordinates, Angstrom units\nCOORDINATES 1\n");
-      
-        // lattice and atomic positions
-        fprintf(fp,"\n* the lattice info\nLATTICE P 1.0\n");
-        for (int idim=0; idim<3; idim++) fprintf(fp,"%15.8f %15.8f %15.8f\n",
-          one->axis[idim][0], one->axis[idim][1], one->axis[idim][2]);
-  
-        one->dir2car();
-        fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot\n");
-        for (int i=1; i <= one->natom; i++){
-          int ip = one->attyp[i];
-          if (cenlist[i] == 1 && ip == AbsorberType) ip = one->ntype+1;
-          fprintf(fp,"%15.8f %15.8f %15.8f %d\n", one->atpos[i][0], one->atpos[i][1], one->atpos[i][2], ip);
-        }
-        fprintf(fp,"\n* XAFS is computed by averaging over the following type\n");
-        // suitable r for CFAVERAGE
-        double rmax = pow(3000.*one->vol/(16.*one->natom), 1./3.);
-        fprintf(fp,"CFAVERAGE %d %d %g\n", one->ntype+1, nc, rmax);
-  
-        // clsoe the file
-        fclose(fp);
-  
-      } else {
-
-        for (int id=1; id <= one->natom; id++){
-          if (cenlist[id] == 0) continue;
-
-          // find atoms in the cluster
-          list<int> cluster;
-          map<int,int> shell;
-          cluster.clear(); shell.clear();
-          cluster.push_back(id); shell[id] = 0;
-          FEFF_cluster(0, nshell, neilist, id, cluster, shell);
-          
-          cluster.sort(); cluster.unique();
-          int nclus = cluster.size();
-
-          // check atomic types in the cluster
-          map<int,int> attyp2pot;
-          attyp2pot.clear(); attyp2pot[0] = 0;
-          int npottype = 0;
-          for (list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
-            int jd = *it;
-            int jp = one->attyp[jd];
-            if (jd == id) jp = 0;
-            if (attyp2pot.count(jp) == 0) attyp2pot[jp] = ++npottype;
-          }
-
-          // open the feff.inp file for current frame
-          sprintf(dirname, "%s/F%dA%d", workdir, img+1, id);
-          fprintf(fpx, "%s", dirname); ndir++;
-          if (flag_out & OutFeff){
-            strcpy(mkdir,"mkdir -p "); strcat(mkdir,dirname);
-            system(mkdir);
-            strcpy(fname, dirname); strcat(fname,"/feff.inp");
-            fp = fopen(fname, "w");
-  
-            // write the potential part of feff.inp
-            element->Num2Name(type2atnum[one->attyp[id]], ename);
-            fprintf(fp,"TITLE Cluster centered on atom %d (%s, <%s>) of frame %d (MD steps: %d)\n",
-              id, ename, voroindex[id].c_str(), img+1, one->tstep);
-            fprintf(fp,"TITLE Total number of atoms in cluster: %d\n\n", nclus);
-  
-            fprintf(fp,"POTENTIALS\n*  ipot Z   tag lmax1 lmax2\n");
-            for (map<int,int>::iterator it = attyp2pot.begin(); it != attyp2pot.end(); it++){
-              int ip = it->first; if (ip == 0) ip = one->attyp[id];
-              int IP = it->second;
-              element->Num2Name(type2atnum[ip], ename);
-              fprintf(fp,"%4d   %3d  %3s  -1   3\n", IP, type2atnum[ip], ename);
-            }
-  
-            // write other common info
-            FEFF_input(job, fp);
-          }
-
-          // storage for coordination number and dist info
-          int CN[one->ntype+1], CNtot = 0;
-          double nndist[one->ntype+1], nndist2[one->ntype+1];
-          for (int ip = 1; ip <= one->ntype; ip++){
-            CN[ip] = 0;
-            nndist[ip] = nndist2[ip] = 0.;
-          }
-  
-          // atomic positions
-          one->dir2car();
-          if (flag_out & OutFeff) fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot tag ishell dist id\n");
-          for (list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
-            int jd = *it;
-            int jp = one->attyp[jd];
-            if (jd == id) jp = 0;
-            double dx[3], r2; r2 = 0.;
-            if (one->triclinic){
-              for (int idim=0; idim<3; idim++) dx[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
-              while (dx[2] > one->hbox[2]){
-                dx[0] -= one->xz;
-                dx[1] -= one->yz;
-                dx[2] -= one->lz;
-              }
-              while (dx[2] < -one->hbox[2]){
-                dx[0] += one->xz;
-                dx[1] += one->yz;
-                dx[2] += one->lz;
-              }
-
-              while (dx[1] > one->hbox[1]){
-                dx[0] -= one->xy;
-                dx[1] -= one->ly;
-              }
-              while (dx[1] < -one->hbox[1]){
-                dx[0] += one->xy;
-                dx[1] += one->ly;
-              }
-
-              while (dx[0] > one->hbox[0]) dx[0] -= one->box[0];
-              while (dx[0] <-one->hbox[0]) dx[0] += one->box[0];
-
-            } else {
-
-              for (int idim=0; idim<3; idim++){
-                dx[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
-                while (dx[idim] > one->hbox[idim]) dx[idim] -= one->box[idim];
-                while (dx[idim] <-one->hbox[idim]) dx[idim] += one->box[idim];
-                r2 += dx[idim]*dx[idim];
-              }
-            }
-            double rij = sqrt(r2);
-            element->Num2Name(type2atnum[one->attyp[jd]], ename);
-            if (flag_out & OutFeff) fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], attyp2pot[jp], ename, shell[jd], rij, jd);
-
-            if (shell[jd] == 1){
-              CN[jp]++; CNtot++;
-              nndist[jp] += rij;
-              nndist2[jp] += r2;
-            }
-          }
-          attyp2pot.clear();
-
-          // write coordination number info
-          if (flag_out & OutFeff){
-            fprintf(fp,"\n* Coordination number and nearest neighbor distance info for atom %d,\n", id);
-            fprintf(fp,"* only atoms of the Voronoi neighbors are seen as nearest neighbors.\n* Total: %d\n", CNtot);
-          }
-          fprintf(fpx," %d :", CNtot);
-
-          for (int ip = 1; ip <= one->ntype; ip++){
-            double stdv = 0.;
-            if (CN[ip] > 0){
-              nndist[ip] /= double(CN[ip]);
-              stdv = sqrt(nndist2[ip]/double(CN[ip])-nndist[ip]*nndist[ip]);
-            }
-            element->Num2Name(type2atnum[ip], ename);
-            if (flag_out & OutFeff) fprintf(fp,"* %2s  %d  %lg +/- %lg\n", ename, CN[ip], nndist[ip], stdv);
-            fprintf(fpx," %2s %d %lg +/- %lg; ", ename, CN[ip], nndist[ip], stdv);
-          }
-          fprintf(fpx," <%s>\n", voroindex[id].c_str());
-
-          shell.clear(); cluster.clear();
-          // clsoe the file
-          if (flag_out & OutFeff) fclose(fp);
-        }
       }
 
-      voroindex.clear();
-      memory->destroy(neilist);
-      memory->destroy(cenlist);
+      // storage for coordination number and dist info
+      int CN[one->ntype+1], CNtot = 0;
+      double nndist[one->ntype+1], nndist2[one->ntype+1];
+      for (int ip = 1; ip <= one->ntype; ip++){
+        CN[ip] = 0;
+        nndist[ip] = nndist2[ip] = 0.;
+      }
+ 
+      // atomic positions
+      one->car2dir();
+ 
+      if (flag_out & OutFeff) fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot tag ishell dist id\n");
+      for (list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
+        int jd = *it;
+        int jp = one->attyp[jd];
+        if (jd == id) jp = 0;
+        double dx[3], r2; r2 = 0.;
+        for (int idim=0; idim<3; idim++){
+          dx[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
+          while (dx[idim] > 0.5) dx[idim] -= 1.;
+          while (dx[idim] <-0.5) dx[idim] += 1.;
+        }
+        dx[0] = dx[0]*one->lx + dx[1]*one->xy + dx[2]*one->xz;
+        dx[1] = dx[1]*one->ly + dx[2]*one->yz;
+        dx[2] = dx[2]*one->lz;
+ 
+        double rij = sqrt(r2);
+        element->Num2Name(type2atnum[one->attyp[jd]], ename);
+        if (flag_out & OutFeff) fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], attyp2pot[jp], ename, shell[jd], rij, jd);
+ 
+        if (shell[jd] == 1){
+          CN[jp]++; CNtot++;
+          nndist[jp] += rij;
+          nndist2[jp] += r2;
+        }
+      }
+      attyp2pot.clear();
+ 
+      // write coordination number info
+      if (flag_out & OutFeff){
+        fprintf(fp,"\n* Coordination number and nearest neighbor distance info for atom %d,\n", id);
+        fprintf(fp,"* only atoms of the Voronoi neighbors are seen as nearest neighbors.\n* Total: %d\n", CNtot);
+      }
+      fprintf(fpx," %d :", CNtot);
+ 
+      for (int ip = 1; ip <= one->ntype; ip++){
+        double stdv = 0.;
+        if (CN[ip] > 0){
+          nndist[ip] /= double(CN[ip]);
+          stdv = sqrt(nndist2[ip]/double(CN[ip])-nndist[ip]*nndist[ip]);
+        }
+        element->Num2Name(type2atnum[ip], ename);
+        if (flag_out & OutFeff) fprintf(fp,"* %2s  %d  %lg +/- %lg\n", ename, CN[ip], nndist[ip], stdv);
+        fprintf(fpx," %2s %d %lg +/- %lg; ", ename, CN[ip], nndist[ip], stdv);
+      }
+      fprintf(fpx," <%s>\n", one->voro[id].c_str());
+
+      shell.clear(); cluster.clear();
+      // clsoe the file
+      if (flag_out & OutFeff) fclose(fp);
     } // end of loop over frames
   }
 
@@ -557,325 +341,4 @@ void Driver::FEFF_input(int job, FILE *fp)
 return;
 }
 
-/*------------------------------------------------------------------------------
- * Method to find the neighbor list based on refined Voronoi calculation
- *------------------------------------------------------------------------------
- * vlist   (in)    : list of voronoi index to select; if empty, select all
- * mins    (in)    : threshold for surface, edge and minimum neighbors retained
- * nmax    (inout) : max # of neighbors for each atom
- * nlist   (out)   : neighbor list
- * clist   (out)   : status of atoms, 1 if selected, 0 if not.
- * vindx   (out)   : Voronoi index for each atom
- *----------------------------------------------------------------------------*/
-void Driver::FEFF_voro(set<string> vlist, double *mins, int &nmax, int **nlist, int *clist, map<int,string> &vindx)
-{
-  double surf_min = mins[0];
-  double edge_min = mins[1];
-  int nminnei = int(mins[2]);
-  // set local variables
-  double xlo = one->xlo, xhi = one->xhi;
-  double ylo = one->ylo, yhi = one->yhi;
-  double zlo = one->zlo, zhi = one->zhi;
-  double lx  = one->lx,  ly  = one->ly,  lz = one->lz;
-  double xy  = one->xy,  xz  = one->xz,  yz = one->yz;
-  double hx = 0.5*lx, hy = 0.5*ly, hz = 0.5*lz;
-  int natom = one->natom;
-
-  int *attyp = one->attyp;
-  double **atpos = one->atpos;
-
-  // need cartesian coordinates
-  one->dir2car();
-
-  // compute optimal size for container, and then contrust it
-  double l = pow(double(natom)/(5.6*lx*ly*lz), 1./3.);
-  int nx = int(lx*l+1), ny = int(ly*l+1), nz = int(lz*l+1);
-
-  if (one->triclinic){
-
-    voro::container_periodic con(lx,xy,ly,xz,yz,lz,nx,ny,nz,8);
-    // put atoms into the container
-    for (int i=1; i<= natom; i++) con.put(i, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
-  
-    voro::voronoicell_neighbor c1, c2, *cell;
-    voro::c_loop_all_periodic cl(con);
-    if (cl.start()) do if (con.compute_cell(c1,cl)){
-      int id;
-      double x, y, z, vol;
-      vector<int> ff;       // face_freq
-      vector<int> neigh;    // neigh list
-      vector<double> fs;    // face areas
-      int index[7];
-      for (int i=0; i<7; i++) index[i] = 0;
-         
-      cl.pos(x,y,z);
-      id = cl.pid();
-      c1.neighbors(neigh);
-      c1.face_areas(fs);
-      cell = &c1;
-  
-      // refine the voronoi cell by removing tiny surfaces
-      double L = MAX(lx,MAX(ly,lz));
-      c2.init(-L,L,-L,L,-L,L);
-    
-      int nf = fs.size();
-      // sort neighbors by area if asked to keep a minimum # of neighbors
-      if (nminnei){
-        for (int i=0; i<nf; i++)
-        for (int j=i+1; j<nf; j++){
-          if (fs[j] > fs[i]){
-            double dswap = fs[i]; fs[i] = fs[j]; fs[j] = dswap;
-            int ik = neigh[i]; neigh[i] = neigh[j]; neigh[j] = ik;
-          }
-        }
-      }
-  
-      // add condition on surface
-      double fcut = surf_min * cell->surface_area();
-      for (int i=0; i<nf; i++){
-        if (i < nminnei || fs[i] > fcut){
-          int j = neigh[i];
-    
-          // apply pbc
-          double xij = one->atpos[j][0]-x;
-          double yij = one->atpos[j][1]-y;
-          double zij = one->atpos[j][2]-z;
-
-          while (zij > hz){
-            xij -= xz;
-            yij -= yz;
-            zij -= lz;
-          }
-          while (zij <-hz){
-            xij += xz;
-            yij += yz;
-            zij += lz;
-          }
-
-          while (yij > hy){
-            xij -= xy;
-            yij -= ly;
-          }
-          while (yij <-hy){
-            xij += xy;
-            yij += ly;
-          }
-
-          while (xij > hx) xij -= lx;
-          while (xij <-hx) xij += lx;
-  
-          c2.nplane(xij,yij,zij,j);
-        }
-      }
-      c2.face_areas(fs);
-      c2.neighbors(neigh);
-      cell = &c2;
-  
-      vol = cell->volume();
-      cell->face_freq_table(ff);
-      int nn = ff.size()-1;
-      for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
-        
-      // refine the voronoi cell if asked by skipping ultra short edges
-      vector<double> vpos;
-      vector<int>    vlst;
-      double lcut2 = cell->total_edge_distance()*edge_min;
-      lcut2 = lcut2*lcut2;
-    
-      cell->vertices(vpos);
-      cell->face_vertices(vlst);
-    
-      nf = fs.size();
-      int ford[nf];
-      int k = 0, iface = 0;
-      while (k < vlst.size()){
-        int ned = vlst[k++];
-        int nuc = 0;
-        for (int ii=0; ii<ned; ii++){
-          int jj = (ii+1)%ned;
-          int v1 = vlst[k+ii], v2 = vlst[k+jj];
-          double dx = vpos[v1*3]   - vpos[v2*3];
-          double dy = vpos[v1*3+1] - vpos[v2*3+1];
-          double dz = vpos[v1*3+2] - vpos[v2*3+2];
-          double r2 = dx*dx+dy*dy+dz*dz;
-          if (r2 <= lcut2) nuc++;
-        }
-        ford[iface++] = ned - nuc;
-        k += ned;
-      }
-    
-      for (int i=3; i<7; i++) index[i] = 0;
-      for (int i=0; i<nf; i++){
-        if (ford[i] < 7) index[ford[i]] += 1;
-      }
-    
-      if (one->atsel[id] == 1){
-        if (vlist.size() > 0){
-          char str[MAXLINE];
-          sprintf(str,"%d,%d,%d,%d", index[3], index[4], index[5], index[6]);
-          string vindex; vindex.assign(str);
-          if (vlist.count(vindex) > 0) clist[id] = 1;
-        } else clist[id] = 1;
-      }
-    
-      nf = fs.size();
-      if (nf > nmax){
-        while (nf >= nmax) nmax += 12;
-        nlist = memory->grow(nlist, nmax+1, natom+1, "nlist");
-      }
-      nlist[0][id] = nf;
-      for (int i=0; i<nf; i++) nlist[i+1][id] = neigh[i];
-    
-    } while (cl.inc());
-
-  } else { // orthogonal box
-    voro::container con(xlo,xhi,ylo,yhi,zlo,zhi,nx,ny,nz,true,true,true,8);
-  
-    // put atoms into the container
-    for (int i=1; i<= natom; i++) con.put(i, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
-  
-    voro::voronoicell_neighbor c1, c2, *cell;
-    voro::c_loop_all cl(con);
-    if (cl.start()) do if (con.compute_cell(c1,cl)){
-      int id;
-      double x, y, z, vol;
-      vector<int> ff;       // face_freq
-      vector<int> neigh;    // neigh list
-      vector<double> fs;    // face areas
-      int index[7];
-      for (int i=0; i<7; i++) index[i] = 0;
-         
-      cl.pos(x,y,z);
-      id = cl.pid();
-      c1.neighbors(neigh);
-      c1.face_areas(fs);
-      cell = &c1;
-  
-      // refine the voronoi cell by removing tiny surfaces
-      c2.init(-lx,lx,-ly,ly,-lz,lz);
-    
-      int nf = fs.size();
-      // sort neighbors by area if asked to keep a minimum # of neighbors
-      if (nminnei){
-        for (int i=0; i<nf; i++)
-        for (int j=i+1; j<nf; j++){
-          if (fs[j] > fs[i]){
-            double dswap = fs[i]; fs[i] = fs[j]; fs[j] = dswap;
-            int ik = neigh[i]; neigh[i] = neigh[j]; neigh[j] = ik;
-          }
-        }
-      }
-  
-      // add condition on surface
-      double fcut = surf_min * cell->surface_area();
-      for (int i=0; i<nf; i++){
-        if (i < nminnei || fs[i] > fcut){
-          int j = neigh[i];
-    
-          // apply pbc
-          double xij = one->atpos[j][0]-x;
-          while (xij > hx) xij -= lx;
-          while (xij <-hx) xij += lx;
-  
-          double yij = one->atpos[j][1]-y;
-          while (yij > hy) yij -= ly;
-          while (yij <-hy) yij += ly;
-  
-          double zij = one->atpos[j][2]-z;
-          while (zij > hz) zij -= lz;
-          while (zij <-hz) zij += lz;
-    
-          c2.nplane(xij,yij,zij,j);
-        }
-      }
-      c2.face_areas(fs);
-      c2.neighbors(neigh);
-      cell = &c2;
-  
-      vol = cell->volume();
-      cell->face_freq_table(ff);
-      int nn = ff.size()-1;
-      for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
-        
-      // refine the voronoi cell if asked by skipping ultra short edges
-      vector<double> vpos;
-      vector<int>    vlst;
-      double lcut2 = cell->total_edge_distance()*edge_min;
-      lcut2 = lcut2*lcut2;
-    
-      cell->vertices(vpos);
-      cell->face_vertices(vlst);
-    
-      nf = fs.size();
-      int ford[nf];
-      int k = 0, iface = 0;
-      while (k < vlst.size()){
-        int ned = vlst[k++];
-        int nuc = 0;
-        for (int ii=0; ii<ned; ii++){
-          int jj = (ii+1)%ned;
-          int v1 = vlst[k+ii], v2 = vlst[k+jj];
-          double dx = vpos[v1*3]   - vpos[v2*3];
-          double dy = vpos[v1*3+1] - vpos[v2*3+1];
-          double dz = vpos[v1*3+2] - vpos[v2*3+2];
-          double r2 = dx*dx+dy*dy+dz*dz;
-          if (r2 <= lcut2) nuc++;
-        }
-        ford[iface++] = ned - nuc;
-        k += ned;
-      }
-    
-      for (int i=3; i<7; i++) index[i] = 0;
-      for (int i=0; i<nf; i++){
-        if (ford[i] < 7) index[ford[i]] += 1;
-      }
-    
-      char str[MAXLINE];
-      sprintf(str,"%d,%d,%d,%d", index[3], index[4], index[5], index[6]);
-      vindx[id].assign(str);
-      if (one->atsel[id] == 1){
-        if (vlist.size() > 0){
-          if (vlist.count(vindx[id]) > 0) clist[id] = 1;
-        } else clist[id] = 1;
-      }
-    
-      nf = fs.size();
-      if (nf > nmax){
-        while (nf >= nmax) nmax += 12;
-        nlist = memory->grow(nlist, nmax+1, natom+1, "nlist");
-      }
-      nlist[0][id] = nf;
-      for (int i=0; i<nf; i++) nlist[i+1][id] = neigh[i];
-    
-    } while (cl.inc());
-  }
-
-return;
-}
-
-/*------------------------------------------------------------------------------
- * Recursive method to find neighbors of id upto max shells
- *------------------------------------------------------------------------------
- * il    (in)  : current shell level
- * max   (in)  : max shell #
- * nlist (in)  : neighbor list
- * clist (out) : list stores the IDs of atoms in the cluster
- * myshell (out) : shell # of each atom in the cluster
- *----------------------------------------------------------------------------*/
-void Driver::FEFF_cluster(int il, const int max, int **nlist, int id, list<int> &clist, map<int,int> &myshell)
-{
-  if (++il > max) return;
-
-  int nn = nlist[0][id];
-  for (int ii=1; ii <= nn; ii++){
-    int jd = nlist[ii][id];
-    clist.push_back(nlist[ii][id]);
-    if (myshell.count(jd)) myshell[jd] = MIN(myshell[jd], il);
-    else myshell[jd] = il;
-
-    FEFF_cluster(il, max, nlist, jd, clist, myshell);
-  }
-
-return;
-}
-/*------------------------------------------------------------------------------ */
+/*------------------------------------------------------------------------------*/

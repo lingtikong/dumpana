@@ -1,9 +1,5 @@
 #include "driver.h"
 
-#define MAXLINE 512
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-
 /*------------------------------------------------------------------------------
  * Constructor of driver, main menu
  *------------------------------------------------------------------------------ */
@@ -77,7 +73,7 @@ Driver::Driver(int narg, char** arg)
     printf("  3. Honeycutt-Andersen bond index;    |  13. Pair correlation function;\n");
     printf("  4. Common neighbor analysis;         |  14. Static structure factor;\n");
     printf("  5. Prepare for FEFF9;                | \n");
-    printf("  6. Cluster connectivity info;        | \n");
+    printf("  6. Voronoi cluster connectivity;     | \n");
     for (int i=0; i<20; i++) printf("----"); printf("\n");
     printf("  0. Exit.\nYour choice [%d]: ", job);
     fgets(str,MAXLINE,stdin);
