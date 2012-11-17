@@ -37,6 +37,7 @@ public:
 
   int **neilist;         // Voronoi neighbor list, only available if voro is computed
   map<int,string> voro;  // Voronoi index for each atom
+  int bonded(int,int);   // check if two atoms are neighbors to each other
 
   void ComputeVoro(double *); // compute the Voronoi info
   void ComputeVoro(double *, FILE *, FILE *, FILE *);                  // compute the Voronoi info

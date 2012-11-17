@@ -1,10 +1,4 @@
 #include "driver.h"
-#include "voro++.hh"
-#include "math.h"
-
-#define MAXLINE 512
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
 
 /*------------------------------------------------------------------------------
  * Method to do voronoi diagram analysis for the selected frames
@@ -74,10 +68,12 @@ void Driver::voro()
     printf("  Frame %d done, voro info written to: %s\n", img+1, ptr);
   }
 
-  if (flag_out & OutSurf) fclose(fpsurf);
-  if (flag_out & OutEdge) fclose(fpedge);
+  if (fpsurf) fclose(fpsurf);
+  if (fpedge) fclose(fpedge);
 
   delete []prefix;
   for (int i=0; i<20; i++) printf("===="); printf("\n");
 return;
 }
+
+/*------------------------------------------------------------------------------*/

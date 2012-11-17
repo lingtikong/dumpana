@@ -1,12 +1,5 @@
 #include "driver.h"
-#include "voro++.hh"
 #include "common_neig.h"
-#include "math.h"
-#include <vector>
-
-#define MAXLINE 512
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
 
 /*------------------------------------------------------------------------------
  * Driver to execute the Common neighbor analysis or common neighbor parameter
@@ -20,13 +13,10 @@ void Driver::Compute_CNACNP()
   printf("   Common  Neighber  Analysis   ");
   for (int i=0; i<6; i++) printf("====");
 
-  // thresholds for surface and edges
-  double mins[3];
-  mins[0] = 1.e-2; mins[1] = 1.e-4; mins[2] = 0.;
-
   int job = 1;
-  printf("\nPlease select your desired job:\n");
-  for (int i=0; i<20; i++) printf("----"); printf("\n");
+  printf("\nReference: Comp. Phys. Comm. 177:518, 2007.\n");
+  for (int i=0; i<20; i++) printf("----");
+  printf("\nNow please select your desired job:\n");
   printf("  1. CNA based on Voronoi info;\n");
   printf("  2. CNP based on Voronoi info;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
@@ -39,6 +29,10 @@ void Driver::Compute_CNACNP()
     return;
   }
   printf("\n");
+
+  // thresholds for surface and edges
+  double mins[3];
+  mins[0] = 1.e-2; mins[1] = 1.e-4; mins[2] = 0.;
 
   // ask for Voronoi refinement parameters
   printf("Please input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
@@ -89,3 +83,5 @@ void Driver::Compute_CNACNP()
 
 return;
 }
+
+/*------------------------------------------------------------------------------ */

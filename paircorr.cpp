@@ -1,9 +1,5 @@
 #include "driver.h"
-#include "math.h"
-
-#define MAXLINE 512
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#include "timer.h"
 
 /*------------------------------------------------------------------------------
  * Method to compute the pair correlation function of the system
@@ -121,6 +117,9 @@ void Driver::paircorr()
     sprintf(header,"# g(r) between two selections:\n# source atoms: %s# neighbors: %s", srcsel, dessel);
   }
   
+  // timer
+  Timer * timer = new Timer();
+
   // now to compute g(r)
   if (job == 1){  // g(r) for selected atoms
     for (int img = istr; img <= iend; img += inc){ // loop over frames
@@ -211,8 +210,12 @@ void Driver::paircorr()
     hit[i] /= MAX(1,nused);
   }
   
+  timer->stop();
+  printf("\nTotal CPU time used: %g seconds.\n", timer->cpu_time());
+  delete timer;
+
   // output the result
-  printf("\nPlease input the file to output g(r) [gr.dat]: ");
+  printf("Please input the file to output g(r) [gr.dat]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) strcpy(str, "gr.dat");
@@ -236,3 +239,5 @@ void Driver::paircorr()
 
 return;
 }
+
+/*------------------------------------------------------------------------------*/
