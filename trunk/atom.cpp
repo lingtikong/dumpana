@@ -59,7 +59,7 @@ DumpAtom::DumpAtom(FILE *fp)
   atsel = memory->create(atsel, natom+1, "atsel");
 
   for (int i=1; i<=natom; i++) atsel[i] = 1; atsel[0] = 0;
-  realcmd = new char [MAXLINE]; strcpy(realcmd, "all");
+  realcmd = new char [MAXLINE]; strcpy(realcmd, "all\n");
   nsel = natom;
 
   s = memory->create(s, natom+1, 3, "s");
@@ -161,7 +161,7 @@ return;
 void DumpAtom::selection(const char *line)
 {
   int n = strlen(line) + 1;
-  char *selcmd = (char *) memory->smalloc(n*sizeof(char),"selcmd");
+  char *selcmd = memory->create(selcmd, n, "selcmd"); //(char *) memory->smalloc(n*sizeof(char),"selcmd");
   strcpy(selcmd,line);
 
   char *key, *oper, *ptr;
@@ -250,8 +250,7 @@ void DumpAtom::selection(const char *line)
 
       } else break;
 
-    } else if (strcmp(key,"x")==0 || strcmp(key,"y")==0 || strcmp(key,"z")==0 ){
-    // selection by fractional position
+    } else if (strcmp(key,"x")==0 || strcmp(key,"y")==0 || strcmp(key,"z")==0 ){ // selection by fractional position
       car2dir();
 
       int dir = key[0]-'x';
@@ -296,8 +295,7 @@ void DumpAtom::selection(const char *line)
 
       } else break;
 
-    } else if (strcmp(key,"X")==0 || strcmp(key,"Y")==0 || strcmp(key,"Z")==0 ){
-    // selection by cartesian position
+    } else if (strcmp(key,"X")==0 || strcmp(key,"Y")==0 || strcmp(key,"Z")==0 ){ // selection by cartesian position
       dir2car();
 
       int dir = key[0]-'x';
@@ -584,9 +582,9 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 
   for (int i=0; i<3; i++) vmins[i] = fabs(mins[i]);
 
-  double surf_min = fabs(mins[0]);
-  double edge_min = fabs(mins[1]);
-  int nminnei = int(mins[2]);
+  double surf_min = vmins[0];
+  double edge_min = vmins[1];
+  int nminnei = int(vmins[2]);
 
   voro.clear();
   if (neilist) memory->destroy(neilist);
@@ -906,6 +904,19 @@ void DumpAtom::voro_cluster(int il, const int max, int id, list<int> &clist, map
   }
 
 return;
+}
+
+/*------------------------------------------------------------------------------
+ * Private method to check if a pair of atoms are bonded or not
+ *----------------------------------------------------------------------------*/
+int DumpAtom::bonded(int id, int jd)
+{
+  int ni = neilist[0][id];
+  for (int jj=1; jj<= ni; jj++){
+    if (neilist[jj][id] == jd) return 1;
+  }
+
+return 0;
 }
 
 /*------------------------------------------------------------------------------ */

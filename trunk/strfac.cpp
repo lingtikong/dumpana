@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "math.h"
 #include <complex>
 #include "timer.h"
 
@@ -61,7 +60,7 @@ void Driver::strfac()
   for (int i=0; i<3; i++) dk[i] = kmax[i]/MAX(1.,double(nk[i]-1));
 
   // selection commands for atoms
-  one = all[0];
+  one = all[istr];
   char selcmd[MAXLINE];
   while (1){
     printf("\nPlease input the atom selection command, `h` for help [all]: ");
@@ -242,3 +241,4 @@ void Driver::strfac()
 
 return;
 }
+/*------------------------------------------------------------------------------*/

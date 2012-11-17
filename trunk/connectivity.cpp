@@ -1,9 +1,4 @@
 #include "driver.h"
-#include "voro++.hh"
-#include "math.h"
-#include <list>
-#include "random.h"
-#include "time.h"
 
 /*------------------------------------------------------------------------------
  * Method to check the connectivity of certain clusters
@@ -327,3 +322,5 @@ void Driver::ClusterConnectivity()
 
 return;
 }
+
+/*------------------------------------------------------------------------------ */

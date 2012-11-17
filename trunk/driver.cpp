@@ -8,12 +8,13 @@ Driver::Driver(int narg, char** arg)
   one = NULL; all.clear();
   dump = NULL;
   nframe = 0;
-  memory = new Memory();
-  flag_out = 0;
-  int loop = 1;
-  type2atnum = NULL;
-  element = NULL;
+  type2atnum = NULL; element = NULL;
 
+  memory = new Memory();
+
+  int loop = 1;
+
+  flag_out = 0;
   flag_out |= OutFeff; // by default, feff.inp is written
 
   // analyse command line options
@@ -264,17 +265,11 @@ return;
 void Driver::writexyz()
 {
   char str[MAXLINE];
-  char *fout;
+  printf("\n"); for (int i=0; i<20; i++) printf("====");
   printf("\nPlease input the output xyz file name [%s.xyz]: ", dump);
-  fgets(str,MAXLINE,stdin);
-  char *ptr = strtok(str, " \n\t\r\f");
-  if (ptr == NULL){
-    fout = new char[strlen(dump)+5];
-    sprintf(fout,"%s.xyz",dump);
-  } else {
-    fout = new char [strlen(ptr)+1];
-    strcpy(fout, ptr);
-  }
+  if (count_words(fgets(str,MAXLINE,stdin)) < 1) sprintf(str,"%s.xyz", dump);
+  char *fout = strtok(str, " \n\t\r\f");
+
   FILE *fp = fopen(fout, "w");
   for (int img = istr; img<= iend; img += inc){
     one = all[img];
@@ -305,9 +300,9 @@ void Driver::writexyz()
       }
     }
   }
-  fclose(fp);
+  fclose(fp); fout = NULL;
   printf("Mission completed, %d frames written to file: %s\n", (iend-istr+1)/inc, fout);
-  delete []fout;
+  for (int i=0; i<20; i++) printf("===="); printf("\n"); 
 return;
 }
 
@@ -365,17 +360,13 @@ void Driver::avedump()
   }
   
   char str[MAXLINE];
-  char *fout;
+  printf("\n"); for (int i=0; i<20; i++) printf("====");
   printf("\nPlease input the output xyz file name [dumpave.xyz]: ");
-  fgets(str,MAXLINE,stdin);
-  char *ptr = strtok(str, " \n\t\r\f");
-  if (ptr == NULL){
-    strcpy(str,"dumpave.xyz");
-    ptr = strtok(str, " \n\t\r\f");
-  }
-  fout = new char [strlen(ptr)+1];
-  strcpy(fout, ptr);
+  if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str,"dumpave.xyz");
+
+  char *fout = strtok(str, " \n\t\r\f");
   FILE *fp = fopen(fout, "w");
+
   fprintf(fp,"%d\n", nfirst);
   fprintf(fp,"Averaged over frames from %d to %d with incremental of %d: %lg %lg %lg %lg %lg %lg\n",
   istr+1, iend+1, inc, lx, ly, lz, xy, xz, yz);
@@ -389,7 +380,7 @@ void Driver::avedump()
   fclose(fp);
 
   memory->destroy(atpos);
-  delete []fout;
+  for (int i=0; i<20; i++) printf("===="); printf("\n"); 
 
 return;
 }

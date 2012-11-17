@@ -60,7 +60,7 @@ void Driver::honeycutt_andersen()
     for (int id=1; id<= one->natom; id++){
       if (unbond){
         for (int jd=id+1; jd<= one->natom; jd++){
-          count_HA(id, jd, one->neilist, fp, outcomm);
+          count_HA(id, jd, fp, outcomm);
         }
 
       } else {
@@ -70,7 +70,7 @@ void Driver::honeycutt_andersen()
           int jd  = one->neilist[kk][id];
           if (id > jd) continue;
 
-          count_HA(id, jd, one->neilist, fp, outcomm);
+          count_HA(id, jd, fp, outcomm);
         }
       }
     }
@@ -86,13 +86,13 @@ return;
  * Private method to compute the Honeycutt-Andersen index for a pair of atoms
  *------------------------------------------------------------------------------
  * id, jd  (in) : ID of the atom pair
- * list    (in) : neighbor list
  * fp      (in) : FILE to write the result
  * flag    (in) : 1, write the common neighors; 0, not write
  *----------------------------------------------------------------------------*/
-void Driver::count_HA(int id, int jd, int **list, FILE * fp, const int flag)
+void Driver::count_HA(int id, int jd, FILE * fp, const int flag)
 {
-  int ibond = 2 - bonded(id,jd,list);
+  int ibond = 2 - one->bonded(id,jd);
+  int **list = one->neilist;
   int nni = list[0][id];
   int nnj = list[0][jd];
 
@@ -106,7 +106,7 @@ void Driver::count_HA(int id, int jd, int **list, FILE * fp, const int flag)
 
   int nbond = 0;
   for (int mm=0; mm<ncomm; mm++)
-  for (int nn=mm+1; nn<ncomm; nn++) nbond += bonded(comms[mm],comms[nn], list);
+  for (int nn=mm+1; nn<ncomm; nn++) nbond += one->bonded(comms[mm],comms[nn]);
 
   int nconf = 1;
   // needs to distinct same ncomm-nbond for 144, 142
@@ -116,8 +116,8 @@ void Driver::count_HA(int id, int jd, int **list, FILE * fp, const int flag)
     for (int mm=0; mm<ncomm; mm++)
     for (int nn=mm+1; nn<ncomm; nn++){
       int md = comms[mm], nd = comms[nn];
-      ned[mm] += bonded(md, nd, list);
-      ned[nn] += bonded(md, nd, list);
+      ned[mm] += one->bonded(md, nd);
+      ned[nn] += one->bonded(md, nd);
     }
     int nmin = nbond/2;
     for (int mm=0; mm<ncomm; mm++) if (ned[mm] < nmin) nconf = 2;
@@ -130,15 +130,4 @@ void Driver::count_HA(int id, int jd, int **list, FILE * fp, const int flag)
 return;
 }
 
-/*------------------------------------------------------------------------------
- * Private method to check if a pair of atoms are bonded or not
- *----------------------------------------------------------------------------*/
-int Driver::bonded(int id, int jd, int ** list)
-{
-  int ni = list[0][id];
-  for (int jj=1; jj<= ni; jj++){
-    if (list[jj][id] == jd) return 1;
-  }
-
-return 0;
-}
+/*------------------------------------------------------------------------------*/

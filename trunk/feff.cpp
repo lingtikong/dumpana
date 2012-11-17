@@ -1,8 +1,4 @@
 #include "driver.h"
-#include "math.h"
-#include "random.h"
-#include "time.h"
-#include "voro++.hh"
 
 /*------------------------------------------------------------------------------
  * Method to prepare for the FEFF9 input for XANES or EXAFS calculations.
