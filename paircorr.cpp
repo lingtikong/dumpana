@@ -30,39 +30,6 @@ void Driver::paircorr()
   }
   printf("\n");
 
-  // bounds of g(r)
-  printf("Please input the lower bound of g(r) [%g]: ", rmin);
-  fgets(str,MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
-  if (ptr) rmin = atof(ptr);
-  rmin = MAX(rmin, 0.);
-
-  printf("Please input the upper bound of g(r) [%g]: ", rmax);
-  fgets(str,MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
-  if (ptr) rmax = atof(ptr);
-  rmax = MAX(rmax,rmin+1.);
-
-  printf("Please input the # of points of g(r) [%d]: ", nbin);
-  fgets(str,MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
-  if (ptr) nbin = atoi(ptr);
-  nbin = MAX(2,nbin);
-  
-  // derived variables
-  double delr = (rmax-rmin)/double(nbin-1);
-  double rdr = 1./delr;
-  
-  // working space
-  double *gr, *hit;
-  gr  = memory->create(gr,nbin,"gr");
-  hit = memory->create(hit,nbin,"gr");
-  for (int i=0; i<nbin; i++) gr[i] = 0.;
-  for (int i=0; i<nbin; i++) hit[i] = 0.;
-  
-  const double tpi = 8.*atan(1.);
-  int nused = 0;
-  
   // selection commands
   char srcsel[MAXLINE], dessel[MAXLINE];
   int *insrc;
@@ -70,7 +37,7 @@ void Driver::paircorr()
   one = all[istr];
   // selection commands for atoms
   while (1){
-    if (job == 1) printf("\nPlease input the selection command for atoms, `h` for help [all]:");
+    if (job == 1) printf("\nPlease input the selection command for atoms, `h` for help [all]: ");
     else printf("\nPlease input the selection command for source atoms, `h` for help [all]: ");
 
     if (count_words(fgets(str,MAXLINE,stdin)) > 0){
@@ -117,6 +84,39 @@ void Driver::paircorr()
     sprintf(header,"# g(r) between two selections:\n# source atoms: %s# neighbors: %s", srcsel, dessel);
   }
   
+  // bounds of g(r)
+  printf("Please input the lower bound of g(r) [%g]: ", rmin);
+  fgets(str,MAXLINE, stdin);
+  ptr = strtok(str, " \n\t\r\f");
+  if (ptr) rmin = atof(ptr);
+  rmin = MAX(rmin, 0.);
+
+  printf("Please input the upper bound of g(r) [%g]: ", rmax);
+  fgets(str,MAXLINE, stdin);
+  ptr = strtok(str, " \n\t\r\f");
+  if (ptr) rmax = atof(ptr);
+  rmax = MAX(rmax,rmin+1.);
+
+  printf("Please input the # of points of g(r) [%d]: ", nbin);
+  fgets(str,MAXLINE, stdin);
+  ptr = strtok(str, " \n\t\r\f");
+  if (ptr) nbin = atoi(ptr);
+  nbin = MAX(2,nbin);
+  
+  // derived variables
+  double delr = (rmax-rmin)/double(nbin-1);
+  double rdr = 1./delr;
+  
+  // working space
+  double *gr, *hit;
+  gr  = memory->create(gr,nbin,"gr");
+  hit = memory->create(hit,nbin,"gr");
+  for (int i=0; i<nbin; i++) gr[i] = 0.;
+  for (int i=0; i<nbin; i++) hit[i] = 0.;
+  
+  const double tpi = 8.*atan(1.);
+  int nused = 0;
+
   // timer
   Timer * timer = new Timer();
 

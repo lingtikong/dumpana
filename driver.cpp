@@ -71,7 +71,7 @@ Driver::Driver(int narg, char** arg)
     printf("  2. Chemical Short Range Order;       |  12. Average over frames;   \n");
     printf("  3. Honeycutt-Andersen bond index;    |  13. Pair correlation function;\n");
     printf("  4. Common neighbor analysis;         |  14. Static structure factor;\n");
-    printf("  5. Prepare for FEFF9;                | \n");
+    printf("  5. Prepare for FEFF9;                |  15. Bond length/angles;\n");
     printf("  6. Voronoi cluster connectivity;     | \n");
     for (int i=0; i<20; i++) printf("----"); printf("\n");
     printf("  0. Exit.\nYour choice [%d]: ", job);
@@ -132,6 +132,11 @@ Driver::Driver(int narg, char** arg)
     case 14:
       setrange();
       if (nsel > 0) strfac();
+      break;
+
+    case 15:
+      setrange();
+      if (nsel > 0) bonds();
       break;
 
     default:
