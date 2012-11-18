@@ -16,9 +16,10 @@ void Driver::strfac()
   printf("\n"); for (int i=0; i<6; i++) printf("====");
   printf("    Static  Structure  Factor   ");
   for (int i=0; i<6; i++) printf("====");
+
   // ask for the max value of k's
   kmax[0] = kmax[1] = kmax[2] = 10.;
-  printf("Please input the upper bound of the k-vectors [%g %g %g]: ", kmax[0], kmax[1], kmax[2]);
+  printf("\nPlease input the upper bound of the k-vectors [%g %g %g]: ", kmax[0], kmax[1], kmax[2]);
   if (count_words(fgets(str,MAXLINE, stdin)) >= 3){
     ptr = strtok(str, " \n\t\r\f");
     for (int i=0; i<2; i++){

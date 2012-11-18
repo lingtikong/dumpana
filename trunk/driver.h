@@ -67,6 +67,9 @@ private:
   // Connectivity info for certain clusters; needs FEFF_voro
   void ClusterConnectivity();
 
+  // bond length or bond angle distribution; Voronoi neighbors are seen as bonded
+  void bonds();
+
   // help info
   void help();
 
