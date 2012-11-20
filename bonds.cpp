@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "math.h"
+#include <set>
 
 /*------------------------------------------------------------------------------
  * Method to compute the bond length/angles; Voronoi neighbors are seen as bonded
@@ -193,60 +194,91 @@ void Driver::bonds()
     double lx = one->lx, ly = one->ly, lz = one->lz;
     double xy = one->xy, xz = one->xz, yz = one->yz;
 
-    int ibond = 0, iangle = 0;
+    set<int> counted;
 
     // now to do the real job
-    for (int id=1; id<= one->natom; id++){
-      if (is[id] == 0) continue;
-      int ip = one->attyp[id];
+    if (job == 1){ // bond length
 
-      int ni = one->neilist[0][id];
-      for (int jj=1; jj<= ni; jj++){
-        int jd = one->neilist[jj][id];
-        if (js[jd] == 0) continue;
-        int jp = one->attyp[jd];
+      int ibond = 0;
+      set<int> counted; counted.clear();
 
-        for (int idim=0; idim<3; idim++){
-          xij[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
-          while (xij[idim] > 0.5) xij[idim] -= 1.;
-          while (xij[idim] <-0.5) xij[idim] += 1.;
-        }
-        xij[0] = xij[0] * lx + xij[1] * xy + xij[2] * xz;
-        xij[1] = xij[1] * ly + xij[2] * yz;
-        xij[2] = xij[2] * lz;
-        rij = sqrt(xij[0]*xij[0] + xij[1]*xij[1] + xij[2]*xij[2]);
-
-        if (job == 1){
+      for (int id=1; id<= one->natom; id++){
+        if (is[id] == 0) continue;
+        int ip = one->attyp[id];
+  
+        int ni = one->neilist[0][id];
+        for (int jj=1; jj<= ni; jj++){
+          int jd = one->neilist[jj][id];
+          int index = MIN(id,jd)*(one->natom+1)+MAX(id,jd);
+          if (js[jd] == 0 || counted.count(index)) continue;
+          counted.insert(index);
+          int jp = one->attyp[jd];
+  
+          for (int idim=0; idim<3; idim++){
+            xij[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
+            while (xij[idim] > 0.5) xij[idim] -= 1.;
+            while (xij[idim] <-0.5) xij[idim] += 1.;
+          }
+          xij[0] = xij[0] * lx + xij[1] * xy + xij[2] * xz;
+          xij[1] = xij[1] * ly + xij[2] * yz;
+          xij[2] = xij[2] * lz;
+          rij = sqrt(xij[0]*xij[0] + xij[1]*xij[1] + xij[2]*xij[2]);
+  
           fprintf(fp,"%d %d %d %d %d %d %lg\n", img+1, ++ibond, id, jd, ip, jp, rij);
+        }
+      }
+      counted.clear();
 
-        } else {
-          for (int kk=1; kk<= ni; kk++){
+    } else {       // bond angle
+
+      int iangle = 0;
+
+      for (int id=1; id<= one->natom; id++){
+        if (is[id] == 0) continue;
+
+        int ni = one->neilist[0][id];
+        for (int jj=1; jj< ni; jj++){
+          int jd = one->neilist[jj][id];
+          if (js[jd] == 0 && ks[jd] == 0) continue;
+  
+          for (int idim=0; idim<3; idim++){
+            xij[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
+            while (xij[idim] > 0.5) xij[idim] -= 1.;
+            while (xij[idim] <-0.5) xij[idim] += 1.;
+          }
+          xij[0] = xij[0] * lx + xij[1] * xy + xij[2] * xz;
+          xij[1] = xij[1] * ly + xij[2] * yz;
+          xij[2] = xij[2] * lz;
+          rij = xij[0]*xij[0] + xij[1]*xij[1] + xij[2]*xij[2];
+  
+          for (int kk=jj+1; kk<= ni; kk++){
             int kd = one->neilist[kk][id];
-            if (ks[kd] == 0) continue;
-
-            for (int idim=0; idim<3; idim++){
-              xik[idim] = one->atpos[kd][idim] - one->atpos[id][idim];
-              while (xik[idim] > 0.5) xik[idim] -= 1.;
-              while (xik[idim] <-0.5) xik[idim] += 1.;
+            if ( (js[jd] & ks[kd]) || (js[kd] & ks[jd]) ){
+              for (int idim=0; idim<3; idim++){
+                xik[idim] = one->atpos[kd][idim] - one->atpos[id][idim];
+                while (xik[idim] > 0.5) xik[idim] -= 1.;
+                while (xik[idim] <-0.5) xik[idim] += 1.;
+              }
+              xik[0] = xik[0] * lx + xik[1] * xy + xik[2] * xz;
+              xik[1] = xik[1] * ly + xik[2] * yz;
+              xik[2] = xik[2] * lz;
+              rik = xik[0]*xik[0] + xik[1]*xik[1] + xik[2]*xik[2];
+  
+              double cos = (xij[0]*xik[0] + xij[1]*xik[1] + xij[2]*xik[2]) / sqrt(rij*rik);
+              double ang = acos(cos)*rad2ang;
+  
+              fprintf(fp,"%d %d %d %d %d %g %lg\n", img+1, ++iangle, jd, id, kd, ang, cos);
             }
-            xik[0] = xik[0] * lx + xik[1] * xy + xik[2] * xz;
-            xik[1] = xik[1] * ly + xik[2] * yz;
-            xik[2] = xik[2] * lz;
-            rik = sqrt(xik[0]*xik[0] + xik[1]*xik[1] + xik[2]*xik[2]);
-
-            double cos = (xij[0]*xik[0] + xij[1]*xik[1] + xij[2]*xik[2]) / (rij*rik);
-            double ang = acos(cos)*rad2ang;
-
-            fprintf(fp,"%d %d %d %d %d %g %lg\n", img+1, ++iangle, jd, id, kd, ang, cos);
           }
         }
       }
     }
+
     nused++;
   }
   fclose(fp);
   memory->destroy(is); memory->destroy(js); ks = NULL;
-  printf("\n%d images were used in counting the bonds, the results is written to %s\n", nused, fname);
+  printf("\n%d images were used in counting bonds, the results is written to %s\n", nused, fname);
   delete []fname;
 
   for (int i=0; i<20; i++) printf("===="); printf("\n");

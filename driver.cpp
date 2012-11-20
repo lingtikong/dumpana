@@ -67,7 +67,7 @@ Driver::Driver(int narg, char** arg)
     printf("\n"); for (int i=0; i<20; i++) printf("====");
     printf("\nPlease select your desired task to perform:\n");
     for (int i=0; i<20; i++) printf("----"); printf("\n");
-    printf("  1. Voronoi diagram analysis;         |  11. Convert to xyz format; \n");
+    printf("  1. Voronoi diagram analysis;         |  11. Output selected frames;\n");
     printf("  2. Chemical Short Range Order;       |  12. Average over frames;   \n");
     printf("  3. Honeycutt-Andersen bond index;    |  13. Pair correlation function;\n");
     printf("  4. Common neighbor analysis;         |  14. Static structure factor;\n");
@@ -116,7 +116,7 @@ Driver::Driver(int narg, char** arg)
 
     case 11:
       setrange();
-      if (nsel > 0) writexyz();
+      if (nsel > 0) writesel();
       break;
 
     case 12:
@@ -265,48 +265,101 @@ return;
 }
 
 /*------------------------------------------------------------------------------
- * Method to convert the dump file into xyz format
+ * Method to output the selected frames
  *------------------------------------------------------------------------------ */
-void Driver::writexyz()
+void Driver::writesel()
 {
-  char str[MAXLINE];
-  printf("\n"); for (int i=0; i<20; i++) printf("====");
-  printf("\nPlease input the output xyz file name [%s.xyz]: ", dump);
-  if (count_words(fgets(str,MAXLINE,stdin)) < 1) sprintf(str,"%s.xyz", dump);
-  char *fout = strtok(str, " \n\t\r\f");
+  char str[MAXLINE]; int job = 1;
+  printf("\n"); for (int i=0; i<7; i++) printf("====");
+  printf(" Output Selected Frames ");
+  for (int i=0; i<7; i++) printf("====");
+  printf("\nPlease select your desired job:\n");
+  printf("  1. Convert into xyz files;\n");
+  printf("  2. Write as dump atom;\n");
+  printf("  0. Return;\nYour choice [%d]: ", job);
+  fgets(str,MAXLINE, stdin);
+  char *ptr = strtok(str, " \n\t\r\f");
+  if (ptr) job = atoi(ptr);
+  printf("Your selection : %d\n", job);
+  if (job < 1 || job > 2){
+    for (int i=0; i<20; i++) printf("===="); printf("\n");
+    return;
+  }
+  printf("\n");
 
-  FILE *fp = fopen(fout, "w");
-  for (int img = istr; img<= iend; img += inc){
-    one = all[img];
-    fprintf(fp,"%d\n", one->natom);
-    fprintf(fp,"Frame %d of %s, istep= %d\n", img+1, dump, one->tstep);
+  if (job == 1){
+    printf("\nPlease input the output file name [%s.xyz]: ", dump);
+    if (count_words(fgets(str,MAXLINE,stdin)) < 1) sprintf(str,"%s.xyz", dump);
+  } else {
+    printf("\nPlease input the output file name [%s]: ", dump);
+    if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, dump);
+  }
+  ptr = strtok(str, " \n\t\r\f");
+  FILE *fp = fopen(ptr, "w");
 
-    one->dir2car();
-    if (type2atnum == NULL){ // no elements assigned, print atomic type num as element
-      for (int i=1; i<=MIN(3,one->natom); i++){
-        fprintf(fp,"%d %lg %lg %lg crystal_vector %d %lg %lg %lg\n",
-        one->attyp[i], one->atpos[i][0], one->atpos[i][1], one->atpos[i][2], i,
-        one->axis[i-1][0], one->axis[i-1][1], one->axis[i-1][2]);
+  int nused = 0;
+
+  if (job == 1){
+    for (int img = istr; img<= iend; img += inc){
+      one = all[img];
+      fprintf(fp,"%d\n", one->natom);
+      fprintf(fp,"Frame %d of %s, istep= %d\n", img+1, dump, one->tstep);
+  
+      one->dir2car();
+      if (type2atnum == NULL){ // no elements assigned, print atomic type num as element
+        for (int i=1; i<=MIN(3,one->natom); i++){
+          fprintf(fp,"%d %lg %lg %lg crystal_vector %d %lg %lg %lg\n",
+          one->attyp[i], one->atpos[i][0], one->atpos[i][1], one->atpos[i][2], i,
+          one->axis[i-1][0], one->axis[i-1][1], one->axis[i-1][2]);
+        }
+        for (int i=MIN(3,one->natom)+1; i<= one->natom; i++){
+          fprintf(fp,"%d %lg %lg %lg\n", one->attyp[i], one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
+        }
+      } else { // in case elements are assigned, print true element names
+        char ename[3];
+        for (int i=1; i<=MIN(3,one->natom); i++){
+          element->Num2Name(type2atnum[one->attyp[i]], ename);
+          fprintf(fp,"%2s %lg %lg %lg crystal_vector %d %lg %lg %lg\n",
+          ename, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2], i,
+          one->axis[i-1][0], one->axis[i-1][1], one->axis[i-1][2]);
+        }
+        for (int i=MIN(3,one->natom)+1; i<= one->natom; i++){
+          element->Num2Name(type2atnum[one->attyp[i]], ename);
+          fprintf(fp,"%2s %lg %lg %lg\n", ename, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
+        }
       }
-      for (int i=MIN(3,one->natom)+1; i<= one->natom; i++){
-        fprintf(fp,"%d %lg %lg %lg\n", one->attyp[i], one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
+      nused++;
+    }
+
+  } else if (job == 2){
+
+    for (int img = istr; img <= iend; img += inc){
+      one = all[img];
+      one->car2dir();
+
+      fprintf(fp,"ITEM: TIMESTEP\n%d\n", one->tstep);
+      fprintf(fp,"ITEM: NUMBER OF ATOMS\n%d\n", one->natom);
+      if (one->triclinic){
+        fprintf(fp,"ITEM: BOX BOUNDS pp pp pp xy xz yz\n");
+        fprintf(fp,"%lg %lg %lg\n", one->xlo, one->xhi, one->xy);
+        fprintf(fp,"%lg %lg %lg\n", one->ylo, one->yhi, one->xz);
+        fprintf(fp,"%lg %lg %lg\n", one->zlo, one->zhi, one->yz);
+      } else {
+        fprintf(fp,"ITEM: BOX BOUNDS pp pp pp\n");
+        fprintf(fp,"%lg %lg\n", one->xlo, one->xhi);
+        fprintf(fp,"%lg %lg\n", one->ylo, one->yhi);
+        fprintf(fp,"%lg %lg\n", one->zlo, one->zhi);
       }
-    } else { // in case elements are assigned, print true element names
-      char ename[3];
-      for (int i=1; i<=MIN(3,one->natom); i++){
-        element->Num2Name(type2atnum[one->attyp[i]], ename);
-        fprintf(fp,"%2s %lg %lg %lg crystal_vector %d %lg %lg %lg\n",
-        ename, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2], i,
-        one->axis[i-1][0], one->axis[i-1][1], one->axis[i-1][2]);
-      }
-      for (int i=MIN(3,one->natom)+1; i<= one->natom; i++){
-        element->Num2Name(type2atnum[one->attyp[i]], ename);
-        fprintf(fp,"%2s %lg %lg %lg\n", ename, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
-      }
+      fprintf(fp,"ITEM: ATOMS\n");
+
+      for (int id=1; id<= one->natom; id++) fprintf(fp,"%d %d %lg %lg %lg\n", id, one->attyp[id],
+      one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
+
+      nused++;
     }
   }
-  fclose(fp); fout = NULL;
-  printf("Mission completed, %d frames written to file: %s\n", (iend-istr+1)/inc, fout);
+  fclose(fp);
+  printf("Mission completed, %d frames written to file: %s\n", nused, ptr);
   for (int i=0; i<20; i++) printf("===="); printf("\n"); 
 return;
 }
@@ -448,7 +501,7 @@ void Driver::MapType2Elem(const int flag, const int ntype)
 
   char str[MAXLINE];
   if (flag == 0){
-    printf("\nIf you want to map the atomic types to element, input the element\n");
+    printf("\nIf you want to map the atomic types to elements, input the element\n");
     printf("symbols in sequence now: ");
   } else {
     printf("Total number of atomic types in the system are %d.\n", ntype); 
