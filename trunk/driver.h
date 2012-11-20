@@ -36,8 +36,8 @@ private:
   void setrange();
   int nsel;
 
-  // to output selected frames as xyz file
-  void writexyz();
+  // to output selected frames
+  void writesel();
 
   // to do voronoi diagram analysis
   int flag_out;

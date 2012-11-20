@@ -12,7 +12,7 @@
 void Driver::csro()
 {
   char str[MAXLINE];
-  int job = 2;
+  int job = 1;
   printf("\n"); for (int i=0; i<6; i++) printf("====");
   printf("   Chemical Short Range Order   ");
   for (int i=0; i<6; i++) printf("====");
@@ -20,7 +20,7 @@ void Driver::csro()
   printf("\nPlease select your desired job:\n");
   for (int i=0; i<20; i++) printf("----"); printf("\n");
   printf("  1. Overall CSRO based on Voronoi info;\n");
-  printf("  2. Peratom CSRO based on Voronoi info;");
+  printf("  2. Peratom CSRO based on Voronoi info;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
