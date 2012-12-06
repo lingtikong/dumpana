@@ -625,6 +625,12 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       c1.face_areas(fs);
       cell = &c1;
 
+      // print surface ratios if required
+      if (fpsurf){
+        int nf = fs.size();
+        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
+      }
+
       // refine the voronoi cell if asked by removing tiny surfaces
       if (surf_min > ZERO){
         c2.init(-lx,lx,-ly,ly,-lz,lz);
@@ -644,7 +650,6 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         // add condition on surface
         double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
-          if (fpsurf) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
           if (i < nminnei || fs[i] > fcut){
             int j = neigh[i];
   
@@ -690,7 +695,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
-      if (edge_min > ZERO){
+      if (edge_min > ZERO || fpedge){
         std::vector<double> vpos;
         std::vector<int>    vlst;
         double lcut2 = cell->total_edge_distance()*edge_min;
@@ -719,9 +724,11 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
           k += ned;
         }
 
-        for (int i=3; i<7; i++) index[i] = 0;
-        for (int i=0; i<nf; i++){
-          if (ford[i] < 7) index[ford[i]] += 1;
+        if (edge_min > ZERO){
+          for (int i=3; i<7; i++) index[i] = 0;
+          for (int i=0; i<nf; i++){
+            if (ford[i] < 7) index[ford[i]] += 1;
+          }
         }
       }
 
@@ -767,6 +774,12 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       c1.face_areas(fs);
       cell = &c1;
 
+      // print surface ratios if required
+      if (fpsurf){
+        int nf = fs.size();
+        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
+      }
+
       // refine the voronoi cell if asked by removing tiny surfaces
       if (surf_min > ZERO){
         c2.init(-lx,lx,-ly,ly,-lz,lz);
@@ -786,7 +799,6 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         // add condition on surface
         double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
-          if (fpsurf) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
           if (i < nminnei || fs[i] > fcut){
             int j = neigh[i];
   
@@ -817,7 +829,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
-      if (edge_min > ZERO){
+      if (edge_min > ZERO || fpedge){
         std::vector<double> vpos;
         std::vector<int>    vlst;
         double lcut2 = cell->total_edge_distance()*edge_min;
@@ -846,9 +858,11 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
           k += ned;
         }
 
-        for (int i=3; i<7; i++) index[i] = 0;
-        for (int i=0; i<nf; i++){
-          if (ford[i] < 7) index[ford[i]] += 1;
+        if (edge_min > ZERO){
+          for (int i=3; i<7; i++) index[i] = 0;
+          for (int i=0; i<nf; i++){
+            if (ford[i] < 7) index[ford[i]] += 1;
+          }
         }
       }
 
@@ -908,6 +922,7 @@ return;
 
 /*------------------------------------------------------------------------------
  * Private method to check if a pair of atoms are bonded or not
+ * Voronoi neighbors are seen as bonded
  *----------------------------------------------------------------------------*/
 int DumpAtom::bonded(int id, int jd)
 {

@@ -253,8 +253,20 @@ void Driver::FEFF_main()
       if (flag_out & OutFeff) fclose(fp);
     } // end of loop over frames
   }
-
   fclose(fpx);
+
+  // script to run feff
+  if (flag_out & OutFeff){
+    sprintf(fname,"%s/run_feff", workdir);
+    FILE *fp = fopen(fname, "w");
+    fprintf(fp,"#!/bin/bash\nfor dir in `ls|grep F`\n");
+    fprintf(fp,"do\n  if [ -d %c$dir%c ]; then\n", char(34),char(34));
+    fprintf(fp,"    cd $dir; feff\n      echo $dir >> ../jobDone.list\n");
+    fprintf(fp,"    cd ..\n  fi\ndone\n\nexit 0\n\n");
+    fclose(fp);
+    sprintf(fname,"chmod +x %s/run_feff", workdir);
+    system(fname);
+  }
   printf("\nJob done, %d directorys are created and listed in `%s/DirList`.\n", ndir, workdir);
   for (int i=0; i<20; i++) printf("===="); printf("\n");
 return;

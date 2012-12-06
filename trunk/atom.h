@@ -35,12 +35,13 @@ public:
   double **atpos;
   double axis[3][3];
 
+  void ComputeVoro(double *); // compute the Voronoi info
+  void ComputeVoro(double *, FILE *, FILE *, FILE *);                  // compute the Voronoi info
+
+  // the following four variables/functions cannot be called before ComputeVoro
   int **neilist;         // Voronoi neighbor list, only available if voro is computed
   map<int,string> voro;  // Voronoi index for each atom
   int bonded(int,int);   // check if two atoms are neighbors to each other
-
-  void ComputeVoro(double *); // compute the Voronoi info
-  void ComputeVoro(double *, FILE *, FILE *, FILE *);                  // compute the Voronoi info
   void voro_cluster(int, const int, int, list<int> &, map<int,int> &); // find neighbors of an atom upto certain Voronoi shells
 
   void selection(const char *);
