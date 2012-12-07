@@ -26,6 +26,7 @@ private:
   DumpAtom *one;                      // pointer to one frame
   vector<DumpAtom *> all;             // all frames from lammps atom style dump
   void readdump();                    // to read in the dump file
+  void MainMenu();
 
   // map atomic type to elements
   ChemElements *element;
