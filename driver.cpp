@@ -66,14 +66,7 @@ Driver::Driver(int narg, char** arg)
   do {
     printf("\n"); for (int i=0; i<20; i++) printf("====");
     printf("\nPlease select your desired task to perform:\n");
-    for (int i=0; i<20; i++) printf("----"); printf("\n");
-    printf("  1. Voronoi diagram analysis;         |  11. Output selected frames;\n");
-    printf("  2. Chemical Short Range Order;       |  12. Average over frames;   \n");
-    printf("  3. Honeycutt-Andersen bond index;    |  13. Pair correlation function;\n");
-    printf("  4. Common neighbor analysis;         |  14. Static structure factor;\n");
-    printf("  5. Prepare for FEFF9;                |  15. Bond length/angles;\n");
-    printf("  6. Voronoi cluster connectivity;     | \n");
-    for (int i=0; i<20; i++) printf("----"); printf("\n");
+    MainMenu();
     printf("  0. Exit.\nYour choice [%d]: ", job);
     fgets(str,MAXLINE,stdin);
 
@@ -146,6 +139,23 @@ Driver::Driver(int narg, char** arg)
     job = 0;
 
   } while (loop);
+
+return;
+}
+
+/*------------------------------------------------------------------------------
+ * Method to display the main menu of the code
+ *------------------------------------------------------------------------------ */
+void Driver::MainMenu()
+{
+  for (int i=0; i<20; i++) printf("----"); printf("\n");
+  printf("  1. Voronoi diagram analysis;         |  11. Output selected frames;\n");
+  printf("  2. Chemical Short Range Order;       |  12. Average over frames;   \n");
+  printf("  3. Honeycutt-Andersen bond index;    |  13. Pair correlation function;\n");
+  printf("  4. Common neighbor analysis;         |  14. Static structure factor;\n");
+  printf("  5. Prepare for FEFF9;                |  15. Bond length/angles;\n");
+  printf("  6. Voronoi cluster connectivity;     | \n");
+  for (int i=0; i<20; i++) printf("----"); printf("\n");
 
 return;
 }
@@ -448,17 +458,24 @@ return;
  *------------------------------------------------------------------------------ */
 void Driver::help()
 {
-  printf("\n  dumpana\nCode to analyse the atom style dump file of lammps.\n");
-  printf("\nUsage:\n    dumpana [options] [file]\n");
-  printf("\nAvailable options:\n");
+  printf("\n     ######                             #                 \n");
+  printf("     #     #  #    #  #    #  #####    # #    #    #    ##  \n");
+  printf("     #     #  #    #  ##  ##  #    #  #   #   ##   #   #  # \n");
+  printf("     #     #  #    #  # ## #  #    # #     #  # #  #  #    #\n");
+  printf("     #     #  #    #  #    #  #####  #######  #  # #  ######\n");
+  printf("     #     #  #    #  #    #  #      #     #  #   ##  #    #\n");
+  printf("     ######    ####   #    #  #      #     #  #    #  #    #\n");
+  printf("\nCode to analyse the atom style dump files of lammps. Functions available:\n");
+  MainMenu();
+  printf("\nUsage:\n    dumpana [options] [file]\n\nAvailable options:\n");
   printf("    -h       To display this help info;\n");
   printf("    -1       To tell the code to exit once an analysis is done;\n");
   printf("    -os      To output the surface area ratios when analyze Voronoi diagram;\n");
   printf("    -oe      To output the edge length ratios when analyze Voronoi diagram;\n");
   printf("    -ose     To output both the surface area and the edge length ratios\n");
-  printf("                 when analyze Voronoi diagram;\n");
+  printf("             when analyze Voronoi diagram;\n");
   printf("    -s       To skip writing feff.inp files when preparing FEFF for desired voronoi\n");
-  printf("                clusters; instead, output the CN info only.\n");
+  printf("             clusters; instead, output the CN info only.\n");
   printf("    file     Must be lammps atom style dump file, by default: dump.lammpstrj;\n");
   printf("\n\n");
   exit(0);

@@ -86,7 +86,7 @@ void Driver::paircorr()
     }
     
     // bounds of g(r)
-    printf("Please input the lower bound of g(r) [%g]: ", rmin);
+    printf("\nPlease input the lower bound of g(r) [%g]: ", rmin);
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) rmin = atof(ptr);
