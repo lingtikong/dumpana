@@ -18,6 +18,7 @@ DumpAtom::DumpAtom(FILE *fp)
 
   voro.clear();
   neilist = NULL;
+  volume = NULL;
   MaxNei = 20;
   vmins[0] = vmins[1] = vmins[2] = 0.;
 
@@ -109,6 +110,7 @@ DumpAtom::~DumpAtom()
   memory->destroy(s);
 
   memory->destroy(neilist);
+  memory->destroy(volume);
 
   voro.clear();
 
@@ -434,7 +436,7 @@ void DumpAtom::selection(const char *line)
       }
       delete random;
 
-    } else if (strcmp(key,"voro") == 0){ // selected by Voronoi indices; it must be the last selection option
+    } else if (strcmp(key,"voro") == 0){ // selected by Voronoi indices
       set<string> voroset; string vindex;
       double mins[3];
       for (int i=0; i<3; i++){
@@ -454,20 +456,73 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         vindex.assign(ptr); voroset.insert(vindex);
       }
-      if (voroset.size() > 0) ComputeVoro(mins);
+      ComputeVoro(mins);
 
       // make the selection
-      if (logand){
-        for (int i = 1; i <= natom; i++){
-          vindex = voro[i];
-          if (voroset.count(vindex) < 1) atsel[i] = 0;
-        }
-      } else {
-        for (int i = 1; i <= natom; i++){
-          vindex = voro[i];
-          if (voroset.count(vindex) > 0) atsel[i] = 1;
+      if (voroset.size() > 0){
+        if (logand){
+          for (int i = 1; i <= natom; i++){
+            vindex = voro[i];
+            if (voroset.count(vindex) < 1) atsel[i] = 0;
+          }
+        } else {
+          for (int i = 1; i <= natom; i++){
+            vindex = voro[i];
+            if (voroset.count(vindex) > 0) atsel[i] = 1;
+          }
         }
       }
+
+    } else if (strcmp(key,"vol")==0){ // selection by Voronoi volume
+
+      oper = strtok(NULL, " \n\t\r\f");
+      if (oper == NULL) break;
+      ptr = strtok(NULL, " \n\t\r\f");
+      if (ptr == NULL) break;
+      rlow = atof(ptr);
+
+      strcat(onecmd," "); strcat(onecmd,oper);
+      strcat(onecmd," "); strcat(onecmd,ptr);
+
+      if (strcmp(oper,">")==0 || strcmp(oper,">=")==0){
+        if (volume){
+          if (logand){ for (int i = 1; i <= natom; i++) if (volume[i] < rlow) atsel[i] = 0;
+          } else { for (int i = 1; i <= natom; i++) if (volume[i] >= rlow) atsel[i] = 1;
+          }
+        }
+
+      } else if (strcmp(oper,"<")==0 || strcmp(oper,"<=")==0){
+        if (volume){
+          if (logand){ for (int i = 1; i <= natom; i++) if (volume[i] > rlow) atsel[i] = 0;
+          } else { for (int i = 1; i <= natom; i++) if (volume[i] <= rlow) atsel[i] = 1;
+          }
+        }
+
+      } else if (strcmp(oper,"<>") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        rhigh = atof(ptr);
+
+        if (volume){
+          if (logand){ for (int i = 1; i <= natom; i++) if (volume[i]<rlow || volume[i]>rhigh) atsel[i] = 0;
+          } else { for (int i = 1; i <= natom; i++) if (volume[i]>=rlow && volume[i]<=rhigh) atsel[i] = 1;
+          }
+        }
+
+      } else if (strcmp(oper,"><") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        rhigh = atof(ptr);
+
+        if (volume){
+          if (logand){ for (int i = 1; i <= natom; i++) if (volume[i]>rlow && volume[i]<rhigh) atsel[i] = 0;
+          } else { for (int i = 1; i <= natom; i++) if (volume[i]<=rlow || volume[i]>=rhigh) atsel[i] = 1;
+          }
+        }
+
+      } else break;
 
     } else if (strcmp(key,"all") == 0){ // select all; it will discard all previous selections
       strcpy(realcmd,""); strcpy(onecmd,key);
@@ -505,7 +560,7 @@ void DumpAtom::SelHelp()
   printf("\n"); for (int i=0; i<20; i++) printf("----");
   printf("\nThe grammar for the selection command is:\n\n");
   printf("  key op values [& key2 op2 values2 [| key3 op3 values3]]\n");
-  printf("\nwhere `key` is either `type`, `x`,`X', `y`, 'Y', `z`, 'Z',\n");
+  printf("\nwhere `key` is either `type`, `x`,`X', `y`, 'Y', `z`, 'Z', 'vol',\n");
   printf("or `id`. Lower case indicates fractional while upper Cartesian.\n");
   printf("It can also be `all`, which takes no argument and selects all atoms;\n");
   printf("or `ran num seed`, which takes no other argument and selects `num` atoms\n");
@@ -517,8 +572,8 @@ void DumpAtom::SelHelp()
   printf("select atoms with certain Voronoi indices. `MinSurf%%' and `MinEdge%%' defines\n");
   printf("the thresholds for surface and edge, respectively; they can be zero; `NMinNei'\n");
   printf("defines the Minimum # of neighbors wanted, zero means no limitations; `NVoroIndex'\n");
-  printf("defines the # of Voronoi indices that will follow; and the following `NVoroIndex'\n");
-  printf("arguments should be the Voronoi indices, for example: 0,6,0,8\n");
+  printf("defines the # of Voronoi indices that will follow, it can be zero; and the following\n");
+  printf("`NVoroIndex' arguments should be the Voronoi indices, for example: 0,6,0,8\n");
   printf("\n`op` is either `=`, `>`, `>=`, `<`, `<=`, `<>`, `><`, or `%%`,\n");
   printf("while neithor `=` nor `%%` is available for key=`x-z, X-Z`.\n");
   printf("\n`values` can be one or two numbers, depend on the type of `op`:\n");
@@ -529,6 +584,7 @@ void DumpAtom::SelHelp()
   printf("\nMultiple `key op values` could be combined together, by either `&`\n");
   printf("or `|`, which means logical `and` or `or`, respectively. In this case\n");
   printf("the selections take effect sequentially.\n");
+  printf("Selection according to `vol` is only enabled if Voronoi has been done before hand.\n");
   printf("\nFor example, `type = 1 & x <> 0.1 0.5 & id >< 200 800` will select atoms\n");
   printf("of type 1 within 0.1 < x < 0.5 (fractional) and has id <= 200 or id >= 800;\n");
   printf("`type = 1 | type = 2` will select atoms of type 1 or 2; while `type = 1 & type = 2`\n");
@@ -588,7 +644,9 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 
   voro.clear();
   if (neilist) memory->destroy(neilist);
+  if (volume)  memory->destroy(volume);
   neilist = memory->create(neilist, MaxNei+1, natom+1, "neilist");
+  volume  = memory->create(volume,  natom+1, "volume");
   
   // set local variables
   double hx = 0.5*lx, hy = 0.5*ly, hz = 0.5*lz;
@@ -743,6 +801,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       }
       neilist[0][id] = nf;
       for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];
+      volume[id] = vol;
 
       // output voro index info
       if (fp){

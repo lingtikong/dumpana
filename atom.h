@@ -43,6 +43,7 @@ public:
   map<int,string> voro;  // Voronoi index for each atom
   int bonded(int,int);   // check if two atoms are neighbors to each other
   void voro_cluster(int, const int, int, list<int> &, map<int,int> &); // find neighbors of an atom upto certain Voronoi shells
+  double *volume;        // Voronoi volume
 
   void selection(const char *);
   void SelInfo();
