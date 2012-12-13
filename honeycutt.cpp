@@ -18,7 +18,7 @@ void Driver::honeycutt_andersen()
   printf("   Honeycutt-Andersen  Bond  Analysis   ");
   for (int i=0; i<5; i++) printf("===="); printf("\n");
 
-  double mins[3]; mins[0] = 1.e-2; mins[1] = 1.e-4; mins[2] = 0.;
+  double mins[3]; mins[0] = 1.e-2; mins[1] =-1.; mins[2] =-1.;
   printf("Please input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
   fgets(str,MAXLINE, stdin);
   char * ptr = strtok(str, " \n\t\r\f");

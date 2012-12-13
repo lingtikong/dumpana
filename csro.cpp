@@ -33,7 +33,7 @@ void Driver::csro()
   printf("\n");
 
   // refinement info
-  double mins[3]; mins[0] = 1.e-2; mins[1] = 1.e-4; mins[2] = 0.;
+  double mins[3]; mins[0] = 1.e-2; mins[1] =-1.; mins[2] =-1.;
   printf("Please input your criterion for tiny surfaces [%g]: ", mins[0]);
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");

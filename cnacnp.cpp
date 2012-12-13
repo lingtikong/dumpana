@@ -32,7 +32,7 @@ void Driver::Compute_CNACNP()
 
   // thresholds for surface and edges
   double mins[3];
-  mins[0] = 1.e-2; mins[1] = 1.e-4; mins[2] = 0.;
+  mins[0] = 1.e-2; mins[1] =-1.; mins[2] = 0.;
 
   // ask for Voronoi refinement parameters
   printf("Please input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
