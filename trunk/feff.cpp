@@ -41,6 +41,7 @@ void Driver::FEFF_main()
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[1] = atof(ptr);
   printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", mins[1]);
+  one->ComputeVoro(mins);
 
   int AbsorberType = 0;
   // selection of atoms for each frame

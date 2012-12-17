@@ -936,6 +936,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       }
       neilist[0][id] = nf;
       for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];
+      volume[id] = vol;
 
       // output voro index info
       if (fp){
