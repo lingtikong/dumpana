@@ -59,7 +59,7 @@ void Driver::ClusterConnectivity()
     } else strcpy(selcmd,"all\n");
 
     // check the selection command on the first frame
-    one = all[0];
+    one = all[istr]; one->ComputeVoro(mins);
     one->selection(selcmd); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
@@ -173,6 +173,10 @@ void Driver::ClusterConnectivity()
 
   for (int img = istr; img <= iend; img += inc){ // loop over frames
     one = all[img];
+
+    // compute the neighbor list and voro info
+    one->ComputeVoro(mins);
+
     one->selection(selcmd);
 
     // work space for Voronoi
@@ -181,16 +185,13 @@ void Driver::ClusterConnectivity()
     natom = one->natom;
     for (int ii=0; ii<=natom; ii++) cenlist[ii] = 0;
 
-    // compute the neighbor list and voro info
-    one->ComputeVoro(mins);
-
     // look for the list of desired centeral atoms
     natom = one->natom;
     for (int ii=1; ii<=natom; ii++){
       cenlist[ii] = 0;
       if (one->atsel[ii] == 0) continue;
 
-      if (voroset.count(one->voro[ii]) > 0) cenlist[ii] = 1;
+      if (voroset.size() == 0 || voroset.count(one->voro[ii]) > 0) cenlist[ii] = 1;
     }
 
     // check the # of selected clusters
@@ -252,7 +253,7 @@ void Driver::ClusterConnectivity()
           if (paired) ncomm = 4;
           if (ncomm){
             SCid[jd] = SCid[id];
-            if (nconn[jd] < 1) nconn[jd] = 0;
+            if (nconn.count(jd) < 1) nconn[jd] = 0;
             nconn[id]++; nconn[jd]++;
 
             conns[(id-1)*natom+nconn[id]] = jd;
