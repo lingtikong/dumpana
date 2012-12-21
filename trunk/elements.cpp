@@ -44,6 +44,25 @@ double ChemElements::Num2Mass(const int AtNum)
 }
 
 /* -----------------------------------------------------------------------------
+ * Return the atomic radius of an input element symbol
+ * ---------------------------------------------------------------------------*/
+double ChemElements::Name2Radius(const char * ename)
+{
+  int AtNum = Name2Num(ename);
+
+return radius[AtNum];
+}
+
+/* -----------------------------------------------------------------------------
+ * Return the atomic radius of an input atomic number
+ * ---------------------------------------------------------------------------*/
+double ChemElements::Num2Radius(const int AtNum)
+{
+  int num = AtNum;
+  if (num < 0||num > NumMax) num = 0;
+  return radius[num];
+}
+/* -----------------------------------------------------------------------------
  * Atomic weight data taken from:
  * Pure Appl. Chem., Vol. 83, No. 2, pp. 359–396, 2011.
  * Atomic weights of the elements 2009 (IUPAC Technical Report)
@@ -72,6 +91,43 @@ const double ChemElements::weight[] = {0.,                                  // N
   247.,       251.,       252.,       257.,         258.,                   // Bk - Md
   259.,       260.,       261.11,     262.11,       263.12,                 // No - Sg
   262.12,     265.,       266.,       269.,         272.,      285.         // Bh - Cn
+};
+
+/* -----------------------------------------------------------------------------
+ * Atomic radius data taken from:
+ * Wikipage of Atomic radius of elements
+ *
+ * As atomic radius are not uniquely determined, the priority in selecting
+ * the value for each element is as follows:
+ *   Metals    : Metallic radius -> empirical -> van der Waals -> Calculated
+ *   Non-metal : Covalent -> empirical -> van der Waals -> Calculated
+ *   RareGas   : van der Waals -> empirical -> Calculated -> Covalent
+ *   NoData    : 1.111
+ * ---------------------------------------------------------------------------*/
+const double ChemElements::radius[] = {1.111,// Null
+  0.380, 0.320, 1.520, 1.120, 0.820, // H  - B
+  0.770, 0.750, 0.730, 0.710, 1.540, // C  - Ne
+  1.860, 1.600, 1.430, 1.110, 1.060, // Na - P
+  1.020, 0.990, 1.880, 2.270, 1.970, // S  - Ca
+  1.620, 1.470, 1.340, 1.280, 1.270, // Sc - Mn
+  1.260, 1.250, 1.240, 1.280, 1.340, // Fe - Zn
+  1.350, 1.220, 1.190, 1.160, 1.140, // Ga - Br
+  2.020, 2.480, 2.150, 1.800, 1.600, // Kr - Zr
+  1.460, 1.390, 1.360, 1.340, 1.340, // Nb - Rh
+  1.370, 1.440, 1.510, 1.670, 1.450, // Pd - Sn
+  1.450, 1.400, 1.330, 2.160, 2.650, // Sb - Cs
+  2.220, 1.870, 1.818, 1.824, 1.814, // Ba - Nd
+  1.834, 1.804, 1.804, 1.804, 1.773, // Pm - Tb
+  1.781, 1.762, 1.761, 1.759, 1.760, // Dy - Yb
+  1.738, 1.590, 1.460, 1.390, 1.370, // Lu - Re
+  1.350, 1.355, 1.385, 1.440, 1.510, // Os - Hg
+  1.700, 1.800, 0.160, 1.900, 2.020, // Tl - At
+  2.200, 3.480, 2.150, 1.950, 1.790, // Rn - Th
+  1.630, 1.560, 1.550, 1.590, 1.730, // Pa - Am
+  1.740, 1.700, 1.860, 1.860, 1.111, // Cm - Fm
+  1.111, 1.111, 1.111, 1.310, 1.260, // Md - Db
+  1.210, 1.190, 1.180, 1.130, 1.120, // Sg - Ds
+  1.180, 1.300                       // Rg - Cn
 };
 
 /* -----------------------------------------------------------------------------
