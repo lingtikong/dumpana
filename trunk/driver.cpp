@@ -8,7 +8,7 @@ Driver::Driver(int narg, char** arg)
   one = NULL; all.clear();
   dump = NULL;
   nframe = 0;
-  type2atnum = NULL; element = NULL;
+  type2atnum = NULL; type2radius = NULL; element = NULL;
 
   memory = new Memory();
 
@@ -167,7 +167,8 @@ Driver::~Driver()
 {
   if (dump) delete []dump;
   if (element) delete element;
-  if (type2atnum) memory->destroy(type2atnum);
+  if (type2atnum)  memory->destroy(type2atnum);
+  if (type2radius) memory->destroy(type2radius);
   
   for (int img=0; img<nframe; img++){
     one = all[img];
@@ -515,6 +516,7 @@ void Driver::MapType2Elem(const int flag, const int ntype)
 {
   if (element) delete element; element = NULL;
   if (type2atnum) memory->destroy(type2atnum); type2atnum = NULL;
+  if (type2radius)memory->destroy(type2radius);type2radius= NULL;
 
   char str[MAXLINE];
   if (flag == 0){
@@ -527,13 +529,16 @@ void Driver::MapType2Elem(const int flag, const int ntype)
 
   if (count_words(fgets(str,MAXLINE,stdin)) >= ntype){
     if (element) delete element;
-    if (type2atnum) memory->destroy(type2atnum);
+    if (type2atnum)  memory->destroy(type2atnum);
+    if (type2radius) memory->destroy(type2radius);
     element = new ChemElements();
     type2atnum = memory->create(type2atnum, ntype+1, "type2atnum");
+    type2radius= memory->create(type2radius,ntype+1, "type2radius");
 
     char *ptr = strtok(str," \n\t\r\f");
     for (int ip=1; ip<= ntype; ip++){
       type2atnum[ip] =  element->Name2Num(ptr);
+      type2radius[ip]=  element->Name2Radius(ptr);
       ptr = strtok(NULL, " \n\t\r\f");
     }
     printf("\nThe atomic types are assigned as:");

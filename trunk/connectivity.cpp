@@ -59,7 +59,7 @@ void Driver::ClusterConnectivity()
     } else strcpy(selcmd,"all\n");
 
     // check the selection command on the first frame
-    one = all[istr]; one->ComputeVoro(mins);
+    one = all[istr]; one->ComputeVoro(mins,type2radius);
     one->selection(selcmd); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
@@ -175,7 +175,7 @@ void Driver::ClusterConnectivity()
     one = all[img];
 
     // compute the neighbor list and voro info
-    one->ComputeVoro(mins);
+    one->ComputeVoro(mins,type2radius);
 
     one->selection(selcmd);
 

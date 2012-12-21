@@ -35,8 +35,13 @@ public:
   double **atpos;
   double axis[3][3];
 
-  void ComputeVoro(double *); // compute the Voronoi info
-  void ComputeVoro(double *, FILE *, FILE *, FILE *);                  // compute the Voronoi info
+  // Compute the Voronoi info, equal-distance method
+  void ComputeVoro(double *);
+  void ComputeVoro(double *, FILE *, FILE *, FILE *);
+
+  // Compute the Voronoi info, weighted-distance method
+  void ComputeVoro(double *, double *); 
+  void ComputeVoro(double *, FILE *, FILE *, FILE *, double *);
 
   // the following four variables/functions cannot be called before ComputeVoro
   int **neilist;         // Voronoi neighbor list, only available if voro is computed

@@ -31,6 +31,7 @@ private:
   // map atomic type to elements
   ChemElements *element;
   int *type2atnum;
+  double *type2radius;
   void MapType2Elem(const int, const int);
 
   // to define the range of frames to be analysed

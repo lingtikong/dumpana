@@ -994,4 +994,360 @@ int DumpAtom::bonded(int id, int jd)
 return 0;
 }
 
+/*------------------------------------------------------------------------------
+ * Method to compute the Voronoi index, Voronoi neighbor list info
+ * mins     (in)  : surf_min% edge_min% Min#Nei; if negative, default/previous
+ *                : values will be taken.
+ * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
+ * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing
+ * fpedge   (in)  : file pointer to write edge ratio info; if NULL, write nothing
+ * typ2ra   (in)  : array stores the radius for each atomic type
+ *----------------------------------------------------------------------------*/
+void DumpAtom::ComputeVoro(double *mins, double *typ2ra){ ComputeVoro(mins, NULL, NULL, NULL, typ2ra); }
+void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, double *typ2ra)
+{
+  // if typ2ra info not available, compute equal-distance voronoi
+  if (typ2ra == NULL){ComputeVoro(mins,fp,fpsurf,fpedge); return;}
+
+  // now to compute weighted voronoi info
+
+  for (int i=0; i<3; i++) if (mins[i] < 0.) mins[i] = vmins[i];
+  double diff = 0.;
+  for (int i=0; i<3; i++) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
+  if (diff <= ZERO && voro.size() == natom) return;
+
+  for (int i=0; i<3; i++) vmins[i] = fabs(mins[i]);
+
+  double surf_min = vmins[0];
+  double edge_min = vmins[1];
+  int nminnei = int(vmins[2]);
+
+  voro.clear();
+  if (neilist) memory->destroy(neilist);
+  if (volume)  memory->destroy(volume);
+  neilist = memory->create(neilist, MaxNei+1, natom+1, "neilist");
+  volume  = memory->create(volume,  natom+1, "volume");
+  
+  // set local variables
+  double hx = 0.5*lx, hy = 0.5*ly, hz = 0.5*lz;
+
+  // need cartesian coordinates
+  dir2car();
+
+  // compute optimal size for container, and then contrust it
+  double l = pow(double(natom)/(5.6*lx*ly*lz), 1./3.);
+  int nx = int(lx*l+1), ny = int(ly*l+1), nz = int(lz*l+1);
+
+  // common variables
+  int id, index[7];
+  double xpos, ypos, zpos, vol;
+  std::vector<int> ff, neigh; // face_freq, neigh list
+  std::vector<double> fs;     // face areas
+
+  // real job
+  if (triclinic){
+
+    voro::container_periodic_poly con(lx,xy,ly,xz,yz,lz,nx,ny,nz,8);
+    // put atoms into the container
+    for (int i=1; i<= natom; i++){
+      double ri = typ2ra[attyp[i]];
+      con.put(i, atpos[i][0], atpos[i][1], atpos[i][2], ri);
+    }
+
+    // loop over all particles and compute their voronoi cell
+    voro::voronoicell_neighbor c1, c2, *cell;
+    voro::c_loop_all_periodic cl(con);
+    if (cl.start()) do if (con.compute_cell(c1,cl)){
+      for (int i=0; i<7; i++) index[i] = 0;
+       
+      cl.pos(xpos,ypos,zpos);
+      id = cl.pid();
+      c1.neighbors(neigh);
+      c1.face_areas(fs);
+      cell = &c1;
+
+      // print surface ratios if required
+      if (fpsurf){
+        int nf = fs.size();
+        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
+      }
+
+      // refine the voronoi cell if asked by removing tiny surfaces
+      if (surf_min > ZERO){
+        c2.init(-lx,lx,-ly,ly,-lz,lz);
+  
+        int nf = fs.size();
+        // sort neighbors by area if asked to keep a minimum # of neighbors
+        if (nminnei > 0){
+          for (int i=0; i<nf; i++)
+          for (int j=i+1; j<nf; j++){
+            if (fs[j] > fs[i]){
+              double dswap = fs[i]; fs[i] = fs[j]; fs[j] = dswap;
+              int ik = neigh[i]; neigh[i] = neigh[j]; neigh[j] = ik;
+            }
+          }
+        }
+
+        // add condition on surface
+        double fcut = surf_min * cell->surface_area();
+        for (int i=0; i<nf; i++){
+          if (i < nminnei || fs[i] > fcut){
+            int j = neigh[i];
+  
+            double scale = typ2ra[attyp[i]]/(typ2ra[attyp[i]] + typ2ra[attyp[j]]);
+            scale += scale;
+
+            // apply pbc
+            double xij = atpos[j][0]-xpos;
+            double yij = atpos[j][1]-ypos;
+            double zij = atpos[j][2]-zpos;
+
+            while (zij > hz){
+              xij -= xz;
+              yij -= yz;
+              zij -= lz;
+            }
+            while (zij <-hz){
+              xij += xz;
+              yij += yz;
+              zij += lz;
+            }
+
+            while (yij > hy){
+              xij -= xy;
+              yij -= ly;
+            }
+            while (yij <-hy){
+              xij += xy;
+              yij += ly;
+            }
+
+            while (xij > hx) xij -= lx;
+            while (xij <-hx) xij += lx;
+            xij *= scale;
+            yij *= scale;
+            zij *= scale;
+  
+            c2.nplane(xij,yij,zij,j);
+          }
+        }
+        c2.face_areas(fs);
+        c2.neighbors(neigh);
+        cell = &c2;
+      }
+
+      vol = cell->volume();
+      cell->face_freq_table(ff);
+      int nn = ff.size()-1;
+      for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
+    
+      // refine the voronoi cell if asked by skipping ultra short edges
+      if (edge_min > ZERO || fpedge){
+        std::vector<double> vpos;
+        std::vector<int>    vlst;
+        double lcut2 = cell->total_edge_distance()*edge_min;
+        lcut2 = lcut2*lcut2;
+
+        cell->vertices(vpos);
+        cell->face_vertices(vlst);
+
+        int nf = fs.size();
+        int ford[nf];
+        int k = 0, iface = 0;
+        while (k < vlst.size()){
+          int ned = vlst[k++];
+          int nuc = 0;
+          for (int ii=0; ii<ned; ii++){
+            int jj = (ii+1)%ned;
+            int v1 = vlst[k+ii], v2 = vlst[k+jj];
+            double dx = vpos[v1*3]   - vpos[v2*3];
+            double dy = vpos[v1*3+1] - vpos[v2*3+1];
+            double dz = vpos[v1*3+2] - vpos[v2*3+2];
+            double r2 = dx*dx+dy*dy+dz*dz;
+            if ((fpedge) && (v1 > v2)) fprintf(fpedge, "%lg\n", sqrt(r2)/cell->total_edge_distance());
+            if (r2 <= lcut2) nuc++;
+          }
+          ford[iface++] = ned - nuc;
+          k += ned;
+        }
+
+        if (edge_min > ZERO){
+          for (int i=3; i<7; i++) index[i] = 0;
+          for (int i=0; i<nf; i++){
+            if (ford[i] < 7) index[ford[i]] += 1;
+          }
+        }
+      }
+
+      // assign voronoi index and neighbor list info
+      int nf = fs.size();
+      char vstr[MAXLINE];
+      sprintf(vstr,"%d,%d,%d,%d", index[3], index[4], index[5], index[6]);
+      voro[id].assign(vstr);
+      if (nf > MaxNei){
+        MaxNei = nf + 2;
+        neilist = memory->grow(neilist, MaxNei+1, natom+1, "neilist");
+      }
+      neilist[0][id] = nf;
+      for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];
+      volume[id] = vol;
+
+      // output voro index info
+      if (fp){
+        double wf = double(index[5])/double(nf)*100.;
+        fprintf(fp,"%d %d %lg %lg %lg %lg %s %g %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, wf, nf);
+        for (int i=0; i<nf; i++) fprintf(fp," %d", neigh[i]);
+        for (int i=0; i<nf; i++) fprintf(fp," %lg", fs[i]);
+        fprintf(fp,"\n");
+      }
+
+    } while (cl.inc());
+
+  } else {  // orthogonal box
+
+    voro::container_poly con(xlo,xhi,ylo,yhi,zlo,zhi,nx,ny,nz,true,true,true,8);
+
+    // put atoms into the container
+    for (int i=1; i<= natom; i++){
+      double ri = typ2ra[attyp[i]];
+      con.put(i, atpos[i][0], atpos[i][1], atpos[i][2], ri);
+    }
+
+    // loop over all particles and compute their voronoi cell
+    voro::voronoicell_neighbor c1, c2, *cell;
+    voro::c_loop_all cl(con);
+    if (cl.start()) do if (con.compute_cell(c1,cl)){
+      for (int i=0; i<7; i++) index[i] = 0;
+       
+      cl.pos(xpos,ypos,zpos);
+      id = cl.pid();
+      c1.neighbors(neigh);
+      c1.face_areas(fs);
+      cell = &c1;
+
+      // print surface ratios if required
+      if (fpsurf){
+        int nf = fs.size();
+        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
+      }
+
+      // refine the voronoi cell if asked by removing tiny surfaces
+      if (surf_min > ZERO){
+  
+        int nf = fs.size();
+        // sort neighbors by area if asked to keep a minimum # of neighbors
+        if (nminnei > 0){
+          for (int i=0; i<nf; i++)
+          for (int j=i+1; j<nf; j++){
+            if (fs[j] > fs[i]){
+              double dswap = fs[i]; fs[i] = fs[j]; fs[j] = dswap;
+              int ik = neigh[i]; neigh[i] = neigh[j]; neigh[j] = ik;
+            }
+          }
+        }
+
+        c2.init(-lx,lx,-ly,ly,-lz,lz);
+        // add condition on surface
+        double fcut = surf_min * cell->surface_area();
+        for (int i=0; i<nf; i++){
+          if (i < nminnei || fs[i] > fcut){
+            int j = neigh[i];
+  
+            // apply pbc
+            double xij = atpos[j][0]-xpos;
+            while (xij > hx) xij -= lx;
+            while (xij <-hx) xij += lx;
+
+            double yij = atpos[j][1]-ypos;
+            while (yij > hy) yij -= ly;
+            while (yij <-hy) yij += ly;
+
+            double zij = atpos[j][2]-zpos;
+            while (zij > hz) zij -= lz;
+            while (zij <-hz) zij += lz;
+
+            double scale = typ2ra[attyp[i]]/(typ2ra[attyp[i]] + typ2ra[attyp[j]]);
+            scale += scale;
+            xij *= scale;
+            yij *= scale;
+            zij *= scale;
+  
+            c2.nplane(xij,yij,zij,j);
+          }
+        }
+        c2.face_areas(fs);
+        c2.neighbors(neigh);
+        cell = &c2;
+      }
+
+      vol = cell->volume();
+      cell->face_freq_table(ff);
+      int nn = ff.size()-1;
+      for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
+    
+      // refine the voronoi cell if asked by skipping ultra short edges
+      if (edge_min > ZERO || fpedge){
+        std::vector<double> vpos;
+        std::vector<int>    vlst;
+        double lcut2 = cell->total_edge_distance()*edge_min;
+        lcut2 = lcut2*lcut2;
+
+        cell->vertices(vpos);
+        cell->face_vertices(vlst);
+
+        int nf = fs.size();
+        int ford[nf];
+        int k = 0, iface = 0;
+        while (k < vlst.size()){
+          int ned = vlst[k++];
+          int nuc = 0;
+          for (int ii=0; ii<ned; ii++){
+            int jj = (ii+1)%ned;
+            int v1 = vlst[k+ii], v2 = vlst[k+jj];
+            double dx = vpos[v1*3]   - vpos[v2*3];
+            double dy = vpos[v1*3+1] - vpos[v2*3+1];
+            double dz = vpos[v1*3+2] - vpos[v2*3+2];
+            double r2 = dx*dx+dy*dy+dz*dz;
+            if ((fpedge) && (v1 > v2)) fprintf(fpedge, "%lg\n", sqrt(r2)/cell->total_edge_distance());
+            if (r2 <= lcut2) nuc++;
+          }
+          ford[iface++] = ned - nuc;
+          k += ned;
+        }
+
+        if (edge_min > ZERO){
+          for (int i=3; i<7; i++) index[i] = 0;
+          for (int i=0; i<nf; i++){
+            if (ford[i] < 7) index[ford[i]] += 1;
+          }
+        }
+      }
+
+      // assign voronoi index and neighbor list info
+      int nf = fs.size();
+      char vstr[MAXLINE];
+      sprintf(vstr,"%d,%d,%d,%d", index[3], index[4], index[5], index[6]);
+      voro[id].assign(vstr);
+      if (nf > MaxNei){
+        MaxNei = nf + 2;
+        neilist = memory->grow(neilist, MaxNei+1, natom+1, "neilist");
+      }
+      neilist[0][id] = nf;
+      for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];
+      volume[id] = vol;
+
+      // output voro index info
+      if (fp){
+        double wf = double(index[5])/double(nf)*100.;
+        fprintf(fp,"%d %d %lg %lg %lg %lg %s %g %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, wf, nf);
+        for (int i=0; i<nf; i++) fprintf(fp," %d", neigh[i]);
+        for (int i=0; i<nf; i++) fprintf(fp," %lg", fs[i]);
+        fprintf(fp,"\n");
+      }
+
+    } while (cl.inc());
+  }
+return;
+}
+
 /*------------------------------------------------------------------------------ */

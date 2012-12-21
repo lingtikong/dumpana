@@ -53,7 +53,7 @@ void Driver::honeycutt_andersen()
     one = all[img];
 
     // Compute Voronoi neighbor info
-    one->ComputeVoro(mins);
+    one->ComputeVoro(mins,type2radius);
 
     fprintf(fp,"# frame number: %d\n", img);
     // now to analyse the Honeycutt-Andersen bond type info
