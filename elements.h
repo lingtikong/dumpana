@@ -14,9 +14,13 @@ public:
   double Name2Mass(const char *);
   double Num2Mass(const int);
 
+  double Name2Radius(const char *);
+  double Num2Radius(const int);
+
 private:
   static const int NumMax;          // 112
   static const double weight[];     // g/mol
+  static const double radius[];     // Angstrom
   static const char   symbol[][3];
 };
 
