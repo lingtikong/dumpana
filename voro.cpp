@@ -62,7 +62,7 @@ void Driver::voro()
     fprintf(fp,"# id type x  y  z  vol voroindex f5%%  NNei NeiList surfaceareas\n");
 
     // ask for Voronoi info
-    one->ComputeVoro(mins, fp, fpsurf, fpedge);
+    one->ComputeVoro(mins, fp, fpsurf, fpedge, type2radius);
 
     fclose(fp);
     printf("  Frame %d done, voro info written to: %s\n", img+1, ptr);

@@ -76,7 +76,7 @@ void Driver::csro()
     }
 
     // Compute Vorornoi info, so as to get the neighbor list
-    one->ComputeVoro(mins);
+    one->ComputeVoro(mins,type2radius);
 
     // set local variables
     int *attyp = one->attyp;

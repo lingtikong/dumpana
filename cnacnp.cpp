@@ -65,7 +65,7 @@ void Driver::Compute_CNACNP()
     one = all[img];
 
     // Compute the Voronoi info
-    one->ComputeVoro(mins);
+    one->ComputeVoro(mins,type2radius);
     one->dir2car();
 
     fprintf(fp,"# frame number: %d\n", img);
