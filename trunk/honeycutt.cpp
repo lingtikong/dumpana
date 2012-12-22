@@ -25,6 +25,9 @@ void Driver::honeycutt_andersen()
   if (ptr) mins[0] = atof(ptr);
   printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
 
+  // Show relevant info if Weighted Voronoi is used
+  one = all[istr]; WeightVoro();
+
   int unbond = 0;
   printf("\nWould you like to analyse un-bonded pairs? (y/n)[n]: ");
   fgets(str, MAXLINE, stdin);
@@ -53,7 +56,7 @@ void Driver::honeycutt_andersen()
     one = all[img];
 
     // Compute Voronoi neighbor info
-    one->ComputeVoro(mins,type2radius);
+    one->ComputeVoro(mins, weighted);
 
     fprintf(fp,"# frame number: %d\n", img);
     // now to analyse the Honeycutt-Andersen bond type info

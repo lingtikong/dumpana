@@ -41,7 +41,9 @@ void Driver::FEFF_main()
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[1] = atof(ptr);
   printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", mins[1]);
-  one->ComputeVoro(mins,type2radius);
+  // Show relevant info if Weighted Voronoi is used
+  WeightVoro();
+  one->ComputeVoro(mins,weighted);
 
   int AbsorberType = 0;
   // selection of atoms for each frame
@@ -133,7 +135,7 @@ void Driver::FEFF_main()
     one = all[img];
 
     // compute the Voronoi info, so as to get all related info
-    one->ComputeVoro(mins,type2radius);
+    one->ComputeVoro(mins, weighted);
 
     // make selection
     one->selection(selcmd);

@@ -8,7 +8,8 @@ Driver::Driver(int narg, char** arg)
   one = NULL; all.clear();
   dump = NULL;
   nframe = 0;
-  type2atnum = NULL; type2radius = NULL; element = NULL;
+  type2atnum = NULL; type2radius = weighted = NULL;
+  element = NULL;
 
   memory = new Memory();
 
@@ -165,6 +166,7 @@ return;
  *------------------------------------------------------------------------------ */
 Driver::~Driver()
 {
+  weighted = NULL;
   if (dump) delete []dump;
   if (element) delete element;
   if (type2atnum)  memory->destroy(type2atnum);
@@ -549,6 +551,33 @@ void Driver::MapType2Elem(const int flag, const int ntype)
       printf(" %d -> %s(%d);", ip, ename, num);
     } printf("\n");
   }
+
+return;
+}
+
+/*------------------------------------------------------------------------------
+ * Method to show the atomic radius  for each atomic type
+ *------------------------------------------------------------------------------ */
+void Driver::WeightVoro()
+{
+  weighted = NULL;
+  if (one == NULL || type2radius == NULL) return;
+  printf("\nWeighted Voronoi tesselation can be performed, with atomic radii:\n");
+  for (int ip = 1; ip <= one->ntype; ip++){
+    char ename[3];
+    int num = type2atnum[ip];
+    element->Num2Name(num, ename);
+    printf("  R(%s) = %g;", ename, type2radius[ip]);
+  }
+  printf("\nDo you want to enable this? (y/n)[n]: ");
+
+  char str[MAXLINE];
+  fgets(str,MAXLINE,stdin);
+  char *ptr = strtok(str," \n\t\r\f");
+  if (ptr && (strcmp(ptr,"y")==0 || strcmp(ptr,"Y")==0)){
+    weighted = type2radius;
+    printf("Weighted Voronoi tesselation will be performed!\n\n");
+  } else printf("Regular Voronoi tesselation will be performed!\n\n");
 
 return;
 }

@@ -34,9 +34,12 @@ void Driver::voro()
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[1] = atof(ptr);
-  printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", mins[1]);
+  printf("Edges whose length takes less ratio than %lg will be skipped!\n", mins[1]);
 
-  printf("Please input the prefix for output files [voro]: ");
+  // show relevant info if weighted Voronoi is used
+  one = all[istr]; WeightVoro();
+
+  printf("\nPlease input the prefix for output files [voro]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) {strcpy(str,"voro"); ptr = strtok(str, " \n\t\r\f");}
@@ -62,7 +65,7 @@ void Driver::voro()
     fprintf(fp,"# id type x  y  z  vol voroindex f5%%  NNei NeiList surfaceareas\n");
 
     // ask for Voronoi info
-    one->ComputeVoro(mins, fp, fpsurf, fpedge, type2radius);
+    one->ComputeVoro(mins, fp, fpsurf, fpedge, weighted);
 
     fclose(fp);
     printf("  Frame %d done, voro info written to: %s\n", img+1, ptr);

@@ -40,6 +40,9 @@ void Driver::csro()
   if (ptr) mins[0] = atof(ptr);
   printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
 
+  // Show relevant info if Weighted Voronoi is used
+  one = all[istr]; WeightVoro();
+
   // output file name for per atom CSRO
   FILE *fp; fp = NULL;
   printf("Please input the output file name [csro.dat]: ");
@@ -76,7 +79,7 @@ void Driver::csro()
     }
 
     // Compute Vorornoi info, so as to get the neighbor list
-    one->ComputeVoro(mins,type2radius);
+    one->ComputeVoro(mins, weighted);
 
     // set local variables
     int *attyp = one->attyp;
