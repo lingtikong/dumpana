@@ -41,6 +41,9 @@ void Driver::Compute_CNACNP()
   if (ptr) mins[0] = atof(ptr);
   printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
 
+  // Show relevant info if Weighted Voronoi is used
+  one = all[istr]; WeightVoro();
+
   char *fname = new char[8];
   if (job == 1) strcpy(fname, "cna.dat");
   else strcpy(fname, "cnp.dat");
@@ -65,7 +68,7 @@ void Driver::Compute_CNACNP()
     one = all[img];
 
     // Compute the Voronoi info
-    one->ComputeVoro(mins,type2radius);
+    one->ComputeVoro(mins, weighted);
     one->dir2car();
 
     fprintf(fp,"# frame number: %d\n", img);
