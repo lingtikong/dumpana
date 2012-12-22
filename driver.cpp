@@ -578,7 +578,7 @@ void Driver::ShowRadius4Voro()
     int num = type2atnum[ip];
     element->Num2Name(num, ename);
     printf("  R(%s) = %g A;", ename, type2radius[ip]);
-  } printf("\n\n");
+  } printf("\n");
 
   weighted = type2radius;
 

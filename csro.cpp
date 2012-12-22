@@ -38,14 +38,14 @@ void Driver::csro()
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[0] = atof(ptr);
-  printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
+  printf("Surfaces whose areas take less ratio than %lg will be removed!\n", mins[0]);
 
   // Show relevant info if Weighted Voronoi is used
   one = all[istr]; ShowRadius4Voro();
 
   // output file name for per atom CSRO
   FILE *fp; fp = NULL;
-  printf("Please input the output file name [csro.dat]: ");
+  printf("\nPlease input the output file name [csro.dat]: ");
   if (count_words(fgets(str,MAXLINE, stdin)) < 1) strcpy(str,"csro.dat");
   ptr = strtok(str, " \n\t\r\f");
   fp = fopen(ptr, "w");

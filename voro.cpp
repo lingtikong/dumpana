@@ -13,7 +13,7 @@ void Driver::voro()
 
   // thresholds for surface and edges
   double mins[3];
-  mins[0] = 1.e-2; mins[1] = 1.e-4; mins[2] = 0.;
+  mins[0] = 1.e-2; mins[1] = 2.e-3; mins[2] = 0.;
 
   printf("\nPlease input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
   fgets(str,MAXLINE, stdin);
@@ -34,12 +34,12 @@ void Driver::voro()
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[1] = atof(ptr);
-  printf("Edges whose length takes less ratio than %lg will be skipped!\n", mins[1]);
+  printf("Edges whose lengths take less ratio than %lg will be skipped!\n", mins[1]);
 
   // show relevant info if weighted Voronoi is used
   one = all[istr]; ShowRadius4Voro();
 
-  printf("Please input the prefix for output files [voro]: ");
+  printf("\nPlease input the prefix for output files [voro]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) {strcpy(str,"voro"); ptr = strtok(str, " \n\t\r\f");}

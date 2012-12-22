@@ -2,7 +2,6 @@
 #include "time.h"
 #include "random.h"
 #include "global.h"
-#include "voro++.hh"
 
 /*------------------------------------------------------------------------------
  * Constructor, to read one image from the atom style dump file of lammps
@@ -586,7 +585,7 @@ void DumpAtom::SelHelp()
   printf("atoms satisify `key%%num1 == num2`.\n");
   printf("\nMultiple `key op values` could be combined together, by either `&`\n");
   printf("or `|`, which means logical `and` or `or`, respectively. In this case\n");
-  printf("the selections take effect sequentially.\n");
+  printf("the selections take effects sequentially.\n");
   printf("Selection according to `vol` is only enabled if Voronoi has been done before hand.\n");
   printf("\nFor example, `type = 1 & x <> 0.1 0.5 & id >< 200 800` will select atoms\n");
   printf("of type 1 within 0.1 < x < 0.5 (fractional) and has id <= 200 or id >= 800;\n");
@@ -690,7 +689,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       // print surface ratios if required
       if (fpsurf){
         int nf = fs.size();
-        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
+        double wt = 1./cell->surface_area();
+        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
       }
 
       // refine the voronoi cell if asked by removing tiny surfaces
@@ -713,12 +713,12 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
           if (i < nminnei || fs[i] > fcut){
-            int j = neigh[i];
+            int jd = neigh[i];
   
             // apply pbc
-            double xij = atpos[j][0]-xpos;
-            double yij = atpos[j][1]-ypos;
-            double zij = atpos[j][2]-zpos;
+            double xij = atpos[jd][0]-xpos;
+            double yij = atpos[jd][1]-ypos;
+            double zij = atpos[jd][2]-zpos;
 
             while (zij > hz){
               xij -= xz;
@@ -743,7 +743,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
             while (xij > hx) xij -= lx;
             while (xij <-hx) xij += lx;
   
-            c2.nplane(xij,yij,zij,j);
+            c2.nplane(xij,yij,zij,jd);
           }
         }
         c2.face_areas(fs);
@@ -757,42 +757,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
-      if (edge_min > ZERO || fpedge){
-        std::vector<double> vpos;
-        std::vector<int>    vlst;
-        double lcut2 = cell->total_edge_distance()*edge_min;
-        lcut2 = lcut2*lcut2;
-
-        cell->vertices(vpos);
-        cell->face_vertices(vlst);
-
-        int nf = fs.size();
-        int ford[nf];
-        int k = 0, iface = 0;
-        while (k < vlst.size()){
-          int ned = vlst[k++];
-          int nuc = 0;
-          for (int ii=0; ii<ned; ii++){
-            int jj = (ii+1)%ned;
-            int v1 = vlst[k+ii], v2 = vlst[k+jj];
-            double dx = vpos[v1*3]   - vpos[v2*3];
-            double dy = vpos[v1*3+1] - vpos[v2*3+1];
-            double dz = vpos[v1*3+2] - vpos[v2*3+2];
-            double r2 = dx*dx+dy*dy+dz*dz;
-            if ((fpedge) && (v1 > v2)) fprintf(fpedge, "%lg\n", sqrt(r2)/cell->total_edge_distance());
-            if (r2 <= lcut2) nuc++;
-          }
-          ford[iface++] = ned - nuc;
-          k += ned;
-        }
-
-        if (edge_min > ZERO){
-          for (int i=3; i<7; i++) index[i] = 0;
-          for (int i=0; i<nf; i++){
-            if (ford[i] < 7) index[ford[i]] += 1;
-          }
-        }
-      }
+      if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
 
       // assign voronoi index and neighbor list info
       int nf = fs.size();
@@ -840,7 +805,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       // print surface ratios if required
       if (fpsurf){
         int nf = fs.size();
-        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
+        double wt = 1./cell->surface_area();
+        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
       }
 
       // refine the voronoi cell if asked by removing tiny surfaces
@@ -863,22 +829,22 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
           if (i < nminnei || fs[i] > fcut){
-            int j = neigh[i];
+            int jd = neigh[i];
   
             // apply pbc
-            double xij = atpos[j][0]-xpos;
+            double xij = atpos[jd][0]-xpos;
             while (xij > hx) xij -= lx;
             while (xij <-hx) xij += lx;
 
-            double yij = atpos[j][1]-ypos;
+            double yij = atpos[jd][1]-ypos;
             while (yij > hy) yij -= ly;
             while (yij <-hy) yij += ly;
 
-            double zij = atpos[j][2]-zpos;
+            double zij = atpos[jd][2]-zpos;
             while (zij > hz) zij -= lz;
             while (zij <-hz) zij += lz;
   
-            c2.nplane(xij,yij,zij,j);
+            c2.nplane(xij,yij,zij,jd);
           }
         }
         c2.face_areas(fs);
@@ -892,42 +858,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
-      if (edge_min > ZERO || fpedge){
-        std::vector<double> vpos;
-        std::vector<int>    vlst;
-        double lcut2 = cell->total_edge_distance()*edge_min;
-        lcut2 = lcut2*lcut2;
-
-        cell->vertices(vpos);
-        cell->face_vertices(vlst);
-
-        int nf = fs.size();
-        int ford[nf];
-        int k = 0, iface = 0;
-        while (k < vlst.size()){
-          int ned = vlst[k++];
-          int nuc = 0;
-          for (int ii=0; ii<ned; ii++){
-            int jj = (ii+1)%ned;
-            int v1 = vlst[k+ii], v2 = vlst[k+jj];
-            double dx = vpos[v1*3]   - vpos[v2*3];
-            double dy = vpos[v1*3+1] - vpos[v2*3+1];
-            double dz = vpos[v1*3+2] - vpos[v2*3+2];
-            double r2 = dx*dx+dy*dy+dz*dz;
-            if ((fpedge) && (v1 > v2)) fprintf(fpedge, "%lg\n", sqrt(r2)/cell->total_edge_distance());
-            if (r2 <= lcut2) nuc++;
-          }
-          ford[iface++] = ned - nuc;
-          k += ned;
-        }
-
-        if (edge_min > ZERO){
-          for (int i=3; i<7; i++) index[i] = 0;
-          for (int i=0; i<nf; i++){
-            if (ford[i] < 7) index[ford[i]] += 1;
-          }
-        }
-      }
+      if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
 
       // assign voronoi index and neighbor list info
       int nf = fs.size();
@@ -987,6 +918,8 @@ return;
 /*------------------------------------------------------------------------------
  * Private method to check if a pair of atoms are bonded or not
  * Voronoi neighbors are seen as bonded
+ * id  (in)  : atom ID of i
+ * jd  (in)  : atom ID of j
  *----------------------------------------------------------------------------*/
 int DumpAtom::bonded(int id, int jd)
 {
@@ -1074,7 +1007,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
       // print surface ratios if required
       if (fpsurf){
         int nf = fs.size();
-        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
+        double wt = 1./cell->surface_area();
+        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
       }
 
       // refine the voronoi cell if asked by removing tiny surfaces
@@ -1097,15 +1031,12 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
         double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
           if (i < nminnei || fs[i] > fcut){
-            int j = neigh[i];
+            int jd = neigh[i];
   
-            double scale = typ2ra[attyp[i]]/(typ2ra[attyp[i]] + typ2ra[attyp[j]]);
-            scale += scale;
-
             // apply pbc
-            double xij = atpos[j][0]-xpos;
-            double yij = atpos[j][1]-ypos;
-            double zij = atpos[j][2]-zpos;
+            double xij = atpos[jd][0]-xpos;
+            double yij = atpos[jd][1]-ypos;
+            double zij = atpos[jd][2]-zpos;
 
             while (zij > hz){
               xij -= xz;
@@ -1129,11 +1060,14 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
 
             while (xij > hx) xij -= lx;
             while (xij <-hx) xij += lx;
+
+            double scale = typ2ra[attyp[id]]/(typ2ra[attyp[id]] + typ2ra[attyp[jd]]);
+            scale += scale;
             xij *= scale;
             yij *= scale;
             zij *= scale;
   
-            c2.nplane(xij,yij,zij,j);
+            c2.nplane(xij,yij,zij,jd);
           }
         }
         c2.face_areas(fs);
@@ -1147,42 +1081,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
       for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
-      if (edge_min > ZERO || fpedge){
-        std::vector<double> vpos;
-        std::vector<int>    vlst;
-        double lcut2 = cell->total_edge_distance()*edge_min;
-        lcut2 = lcut2*lcut2;
-
-        cell->vertices(vpos);
-        cell->face_vertices(vlst);
-
-        int nf = fs.size();
-        int ford[nf];
-        int k = 0, iface = 0;
-        while (k < vlst.size()){
-          int ned = vlst[k++];
-          int nuc = 0;
-          for (int ii=0; ii<ned; ii++){
-            int jj = (ii+1)%ned;
-            int v1 = vlst[k+ii], v2 = vlst[k+jj];
-            double dx = vpos[v1*3]   - vpos[v2*3];
-            double dy = vpos[v1*3+1] - vpos[v2*3+1];
-            double dz = vpos[v1*3+2] - vpos[v2*3+2];
-            double r2 = dx*dx+dy*dy+dz*dz;
-            if ((fpedge) && (v1 > v2)) fprintf(fpedge, "%lg\n", sqrt(r2)/cell->total_edge_distance());
-            if (r2 <= lcut2) nuc++;
-          }
-          ford[iface++] = ned - nuc;
-          k += ned;
-        }
-
-        if (edge_min > ZERO){
-          for (int i=3; i<7; i++) index[i] = 0;
-          for (int i=0; i<nf; i++){
-            if (ford[i] < 7) index[ford[i]] += 1;
-          }
-        }
-      }
+      if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
 
       // assign voronoi index and neighbor list info
       int nf = fs.size();
@@ -1233,7 +1132,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
       // print surface ratios if required
       if (fpsurf){
         int nf = fs.size();
-        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg\n", fs[i]/cell->surface_area());
+        double wt = 1./cell->surface_area();
+        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
       }
 
       // refine the voronoi cell if asked by removing tiny surfaces
@@ -1256,28 +1156,28 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
         double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
           if (i < nminnei || fs[i] > fcut){
-            int j = neigh[i];
+            int jd = neigh[i];
   
             // apply pbc
-            double xij = atpos[j][0]-xpos;
+            double xij = atpos[jd][0]-xpos;
             while (xij > hx) xij -= lx;
             while (xij <-hx) xij += lx;
 
-            double yij = atpos[j][1]-ypos;
+            double yij = atpos[jd][1]-ypos;
             while (yij > hy) yij -= ly;
             while (yij <-hy) yij += ly;
 
-            double zij = atpos[j][2]-zpos;
+            double zij = atpos[jd][2]-zpos;
             while (zij > hz) zij -= lz;
             while (zij <-hz) zij += lz;
 
-            double scale = typ2ra[attyp[i]]/(typ2ra[attyp[i]] + typ2ra[attyp[j]]);
+            double scale = typ2ra[attyp[id]]/(typ2ra[attyp[id]] + typ2ra[attyp[jd]]);
             scale += scale;
             xij *= scale;
             yij *= scale;
             zij *= scale;
   
-            c2.nplane(xij,yij,zij,j);
+            c2.nplane(xij,yij,zij,jd);
           }
         }
         c2.face_areas(fs);
@@ -1291,42 +1191,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
       for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
-      if (edge_min > ZERO || fpedge){
-        std::vector<double> vpos;
-        std::vector<int>    vlst;
-        double lcut2 = cell->total_edge_distance()*edge_min;
-        lcut2 = lcut2*lcut2;
-
-        cell->vertices(vpos);
-        cell->face_vertices(vlst);
-
-        int nf = fs.size();
-        int ford[nf];
-        int k = 0, iface = 0;
-        while (k < vlst.size()){
-          int ned = vlst[k++];
-          int nuc = 0;
-          for (int ii=0; ii<ned; ii++){
-            int jj = (ii+1)%ned;
-            int v1 = vlst[k+ii], v2 = vlst[k+jj];
-            double dx = vpos[v1*3]   - vpos[v2*3];
-            double dy = vpos[v1*3+1] - vpos[v2*3+1];
-            double dz = vpos[v1*3+2] - vpos[v2*3+2];
-            double r2 = dx*dx+dy*dy+dz*dz;
-            if ((fpedge) && (v1 > v2)) fprintf(fpedge, "%lg\n", sqrt(r2)/cell->total_edge_distance());
-            if (r2 <= lcut2) nuc++;
-          }
-          ford[iface++] = ned - nuc;
-          k += ned;
-        }
-
-        if (edge_min > ZERO){
-          for (int i=3; i<7; i++) index[i] = 0;
-          for (int i=0; i<nf; i++){
-            if (ford[i] < 7) index[ford[i]] += 1;
-          }
-        }
-      }
+      if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
 
       // assign voronoi index and neighbor list info
       int nf = fs.size();
@@ -1355,4 +1220,63 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
 return;
 }
 
+/* -----------------------------------------------------------------------------
+ * Private method to refine the Voronoi edge info
+ * -----------------------------------------------------------------------------
+ * cell (in)  : voro::voronoicell_neighbor
+ * idx  (out) : carries the refined edge counts
+ * ---------------------------------------------------------------------------*/
+void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, double edge_min, FILE *fpedge)
+{
+  std::vector<double> vpos;
+  std::vector<int>    vlst;
+
+  cell->vertices(vpos);
+  cell->face_vertices(vlst);
+
+  int nv = vlst.size();
+  double perim[nf], edges[nv];
+  int k = 0, is = 0, ie = 0;
+  while (k < nv){
+    perim[is] = 0.;
+    int ned = vlst[k++];
+    for (int ii=0; ii<ned; ii++){
+      int jj = (ii+1)%ned;
+      int v1 = vlst[k+ii], v2 = vlst[k+jj];
+      double dx = vpos[v1*3]   - vpos[v2*3];
+      double dy = vpos[v1*3+1] - vpos[v2*3+1];
+      double dz = vpos[v1*3+2] - vpos[v2*3+2];
+      double r = sqrt(dx*dx+dy*dy+dz*dz);
+      edges[ie++] = r;
+      perim[is] += r;
+    }
+    perim[is] = 1./perim[is];
+    is++; k += ned;
+  }
+  
+  int ford[nf];
+  k = is = ie = 0;
+  while (k < nv){
+    int ned = vlst[k++];
+
+    int nuc = 0;
+    for (int ii=0; ii<ned; ii++){
+      double rwt = edges[ie] * perim[is];
+      if (fpedge) fprintf(fpedge, "%lg %g\n", rwt, edges[ie]);
+      if (rwt <= edge_min) nuc++;
+      ie++;
+    }
+    ford[is++] = ned - nuc;
+    k += ned;
+  }
+
+  if (edge_min > ZERO){
+    for (int i=3; i<7; i++) idx[i] = 0;
+    for (int i=0; i<nf; i++){
+      if (ford[i] < 7) idx[ford[i]] += 1;
+    }
+  }
+
+return;
+}
 /*------------------------------------------------------------------------------ */
