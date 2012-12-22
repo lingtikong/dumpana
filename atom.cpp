@@ -16,6 +16,7 @@ DumpAtom::DumpAtom(FILE *fp)
   realcmd = NULL;
   attyp = atsel = numtype = NULL; atpos = x = s = NULL;
 
+  weighted = 0;
   voro.clear();
   neilist = NULL;
   volume = NULL;
@@ -456,7 +457,9 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         vindex.assign(ptr); voroset.insert(vindex);
       }
-      ComputeVoro(mins);
+      // don't care about if weighted or not
+      int idum = weighted;
+      weighted = 0; ComputeVoro(mins); weighted = idum;
 
       // make the selection
       if (voroset.size() > 0){
@@ -634,8 +637,9 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 
   double diff = 0.;
   for (int i=0; i<3; i++) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
-  if (diff <= ZERO && voro.size() == natom) return;
+  if (diff <= ZERO && voro.size()==natom && weighted==0) return;
 
+  weighted = 0;
   for (int i=0; i<3; i++) vmins[i] = fabs(mins[i]);
 
   double surf_min = vmins[0];
@@ -1014,8 +1018,9 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
   for (int i=0; i<3; i++) if (mins[i] < 0.) mins[i] = vmins[i];
   double diff = 0.;
   for (int i=0; i<3; i++) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
-  if (diff <= ZERO && voro.size() == natom) return;
+  if (diff <= ZERO && voro.size() == natom && weighted) return;
 
+  weighted = 1;
   for (int i=0; i<3; i++) vmins[i] = fabs(mins[i]);
 
   double surf_min = vmins[0];

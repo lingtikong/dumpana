@@ -35,6 +35,7 @@ public:
   double **atpos;
   double axis[3][3];
 
+  int weighted;
   // Compute the Voronoi info, equal-distance method
   void ComputeVoro(double *);
   void ComputeVoro(double *, FILE *, FILE *, FILE *);
