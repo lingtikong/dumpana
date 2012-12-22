@@ -13,6 +13,7 @@
 #include <set>
 #include <list>
 #include <string>
+#include "voro++.hh"
 
 using namespace std;
 
@@ -66,5 +67,8 @@ private:
 
   char *realcmd;
   int count_words(const char *);
+
+  // used by ComputeVoro to refine edges
+  void RefineEdge(int,voro::voronoicell_neighbor *,int *,double, FILE *);
 };
 #endif

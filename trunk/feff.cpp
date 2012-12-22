@@ -18,7 +18,7 @@ void Driver::FEFF_main()
 
   // voro refinement info
   double mins[3];
-  mins[0] = 1.e-2; mins[1] = 1.e-4; mins[2] = 0.;
+  mins[0] = 1.e-2; mins[1] = 2.e-3; mins[2] = 0.;
 
   printf("\nRefined Voronoi tesselation will be needed to procceed.\n");
   printf("Now please input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
@@ -40,7 +40,7 @@ void Driver::FEFF_main()
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[1] = atof(ptr);
-  printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", mins[1]);
+  printf("Edges whose lengths take less ratio than %lg will be skipped!\n", mins[1]);
   // Show relevant info if Weighted Voronoi is used
   ShowRadius4Voro();
   one->ComputeVoro(mins,weighted);
@@ -48,7 +48,7 @@ void Driver::FEFF_main()
   int AbsorberType = 0;
   // selection of atoms for each frame
   char selcmd[MAXLINE], workdir[MAXLINE];
-  printf("Please define the absorbing atoms, which are usually of a specific type.\n");
+  printf("\nPlease define the absorbing atoms, which are usually of a specific type.\n");
   printf("However you can restrict to a fraction of a type by a selection command.\n");
   printf("NOTE: for selection option `voro', if negative MINs are provided, their\n");
   printf("respective default/previous values will be used.\n");

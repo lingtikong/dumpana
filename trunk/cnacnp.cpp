@@ -39,7 +39,7 @@ void Driver::Compute_CNACNP()
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[0] = atof(ptr);
-  printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
+  printf("Surfaces whose areas take less ratio than %lg will be removed!\n", mins[0]);
 
   // Show relevant info if Weighted Voronoi is used
   one = all[istr]; ShowRadius4Voro();
@@ -48,7 +48,7 @@ void Driver::Compute_CNACNP()
   if (job == 1) strcpy(fname, "cna.dat");
   else strcpy(fname, "cnp.dat");
 
-  printf("Please input the file name to output the CNA/CNP info [%s]: ", fname);
+  printf("\nPlease input the file name to output the CNA/CNP info [%s]: ", fname);
   fgets(str, MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr){
