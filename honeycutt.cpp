@@ -26,7 +26,7 @@ void Driver::honeycutt_andersen()
   printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
 
   // Show relevant info if Weighted Voronoi is used
-  one = all[istr]; WeightVoro();
+  one = all[istr]; ShowRadius4Voro();
 
   int unbond = 0;
   printf("\nWould you like to analyse un-bonded pairs? (y/n)[n]: ");

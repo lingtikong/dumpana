@@ -33,7 +33,7 @@ private:
   int *type2atnum;
   double *type2radius, *weighted;
   void MapType2Elem(const int, const int);
-  void WeightVoro();
+  void ShowRadius4Voro();
 
   // to define the range of frames to be analysed
   void setrange();

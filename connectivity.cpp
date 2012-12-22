@@ -48,7 +48,7 @@ void Driver::ClusterConnectivity()
   printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", mins[1]);
 
   // Show relevant info if Weighted Voronoi is used
-  one = all[istr]; WeightVoro();
+  one = all[istr]; ShowRadius4Voro();
 
   // selection of atoms for each frame
   char selcmd[MAXLINE];
