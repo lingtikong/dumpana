@@ -54,7 +54,7 @@ void Driver::bonds()
 
   char isel[MAXLINE], jsel[MAXLINE], ksel[MAXLINE];
   // selection commands for atoms
-  one = all[istr]; WeightVoro();
+  one = all[istr]; ShowRadius4Voro();
   one->ComputeVoro(mins, weighted);
 
   if (job == 1) printf("\nA pair of atoms defines a bond, first define one end of the bond.\n");

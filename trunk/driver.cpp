@@ -17,6 +17,7 @@ Driver::Driver(int narg, char** arg)
 
   flag_out = 0;
   flag_out |= OutFeff; // by default, feff.inp is written
+  flag_out |= WtdVoro; // by default, weighted Voronoi will be performed if element mapping is done
 
   // analyse command line options
   int iarg = 1;
@@ -39,6 +40,12 @@ Driver::Driver(int narg, char** arg)
 
     } else if (strcmp(arg[iarg], "-s") == 0){ // to skip writting feff.inp data, while just output the CN info
       flag_out &= ~OutFeff;
+
+    } else if (strcmp(arg[iarg], "-w") == 0){ // to do weighted Voronoi tessellation if possible, default
+      flag_out |= WtdVoro;
+
+    } else if (strcmp(arg[iarg], "-x") == 0){ // no weighted Voronoi tessellation even when possible
+      flag_out &= ~WtdVoro;
 
     } else {
       break;
@@ -479,7 +486,9 @@ void Driver::help()
   printf("             when analyze Voronoi diagram;\n");
   printf("    -s       To skip writing feff.inp files when preparing FEFF for desired voronoi\n");
   printf("             clusters; instead, output the CN info only.\n");
-  printf("    file     Must be lammps atom style dump file, by default: dump.lammpstrj;\n");
+  printf("    -w/-x    To or not to perform weighted Voronoi tessellation, if possible;\n");
+  printf("             by default, weigthed will be done if element mapping has been done;\n");
+  printf("    file     Must be lammps atom style dump file, by default: dump.lammpstrj.\n");
   printf("\n\n");
   exit(0);
 return;
@@ -558,26 +567,20 @@ return;
 /*------------------------------------------------------------------------------
  * Method to show the atomic radius  for each atomic type
  *------------------------------------------------------------------------------ */
-void Driver::WeightVoro()
+void Driver::ShowRadius4Voro()
 {
   weighted = NULL;
-  if (one == NULL || type2radius == NULL) return;
-  printf("\nWeighted Voronoi tesselation can be performed, with atomic radii:\n");
+  if ((flag_out&WtdVoro)==0 || one==NULL || type2radius==NULL) return;
+
+  printf("\nWeighted Voronoi tesselation will be performed, with atomic radii:\n");
   for (int ip = 1; ip <= one->ntype; ip++){
     char ename[3];
     int num = type2atnum[ip];
     element->Num2Name(num, ename);
-    printf("  R(%s) = %g;", ename, type2radius[ip]);
-  }
-  printf("\nDo you want to enable this? (y/n)[n]: ");
+    printf("  R(%s) = %g A;", ename, type2radius[ip]);
+  } printf("\n\n");
 
-  char str[MAXLINE];
-  fgets(str,MAXLINE,stdin);
-  char *ptr = strtok(str," \n\t\r\f");
-  if (ptr && (strcmp(ptr,"y")==0 || strcmp(ptr,"Y")==0)){
-    weighted = type2radius;
-    printf("Weighted Voronoi tesselation will be performed!\n\n");
-  } else printf("Regular Voronoi tesselation will be performed!\n\n");
+  weighted = type2radius;
 
 return;
 }

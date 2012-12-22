@@ -37,9 +37,9 @@ void Driver::voro()
   printf("Edges whose length takes less ratio than %lg will be skipped!\n", mins[1]);
 
   // show relevant info if weighted Voronoi is used
-  one = all[istr]; WeightVoro();
+  one = all[istr]; ShowRadius4Voro();
 
-  printf("\nPlease input the prefix for output files [voro]: ");
+  printf("Please input the prefix for output files [voro]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) {strcpy(str,"voro"); ptr = strtok(str, " \n\t\r\f");}

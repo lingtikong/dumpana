@@ -41,7 +41,7 @@ void Driver::csro()
   printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
 
   // Show relevant info if Weighted Voronoi is used
-  one = all[istr]; WeightVoro();
+  one = all[istr]; ShowRadius4Voro();
 
   // output file name for per atom CSRO
   FILE *fp; fp = NULL;

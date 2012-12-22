@@ -42,7 +42,7 @@ void Driver::FEFF_main()
   if (ptr) mins[1] = atof(ptr);
   printf("Edges whose length takes less ratio than %lg will be skipped!\n\n", mins[1]);
   // Show relevant info if Weighted Voronoi is used
-  WeightVoro();
+  ShowRadius4Voro();
   one->ComputeVoro(mins,weighted);
 
   int AbsorberType = 0;

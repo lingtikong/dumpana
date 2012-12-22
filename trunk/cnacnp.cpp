@@ -42,7 +42,7 @@ void Driver::Compute_CNACNP()
   printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
 
   // Show relevant info if Weighted Voronoi is used
-  one = all[istr]; WeightVoro();
+  one = all[istr]; ShowRadius4Voro();
 
   char *fname = new char[8];
   if (job == 1) strcpy(fname, "cna.dat");
