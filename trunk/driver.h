@@ -28,6 +28,10 @@ private:
   void readdump();                    // to read in the dump file
   void MainMenu();
 
+  // private method to set the cutoff for face or edge, needed by most others
+  double mins[3];
+  void set_cutoffs(int);
+
   // map atomic type to elements
   ChemElements *element;
   int *type2atnum;
@@ -67,7 +71,7 @@ private:
   void FEFF_main();
   void FEFF_input(int, FILE *);
 
-  // Connectivity info for certain clusters; needs FEFF_voro
+  // Connectivity info for certain clusters
   void ClusterConnectivity();
 
   // bond length or bond angle distribution; Voronoi neighbors are seen as bonded

@@ -12,36 +12,14 @@ void Driver::voro()
   for (int i=0; i<6; i++) printf("====");
 
   // thresholds for surface and edges
-  double mins[3];
-  mins[0] = 1.e-2; mins[1] = 2.e-3; mins[2] = 0.;
-
-  printf("\nPlease input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
-  fgets(str,MAXLINE, stdin);
-  char * ptr = strtok(str, " \n\t\r\f");
-  if (ptr) mins[0] = atof(ptr);
-  printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
-
-  printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
-  printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
-  printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", int(mins[2]));
-  if (count_words(fgets(str,MAXLINE, stdin)) > 0){
-    mins[2] = atof(strtok(str, " \n\t\r\f"));
-    if (mins[2] < 1.) mins[2] = 0.;
-    else printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", int(mins[2]));
-  }
-
-  printf("Please input your criterion for ultra short edges, 0 to keep all [%g]: ", mins[1]);
-  fgets(str,MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
-  if (ptr) mins[1] = atof(ptr);
-  printf("Edges whose lengths take less ratio than %lg will be skipped!\n", mins[1]);
+  set_cutoffs(1);
 
   // show relevant info if weighted Voronoi is used
   one = all[istr]; ShowRadius4Voro();
 
   printf("\nPlease input the prefix for output files [voro]: ");
   fgets(str,MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
+  char *ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) {strcpy(str,"voro"); ptr = strtok(str, " \n\t\r\f");}
   char *prefix = new char[strlen(ptr)+1];
   strcpy(prefix, ptr);

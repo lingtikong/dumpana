@@ -31,15 +31,7 @@ void Driver::Compute_CNACNP()
   printf("\n");
 
   // thresholds for surface and edges
-  double mins[3];
-  mins[0] = 1.e-2; mins[1] =-1.; mins[2] = 0.;
-
-  // ask for Voronoi refinement parameters
-  printf("Please input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
-  fgets(str,MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
-  if (ptr) mins[0] = atof(ptr);
-  printf("Surfaces whose areas take less ratio than %lg will be removed!\n", mins[0]);
+  set_cutoffs(0);
 
   // Show relevant info if Weighted Voronoi is used
   one = all[istr]; ShowRadius4Voro();

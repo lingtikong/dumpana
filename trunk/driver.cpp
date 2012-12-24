@@ -584,4 +584,41 @@ void Driver::ShowRadius4Voro()
 
 return;
 }
+
+/*------------------------------------------------------------------------------
+ * Private method to set the cutoffs for Voronoi analysis
+ *------------------------------------------------------------------------------
+ * flag (in) : indicates if cutoff for edges is needed
+ *------------------------------------------------------------------------------ */
+void Driver::set_cutoffs(int flag)
+{
+  char str[MAXLINE];
+  mins[0] = 1.e-4; mins[1] = 1.e-4; mins[2] = 0.;
+
+  printf("\nPlease input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
+  fgets(str,MAXLINE, stdin);
+  char * ptr = strtok(str, " \n\t\r\f");
+  if (ptr) mins[0] = atof(ptr);
+  printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
+
+  printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
+  printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
+  printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", int(mins[2]));
+  if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+    mins[2] = atof(strtok(str, " \n\t\r\f"));
+    if (mins[2] < 1.) mins[2] = 0.;
+    else printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", int(mins[2]));
+  }
+
+  if (flag){
+    printf("Please input your criterion for ultra short edges, 0 to keep all [%g]: ", mins[1]);
+    fgets(str,MAXLINE, stdin);
+    ptr = strtok(str, " \n\t\r\f");
+    if (ptr) mins[1] = atof(ptr);
+    printf("Edges whose lengths take less ratio than %lg will be skipped!\n", mins[1]);
+  } else mins[1] = -1.;
+
+return;
+}
+
 /*----------------------------------------------------------------------------*/
