@@ -18,12 +18,8 @@ void Driver::honeycutt_andersen()
   printf("   Honeycutt-Andersen  Bond  Analysis   ");
   for (int i=0; i<5; i++) printf("===="); printf("\n");
 
-  double mins[3]; mins[0] = 1.e-2; mins[1] =-1.; mins[2] =-1.;
-  printf("Please input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
-  fgets(str,MAXLINE, stdin);
-  char * ptr = strtok(str, " \n\t\r\f");
-  if (ptr) mins[0] = atof(ptr);
-  printf("Surfaces whose areas take less ratio than %lg will be removed!\n", mins[0]);
+  // voronoi refinement
+  set_cutoffs(0);
 
   // Show relevant info if Weighted Voronoi is used
   one = all[istr]; ShowRadius4Voro();
@@ -31,7 +27,7 @@ void Driver::honeycutt_andersen()
   int unbond = 0;
   printf("\nWould you like to analyse un-bonded pairs? (y/n)[n]: ");
   fgets(str, MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
+  char *ptr = strtok(str, " \n\t\r\f");
   if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  unbond = 1;
 
   int outcomm = 0;
