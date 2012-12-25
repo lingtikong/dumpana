@@ -108,7 +108,7 @@ void Driver::ClusterConnectivity()
     }
     // open and write header
     fp = fopen(fname,"w");
-    fprintf(fp,"#Voronoi refinement info: surf_min%% = %g, edge_min%% = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
+    fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min%% = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
     fprintf(fp,"#Voronoi indices of the %d%s shell neighbors of atoms selected by: %s", nshell, Nos[nshell], selcmd);
     fprintf(fp,"# centered on clusters: ");
     for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) fprintf(fp," %s", it->c_str());
@@ -135,7 +135,7 @@ void Driver::ClusterConnectivity()
 
       // open and write header
       fpx = fopen(ptr,"w");
-      fprintf(fp,"#Voronoi refinement info: surf_min%% = %g, edge_min%% = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
+      fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min%% = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
       fprintf(fpx,"# Cluster connectivity info for atoms selected by: %s", selcmd);
       fprintf(fpx,"# centered on clsuters:" );
       for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) fprintf(fpx," %s", it->c_str());

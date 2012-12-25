@@ -492,10 +492,9 @@ void Driver::help()
   printf("\nUsage:\n    dumpana [options] [file]\n\nAvailable options:\n");
   printf("    -h       To display this help info;\n");
   printf("    -1       To tell the code to exit once an analysis is done;\n");
-  printf("    -os      To output the surface area ratios when analyze Voronoi diagram;\n");
-  printf("    -oe      To output the edge length ratios when analyze Voronoi diagram;\n");
-  printf("    -ose     To output both the surface area and the edge length ratios\n");
-  printf("             when analyze Voronoi diagram;\n");
+  printf("    -os      To output the surface area and its ratio when analyze Voronoi diagram;\n");
+  printf("    -oe      To output the edge length and its ratio when analyze Voronoi diagram;\n");
+  printf("    -ose     To set both `-os` and `-oe`;\n");
   printf("    -s       To skip writing feff.inp files when preparing FEFF for desired voronoi\n");
   printf("             clusters; instead, output the CN info only.\n");
   printf("    -w/-x    To or not to perform weighted Voronoi tessellation, if possible;\n");

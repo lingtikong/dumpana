@@ -572,8 +572,8 @@ void DumpAtom::SelHelp()
   printf("random number generator, if a non-positive number is provided, it will be\n");
   printf("set automatically based on current time. The logical operation before `ran`\n");
   printf("is always assumed to be AND, no matter what is defined;\n");
-  printf("or `voro MinSurf%% MinEdge%% NMinNei NVoroIndex VoroIndices', which will\n");
-  printf("select atoms with certain Voronoi indices. `MinSurf%%' and `MinEdge%%' defines\n");
+  printf("or `voro MinSurf MinEdge%% NMinNei NVoroIndex VoroIndices', which will\n");
+  printf("select atoms with certain Voronoi indices. `MinSurf' and `MinEdge%%' defines\n");
   printf("the thresholds for surface and edge, respectively; they can be zero; `NMinNei'\n");
   printf("defines the Minimum # of neighbors wanted, zero means no limitations; `NVoroIndex'\n");
   printf("defines the # of Voronoi indices that will follow, it can be zero; and the following\n");
@@ -594,7 +594,7 @@ void DumpAtom::SelHelp()
   printf("`type = 1 | type = 2` will select atoms of type 1 or 2; while `type = 1 & type = 2`\n");
   printf("will select nothing. `type = 1 & ran 100 0` will randomly select 100 atoms\n");
   printf("from all of type 1. `X <> 0 10 & voro 0 0 0 1 0,0,12,0' will select all atoms\n");
-  printf("that have a Voronoi index of 0,0,12,0 with [0,10] along the x direction.\n");
+  printf("that have a Voronoi index of 0,0,12,0 within [0,10] along the x direction.\n");
   for (int i=0; i<20; i++) printf("----"); printf("\n\n");
     
 return;
@@ -625,7 +625,7 @@ int DumpAtom::count_words(const char *line)
 
 /*------------------------------------------------------------------------------
  * Method to compute the Voronoi index, Voronoi neighbor list info
- * mins     (in)  : surf_min% edge_min% Min#Nei; if negative, default/previous
+ * mins     (in)  : surf_min  edge_min% Min#Nei; if negative, default/previous
  *                : values will be taken.
  * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
  * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing

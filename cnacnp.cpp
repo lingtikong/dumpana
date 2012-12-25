@@ -50,7 +50,7 @@ void Driver::Compute_CNACNP()
   }
 
   FILE *fp = fopen(fname, "w");
-  fprintf(fp,"#Voronoi refinement info: surf_min%% = %g, edge_min%% = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
+  fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min%% = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
   if (job == 1) fprintf(fp,"# CNA: 1, FCC; 2, HCP; 3, BCC; 4, ICOS; 4, OTHER; 5, UNKNOWN.\n# id x y z cna\n");
   else fprintf(fp, "# id x y z cnp\n");
   fflush(fp);
