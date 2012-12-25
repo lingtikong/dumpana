@@ -79,6 +79,8 @@ DumpAtom::DumpAtom(FILE *fp)
   lx = box[0] = axis[0][0] = xhi - xlo;
   ly = box[1] = axis[1][1] = yhi - ylo;
   lz = box[2] = axis[2][2] = zhi - zlo;
+  hx = 0.5*lx;  hy = 0.5*ly;  hz = 0.5*lz;
+
   vol = lx*ly*lz;
   box[3] = axis[1][0] = xy;
   box[4] = axis[2][0] = xz;
@@ -651,9 +653,6 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
   neilist = memory->create(neilist, MaxNei+1, natom+1, "neilist");
   volume  = memory->create(volume,  natom+1, "volume");
   
-  // set local variables
-  double hx = 0.5*lx, hy = 0.5*ly, hz = 0.5*lz;
-
   // need cartesian coordinates
   dir2car();
 
@@ -710,9 +709,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         }
 
         // add condition on surface
-        double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
-          if (i < nminnei || fs[i] > fcut){
+          if (i < nminnei || fs[i] > surf_min){
             int jd = neigh[i];
   
             // apply pbc
@@ -720,29 +718,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
             double yij = atpos[jd][1]-ypos;
             double zij = atpos[jd][2]-zpos;
 
-            while (zij > hz){
-              xij -= xz;
-              yij -= yz;
-              zij -= lz;
-            }
-            while (zij <-hz){
-              xij += xz;
-              yij += yz;
-              zij += lz;
-            }
+            ApplyPBC(xij, yij, zij, 1);
 
-            while (yij > hy){
-              xij -= xy;
-              yij -= ly;
-            }
-            while (yij <-hy){
-              xij += xy;
-              yij += ly;
-            }
-
-            while (xij > hx) xij -= lx;
-            while (xij <-hx) xij += lx;
-  
             c2.nplane(xij,yij,zij,jd);
           }
         }
@@ -826,24 +803,17 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         }
 
         // add condition on surface
-        double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
-          if (i < nminnei || fs[i] > fcut){
+          if (i < nminnei || fs[i] > surf_min){
             int jd = neigh[i];
   
             // apply pbc
             double xij = atpos[jd][0]-xpos;
-            while (xij > hx) xij -= lx;
-            while (xij <-hx) xij += lx;
-
             double yij = atpos[jd][1]-ypos;
-            while (yij > hy) yij -= ly;
-            while (yij <-hy) yij += ly;
-
             double zij = atpos[jd][2]-zpos;
-            while (zij > hz) zij -= lz;
-            while (zij <-hz) zij += lz;
-  
+
+            ApplyPBC(xij, yij, zij, 0);
+
             c2.nplane(xij,yij,zij,jd);
           }
         }
@@ -966,9 +936,6 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
   neilist = memory->create(neilist, MaxNei+1, natom+1, "neilist");
   volume  = memory->create(volume,  natom+1, "volume");
   
-  // set local variables
-  double hx = 0.5*lx, hy = 0.5*ly, hz = 0.5*lz;
-
   // need cartesian coordinates
   dir2car();
 
@@ -1028,9 +995,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
         }
 
         // add condition on surface
-        double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
-          if (i < nminnei || fs[i] > fcut){
+          if (i < nminnei || fs[i] > surf_min){
             int jd = neigh[i];
   
             // apply pbc
@@ -1038,28 +1004,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
             double yij = atpos[jd][1]-ypos;
             double zij = atpos[jd][2]-zpos;
 
-            while (zij > hz){
-              xij -= xz;
-              yij -= yz;
-              zij -= lz;
-            }
-            while (zij <-hz){
-              xij += xz;
-              yij += yz;
-              zij += lz;
-            }
-
-            while (yij > hy){
-              xij -= xy;
-              yij -= ly;
-            }
-            while (yij <-hy){
-              xij += xy;
-              yij += ly;
-            }
-
-            while (xij > hx) xij -= lx;
-            while (xij <-hx) xij += lx;
+            ApplyPBC(xij, yij, zij, 1);
 
             double scale = typ2ra[attyp[id]]/(typ2ra[attyp[id]] + typ2ra[attyp[jd]]);
             scale += scale;
@@ -1153,23 +1098,16 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
 
         c2.init(-lx,lx,-ly,ly,-lz,lz);
         // add condition on surface
-        double fcut = surf_min * cell->surface_area();
         for (int i=0; i<nf; i++){
-          if (i < nminnei || fs[i] > fcut){
+          if (i < nminnei || fs[i] > surf_min){
             int jd = neigh[i];
   
             // apply pbc
             double xij = atpos[jd][0]-xpos;
-            while (xij > hx) xij -= lx;
-            while (xij <-hx) xij += lx;
-
             double yij = atpos[jd][1]-ypos;
-            while (yij > hy) yij -= ly;
-            while (yij <-hy) yij += ly;
-
             double zij = atpos[jd][2]-zpos;
-            while (zij > hz) zij -= lz;
-            while (zij <-hz) zij += lz;
+
+            ApplyPBC(xij, yij, zij, 0);
 
             double scale = typ2ra[attyp[id]]/(typ2ra[attyp[id]] + typ2ra[attyp[jd]]);
             scale += scale;
@@ -1277,6 +1215,55 @@ void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, do
     }
   }
 
+return;
+}
+
+/* -----------------------------------------------------------------------------
+ * Private method to apply PBC on an vector
+ * -----------------------------------------------------------------------------
+ * xij (inout) : x
+ * yij (inout) : y
+ * zij (inout) : z
+ * flag (in)   : 1, non-orthogonal; 0, orthogonal box
+ * ---------------------------------------------------------------------------*/
+void DumpAtom::ApplyPBC(double &xij, double &yij, double &zij, const int flag)
+{
+  if (flag){  // non-orthogonal box
+
+    while (zij > hz){
+      xij -= xz;
+      yij -= yz;
+      zij -= lz;
+    }
+    while (zij <-hz){
+      xij += xz;
+      yij += yz;
+      zij += lz;
+    }
+    
+    while (yij > hy){
+      xij -= xy;
+      yij -= ly;
+    }
+    while (yij <-hy){
+      xij += xy;
+      yij += ly;
+    }
+    
+    while (xij > hx) xij -= lx;
+    while (xij <-hx) xij += lx;
+
+  } else { // orthogonal box
+
+    while (xij > hx) xij -= lx;
+    while (xij <-hx) xij += lx;
+  
+    while (yij > hy) yij -= ly;
+    while (yij <-hy) yij += ly;
+  
+    while (zij > hz) zij -= lz;
+    while (zij <-hz) zij += lz;
+  }
 return;
 }
 /*------------------------------------------------------------------------------ */

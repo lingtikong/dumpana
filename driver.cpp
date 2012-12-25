@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "version.h"
 
 /*------------------------------------------------------------------------------
  * Constructor of driver, main menu
@@ -64,6 +65,7 @@ Driver::Driver(int narg, char** arg)
     strcpy(dump,"dump.lammpstrj");
   }
 
+  ShowVersion();
   // read dump file
   readdump();
   if (nframe < 1) return;
@@ -464,6 +466,14 @@ return;
 }
 
 /*------------------------------------------------------------------------------
+ * To display the code name and version info
+ *------------------------------------------------------------------------------ */
+void Driver::ShowVersion()
+{
+  printf("\nDumpAna  version 1.%d, compiled on %s %s\n", VERSION, __DATE__, __TIME__);
+}
+
+/*------------------------------------------------------------------------------
  * To display help info
  *------------------------------------------------------------------------------ */
 void Driver::help()
@@ -475,6 +485,8 @@ void Driver::help()
   printf("     #     #  #    #  #    #  #####  #######  #  # #  ######\n");
   printf("     #     #  #    #  #    #  #      #     #  #   ##  #    #\n");
   printf("     ######    ####   #    #  #      #     #  #    #  #    #\n");
+  ShowVersion();
+  for (int i=0; i<20; i++) printf("----");
   printf("\nCode to analyse the atom style dump files of lammps. Functions available:\n");
   MainMenu();
   printf("\nUsage:\n    dumpana [options] [file]\n\nAvailable options:\n");
@@ -593,13 +605,13 @@ return;
 void Driver::set_cutoffs(int flag)
 {
   char str[MAXLINE];
-  mins[0] = 1.e-4; mins[1] = 1.e-4; mins[2] = 0.;
+  mins[0] = 2.e-1; mins[1] = 1.e-4; mins[2] = 0.;
 
   printf("\nPlease input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
   fgets(str,MAXLINE, stdin);
   char * ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[0] = atof(ptr);
-  printf("Surfaces whose areas take less ratio than %lg will be removed!\n\n", mins[0]);
+  printf("Surface whose area is less than %lg will be removed!\n\n", mins[0]);
 
   printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
   printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
