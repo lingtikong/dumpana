@@ -6,7 +6,7 @@
 #define OutFeff 4
 #define WtdVoro 8
 
-#define ZERO 1.e-10
+#define ZERO 1.e-12
 #define MAXLINE 512
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
