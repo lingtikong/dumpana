@@ -79,6 +79,7 @@ private:
 
   // help info
   void help();
+  void ShowVersion();
 
   Memory *memory;
   int count_words(const char *);
