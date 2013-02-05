@@ -302,7 +302,7 @@ void DumpAtom::selection(const char *line)
     } else if (strcmp(key,"X")==0 || strcmp(key,"Y")==0 || strcmp(key,"Z")==0 ){ // selection by cartesian position
       dir2car();
 
-      int dir = key[0]-'x';
+      int dir = key[0]-'X';
       oper = strtok(NULL, " \n\t\r\f");
       if (oper == NULL) break;
       ptr = strtok(NULL, " \n\t\r\f");
