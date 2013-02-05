@@ -77,19 +77,22 @@ void Driver::FEFF_main()
   }
   printf("Your selection : %d\n", job);
 
+  // some common variables
+  char ename[3];
+  char dirname[MAXLINE], mkdir[MAXLINE], fname[MAXLINE];
+  FILE *fp;
+
   // working directory: directory to write all output files
   printf("\nPlease define the working directory, i.e., directory to write all\n");
   printf("output files/directories [.]: ");
   if (count_words(fgets(str,MAXLINE,stdin)) > 0){
     char *ptr = strtok(str," \n\t\r\f");
     strcpy(workdir, ptr);
+
+    // create the working directory, if not exist
+    strcpy(mkdir,"mkdir -p "); strcat(mkdir, workdir); system(mkdir);
   } else strcpy(workdir, ".");
   printf("The working directory will be: %s\n", workdir);
-
-  // some common variables
-  char ename[3];
-  char dirname[MAXLINE], mkdir[MAXLINE], fname[MAXLINE];
-  FILE *fp;
 
   // file DirList records all directories created
   sprintf(fname,"%s/DirList", workdir);
