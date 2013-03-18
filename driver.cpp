@@ -292,18 +292,20 @@ return;
 void Driver::writesel()
 {
   char str[MAXLINE]; int job = 1;
+  char *prefix;
   printf("\n"); for (int i=0; i<7; i++) printf("====");
   printf(" Output Selected Frames ");
   for (int i=0; i<7; i++) printf("====");
   printf("\nPlease select your desired job:\n");
   printf("  1. Convert into xyz files;\n");
-  printf("  2. Write as dump atom;\n");
+  printf("  2. Convert into CFG format;\n");
+  printf("  3. Write as dump atom;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
-  if (job < 1 || job > 2){
+  if (job < 1 || job > 3){
     for (int i=0; i<20; i++) printf("===="); printf("\n");
     return;
   }
@@ -312,16 +314,26 @@ void Driver::writesel()
   if (job == 1){
     printf("\nPlease input the output file name [%s.xyz]: ", dump);
     if (count_words(fgets(str,MAXLINE,stdin)) < 1) sprintf(str,"%s.xyz", dump);
-  } else {
+
+  } else if (job == 2) {
+    printf("\nPlease input the prefix for output files [%s]: ", dump);
+    if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, dump);
+    ptr = strtok(str, " \n\t\r\f");
+    prefix = new char[strlen(ptr)+1];
+    strcpy(prefix, ptr);
+
+  } else if (job == 3) {
     printf("\nPlease input the output file name [%s]: ", dump);
     if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, dump);
   }
-  ptr = strtok(str, " \n\t\r\f");
-  FILE *fp = fopen(ptr, "w");
 
   int nused = 0;
+  FILE *fp;
 
-  if (job == 1){
+  if (job == 1){ // xyz
+
+    ptr = strtok(str, " \n\t\r\f");
+    fp = fopen(ptr, "w");
     for (int img = istr; img<= iend; img += inc){
       one = all[img];
       fprintf(fp,"%d\n", one->natom);
@@ -352,8 +364,87 @@ void Driver::writesel()
       }
       nused++;
     }
+    fclose(fp);
 
-  } else if (job == 2){
+  } else if (job == 2){ // CFG
+    if (type2atnum == NULL) MapType2Elem(1, one->ntype);
+
+    for (int img = istr; img<= iend; img += inc){
+      one = all[img];
+      one->car2dir();
+
+      sprintf(str, "%s.%d.cfg\n", prefix, one->tstep);
+      ptr = strtok(str, " \n\t\r\f");
+      printf("ptr=%s\n", ptr);
+      fp = fopen(ptr, "w");
+
+      fprintf(fp, "Number of particles = %d\n", one->natom);
+      fprintf(fp, "# (required) this must be the first line\n\n");
+
+      fprintf(fp, "A = 1.0 Angstrom (basic length-scale)\n# (optional) basic length-scale: default A = 1.0 [Angstrom]\n\n");
+      fprintf(fp, "H0(1,1) = %20.16f\n", one->axis[0][0]);
+      fprintf(fp, "H0(1,2) = %20.16f\n", one->axis[0][1]);
+      fprintf(fp, "H0(1,3) = %20.16f\n", one->axis[0][2]);
+      fprintf(fp, "# (required) this is the supercell's 1st edge, in A\n\n");
+
+      fprintf(fp, "H0(2,1) = %20.16f\n", one->axis[1][0]);
+      fprintf(fp, "H0(2,2) = %20.16f\n", one->axis[1][1]);
+      fprintf(fp, "H0(2,3) = %20.16f\n", one->axis[1][2]);
+      fprintf(fp, "# (required) this is the supercell's 1st edge, in A\n\n");
+
+      fprintf(fp, "H0(3,1) = %20.16f\n", one->axis[2][0]);
+      fprintf(fp, "H0(3,2) = %20.16f\n", one->axis[2][1]);
+      fprintf(fp, "H0(3,3) = %20.16f\n", one->axis[2][2]);
+      fprintf(fp, "# (required) this is the supercell's 1st edge, in A\n\n");
+
+      fprintf(fp, "Transform(1,1) = 1\n");
+      fprintf(fp, "Transform(1,2) = 0\n");
+      fprintf(fp, "Transform(1,3) = 0\n");
+      fprintf(fp, "Transform(2,1) = 0\n");
+      fprintf(fp, "Transform(2,2) = 1\n");
+      fprintf(fp, "Transform(2,3) = 0\n");
+      fprintf(fp, "Transform(3,1) = 0\n");
+      fprintf(fp, "Transform(3,2) = 0\n");
+      fprintf(fp, "Transform(3,3) = 1\n");
+      fprintf(fp, "# (optional) apply additional transformation on H0:  H = H0 * Transform;\n# default = Identity matrix.\n\n");
+
+      fprintf(fp, "eta(1,1) = 0\n");
+      fprintf(fp, "eta(1,2) = 0\n");
+      fprintf(fp, "eta(1,3) = 0\n");
+      fprintf(fp, "eta(2,2) = 0\n");
+      fprintf(fp, "eta(2,3) = 0\n");
+      fprintf(fp, "eta(3,3) = 0\n");
+      fprintf(fp, "# (optional) apply additional Lagrangian strain on H0:\n# H = H0 * sqrt(Identity_matrix + 2 * eta);\n# default = zero matrix.\n\n");
+
+      fprintf(fp, "# ENSUING ARE THE ATOMS, EACH ATOM DESCRIBED BY A ROW\n");
+      fprintf(fp, "# 1st entry is atomic mass in a.m.u.\n");
+      fprintf(fp, "# 2nd entry is the chemical symbol (max 2 chars)\n\n");
+      fprintf(fp, "# 3rd entry is reduced coordinate s1 (dimensionless)\n");
+      fprintf(fp, "# 4th entry is reduced coordinate s2 (dimensionless)\n");
+      fprintf(fp, "# 5th entry is reduced coordinate s3 (dimensionless)\n");
+      fprintf(fp, "# real coordinates x = s * H,  x, s are 1x3 row vectors\n\n");
+      fprintf(fp, "# 6th entry is d(s1)/dt in basic rate-scale R\n");
+      fprintf(fp, "# 7th entry is d(s2)/dt in basic rate-scale R\n");
+      fprintf(fp, "# 8th entry is d(s3)/dt in basic rate-scale R\n");
+      fprintf(fp, "R = 1.0 [ns^-1]\n");
+      fprintf(fp, "# (optional) basic rate-scale: default R = 1.0 [ns^-1]\n\n");
+
+      char ename[3]; double mass;
+      for (int i=1; i<=one->natom; i++){
+        element->Num2Name(type2atnum[one->attyp[i]], ename);
+        mass = element->Name2Mass(ename);
+        fprintf(fp, "%8.4f %2s %20.16f %20.16f %20.16f 0. 0. 0.\n", mass, ename, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
+      }
+
+      nused++;
+      fclose(fp);
+    }
+    delete []prefix;
+
+  } else if (job == 3){ // dump atom
+
+    ptr = strtok(str, " \n\t\r\f");
+    fp = fopen(ptr, "w");
 
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
@@ -379,8 +470,8 @@ void Driver::writesel()
 
       nused++;
     }
+    fclose(fp);
   }
-  fclose(fp);
   printf("Mission completed, %d frames written to file: %s\n", nused, ptr);
   for (int i=0; i<20; i++) printf("===="); printf("\n"); 
 return;
