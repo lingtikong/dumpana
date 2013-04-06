@@ -625,7 +625,7 @@ int DumpAtom::count_words(const char *line)
 
 /*------------------------------------------------------------------------------
  * Method to compute the Voronoi index, Voronoi neighbor list info
- * mins     (in)  : surf_min  edge_min% Min#Nei; if negative, default/previous
+ * mins     (in)  : surf_min  edge_min Min#Nei; if negative, default/previous
  *                : values will be taken.
  * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
  * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing
@@ -903,7 +903,7 @@ return 0;
 
 /*------------------------------------------------------------------------------
  * Method to compute the Voronoi index, Voronoi neighbor list info
- * mins     (in)  : surf_min% edge_min% Min#Nei; if negative, default/previous
+ * mins     (in)  : surf_min edge_min Min#Nei; if negative, default/previous
  *                : values will be taken.
  * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
  * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing
@@ -1201,7 +1201,7 @@ void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, do
     for (int ii=0; ii<ned; ii++){
       double rwt = edges[ie] * perim[is];
       if (fpedge) fprintf(fpedge, "%lg %g\n", rwt, edges[ie]);
-      if (rwt <= edge_min) nuc++;
+      if (edges[ie] <= edge_min) nuc++;
       ie++;
     }
     ford[is++] = ned - nuc;
