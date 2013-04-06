@@ -38,7 +38,7 @@ void Driver::voro()
     FILE *fp = fopen(ptr, "w");
     fprintf(fp,"#Box info: %lg %lg %lg %lg %lg %lg %d %lg %lg %lg\n",
     one->xlo, one->xhi, one->ylo, one->yhi, one->zlo, one->zhi, one->natom, one->xy, one->xz, one->yz);
-    fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min%% = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
+    fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
     fprintf(fp,"# 1  2    3  4  5  6   7         8    9    10\n");
     fprintf(fp,"# id type x  y  z  vol voroindex f5%%  NNei NeiList surfaceareas\n");
 

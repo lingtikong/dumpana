@@ -300,18 +300,19 @@ void Driver::writesel()
   printf("  1. Convert into xyz files;\n");
   printf("  2. Convert into CFG format;\n");
   printf("  3. Write as dump atom;\n");
+  printf("  4. Write selected Voronoi clusters as xyz;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
-  if (job < 1 || job > 3){
+  if (job < 1 || job > 4){
     for (int i=0; i<20; i++) printf("===="); printf("\n");
     return;
   }
   printf("\n");
 
-  if (job == 1){
+  if (job == 1 || job == 4){
     printf("\nPlease input the output file name [%s.xyz]: ", dump);
     if (count_words(fgets(str,MAXLINE,stdin)) < 1) sprintf(str,"%s.xyz", dump);
 
@@ -695,7 +696,7 @@ return;
 void Driver::set_cutoffs(int flag)
 {
   char str[MAXLINE];
-  mins[0] = 2.e-1; mins[1] = 1.e-4; mins[2] = 0.;
+  mins[0] = 5.e-1; mins[1] = 1.e-2; mins[2] = 0.;
 
   printf("\nPlease input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
   fgets(str,MAXLINE, stdin);
@@ -717,7 +718,7 @@ void Driver::set_cutoffs(int flag)
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) mins[1] = atof(ptr);
-    printf("Edges whose lengths take less ratio than %lg will be skipped!\n", mins[1]);
+    printf("Edges whose lengths are less than %lg will be skipped!\n", mins[1]);
   } else mins[1] = -1.;
 
 return;
