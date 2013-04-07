@@ -60,6 +60,8 @@ public:
   void car2dir();
   void dir2car();
 
+  void ApplyPBC(double &, double &, double &, const int);
+
 private:
   int MaxNei;
   double vmins[3];
@@ -71,6 +73,5 @@ private:
 
   // used by ComputeVoro to refine edges
   void RefineEdge(int,voro::voronoicell_neighbor *,int *,double, FILE *);
-  void ApplyPBC(double &, double &, double &, const int);
 };
 #endif

@@ -50,6 +50,9 @@ private:
   int flag_out;
   void voro();
 
+  // to output selected Voronoi cells as xyz file
+  void OutputVoroCells();
+
   // Chemical short range order based on voronoi neighbors
   void csro();
 
