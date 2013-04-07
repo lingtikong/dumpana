@@ -117,6 +117,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) ClusterConnectivity();
       break;
 
+    case 7:
+      setrange();
+      if (nsel > 0) OutputVoroCells();
+      break;
+       
     case 11:
       setrange();
       if (nsel > 0) writesel();
@@ -165,6 +170,7 @@ void Driver::MainMenu()
   printf("  4. Common neighbor analysis;         |  14. Static structure factor;\n");
   printf("  5. Prepare for FEFF9;                |  15. Bond length/angles;\n");
   printf("  6. Voronoi cluster connectivity;     | \n");
+  printf("  7. Output selected Voronoi clusters; | \n");
   for (int i=0; i<20; i++) printf("----"); printf("\n");
 
 return;
@@ -300,19 +306,18 @@ void Driver::writesel()
   printf("  1. Convert into xyz files;\n");
   printf("  2. Convert into CFG format;\n");
   printf("  3. Write as dump atom;\n");
-  printf("  4. Write selected Voronoi clusters as xyz;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
-  if (job < 1 || job > 4){
+  if (job < 1 || job > 3){
     for (int i=0; i<20; i++) printf("===="); printf("\n");
     return;
   }
   printf("\n");
 
-  if (job == 1 || job == 4){
+  if (job == 1){
     printf("\nPlease input the output file name [%s.xyz]: ", dump);
     if (count_words(fgets(str,MAXLINE,stdin)) < 1) sprintf(str,"%s.xyz", dump);
 
