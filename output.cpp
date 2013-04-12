@@ -66,7 +66,6 @@ void Driver::OutputVoroCells()
     if (one->nsel < 1) continue;
     one->dir2car();
 
-    cell.init(-lmax, lmax, -lmax, lmax, -lmax, lmax);
     for (int id = 1; id <= one->natom; id++){
       if (one->atsel[id] == 0) continue;
       double xpos = one->atpos[id][0];
@@ -74,6 +73,8 @@ void Driver::OutputVoroCells()
       double zpos = one->atpos[id][2];
       int nei = one->neilist[0][id];
       
+      cell.init(-lmax, lmax, -lmax, lmax, -lmax, lmax);
+      dx.clear(); dy.clear(); dz.clear(); vertex.clear();
       dx.resize(nei+1); dy.resize(nei+1); dz.resize(nei+1);
 
       for (int jj=1; jj<= nei; jj++){
