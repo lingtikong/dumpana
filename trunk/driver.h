@@ -80,6 +80,9 @@ private:
   // bond length or bond angle distribution; Voronoi neighbors are seen as bonded
   void bonds();
 
+  // spatial distribution of atoms
+  void spatial();
+
   // help info
   void help();
   void ShowVersion();

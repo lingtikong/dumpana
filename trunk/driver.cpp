@@ -147,6 +147,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) bonds();
       break;
 
+    case 16:
+      setrange();
+      if (nsel > 0) spatial();
+      break;
+
     default:
       loop = 0;
       break;
@@ -169,7 +174,7 @@ void Driver::MainMenu()
   printf("  3. Honeycutt-Andersen bond index;    |  13. Pair correlation function;\n");
   printf("  4. Common neighbor analysis;         |  14. Static structure factor;\n");
   printf("  5. Prepare for FEFF9;                |  15. Bond length/angles;\n");
-  printf("  6. Voronoi cluster connectivity;     | \n");
+  printf("  6. Voronoi cluster connectivity;     |  16. Spatial distribution of atoms;\n");
   printf("  7. Output selected Voronoi clusters; | \n");
   for (int i=0; i<20; i++) printf("----"); printf("\n");
 
