@@ -156,8 +156,8 @@ void Driver::spatial()
   // normalize the data
   double fac = 1./double(nused);
   for (int ii = 0; ii < nbin[0]; ii++)
-  for (int jj = 0; jj < nbin[0]; jj++)
-  for (int kk = 0; kk < nbin[0]; kk++) hits[ii][jj][kk] *= fac;
+  for (int jj = 0; jj < nbin[1]; jj++)
+  for (int kk = 0; kk < nbin[2]; kk++) hits[ii][jj][kk] *= fac;
 
   // output the result
   int fastz = 1;
@@ -174,10 +174,12 @@ void Driver::spatial()
   printf("\nPlease input the file name to output the result [spatial.dat]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
-  if (ptr == NULL) strcpy(str, "spatial.dat");
-  ptr = strtok(str, " \n\t\r\f");
+  if (ptr == NULL){
+    strcpy(str, "spatial.dat");
+    ptr = strtok(str, " \n\t\r\f");
+  }
   FILE *fp = fopen(ptr,"w");
-  fprintf(fp,"# Spatial distribution for atoms: %s\n", selcmd);
+  fprintf(fp,"# Spatial distribution for atoms: %s", selcmd);
   fprintf(fp,"# Similar to fix-ave-spatial format; mesh size: %d x %d x %d.\n", nbin[0], nbin[1], nbin[2]);
   fprintf(fp,"# index sx sy sz #atoms\n");
   fprintf(fp,"# 0 %d\n", nbin[0]*nbin[1]*nbin[2]);
