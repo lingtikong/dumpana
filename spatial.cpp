@@ -8,7 +8,7 @@
 void Driver::spatial()
 {
   char str[MAXLINE], *ptr;
-  bigint ***hits;
+  double ***hits;
   int nbin[3];
   double lo[3], hi[3], ds[3], inv_ds[3];
 
@@ -119,7 +119,7 @@ void Driver::spatial()
   hits = memory->create(hits, nbin[0], nbin[1], nbin[2], "hits");
   for (int i= 0; i< nbin[0]; i++)
   for (int j= 0; j< nbin[1]; j++)
-  for (int k= 0; k< nbin[2]; k++) hits[i][j][k] = 0;
+  for (int k= 0; k< nbin[2]; k++) hits[i][j][k] = 0.;
 
   int nused = 0;
 
@@ -146,20 +146,25 @@ void Driver::spatial()
         if (idx[idim] < 0 || idx[idim] >= nbin[idim]) outside = 1;
       }
 
-      if (outside == 0) hits[idx[0]][idx[1]][idx[2]]++;
+      if (outside == 0) hits[idx[0]][idx[1]][idx[2]] += 1.;
     }
 
     nused++;
   }
   if (nused < 1) return;
 
+  // normalize the data
   double fac = 1./double(nused);
+  for (int ii = 0; ii < nbin[0]; ii++)
+  for (int jj = 0; jj < nbin[0]; jj++)
+  for (int kk = 0; kk < nbin[0]; kk++) hits[ii][jj][kk] *= fac;
 
   // output the result
   int fastz = 1;
   printf("\nPlease input the fastest direction to output the data (x/z)[z]: ");
   fgets(str,MAXLINE, stdin); ptr = strtok(str, " \n\t\r\f");
   if (ptr != NULL && (strcmp(ptr,"x") == 0 || strcmp(ptr, "X") == 0)) fastz = 0;
+
   // output a blank line after each cycle of the fatest direction
   int blank = 0;
   printf("\nWould you like to write a blank line after each cycle of the fatest direction (y/n)[n]: ");
@@ -172,14 +177,17 @@ void Driver::spatial()
   if (ptr == NULL) strcpy(str, "spatial.dat");
   ptr = strtok(str, " \n\t\r\f");
   FILE *fp = fopen(ptr,"w");
+  fprintf(fp,"# Spatial distribution for atoms: %s\n", selcmd);
+  fprintf(fp,"# Similar to fix-ave-spatial format; mesh size: %d x %d x %d.\n", nbin[0], nbin[1], nbin[2]);
   fprintf(fp,"# index sx sy sz #atoms\n");
+  fprintf(fp,"# 0 %d\n", nbin[0]*nbin[1]*nbin[2]);
   int index = 0;
   if (fastz){
     for (int ii=0; ii< nbin[0]; ii++)
     for (int jj=0; jj< nbin[1]; jj++){
       for (int kk=0; kk< nbin[2]; kk++){
         fprintf(fp, "%d %lg %lg %lg %lg\n", index++, (double(ii)+0.5)*ds[0]+lo[0],
-        (double(jj)+0.5)*ds[1]+lo[1], (double(kk)+0.5)*ds[2]+lo[2], double(hits[ii][jj][kk])*fac);
+        (double(jj)+0.5)*ds[1]+lo[1], (double(kk)+0.5)*ds[2]+lo[2],hits[ii][jj][kk]);
       }
       if (blank) fprintf(fp,"\n");
     }
@@ -188,7 +196,7 @@ void Driver::spatial()
     for (int jj=0; jj< nbin[1]; jj++){
       for (int ii=0; ii< nbin[0]; ii++){
         fprintf(fp, "%d %lg %lg %lg %lg\n", index++, (double(ii)+0.5)*ds[0]+lo[0],
-        (double(jj)+0.5)*ds[1]+lo[1], (double(kk)+0.5)*ds[2]+lo[2], double(hits[ii][jj][kk])*fac);
+        (double(jj)+0.5)*ds[1]+lo[1], (double(kk)+0.5)*ds[2]+lo[2], hits[ii][jj][kk]);
       }
       if (blank) fprintf(fp,"\n");
     }
