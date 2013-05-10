@@ -19,7 +19,7 @@ using namespace std;
 
 class DumpAtom {
 public:
-  DumpAtom(FILE *fp);
+  DumpAtom(FILE *fp, const int);
   ~DumpAtom();
 
   int iframe;
