@@ -21,6 +21,7 @@ public:
 
 private:
   char *dump;                         // input file name
+  int spk;                            // SPPARKS trajectory, cartesian coordinate
   int nframe;                         // total # of frames
   int istr, iend, inc;                // frame range
   DumpAtom *one;                      // pointer to one frame

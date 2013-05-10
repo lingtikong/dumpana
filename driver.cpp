@@ -11,6 +11,7 @@ Driver::Driver(int narg, char** arg)
   nframe = 0;
   type2atnum = NULL; type2radius = weighted = NULL;
   element = NULL;
+  spk = 0;
 
   memory = new Memory();
 
@@ -47,6 +48,9 @@ Driver::Driver(int narg, char** arg)
 
     } else if (strcmp(arg[iarg], "-x") == 0){ // no weighted Voronoi tessellation even when possible
       flag_out &= ~WtdVoro;
+
+    } else if (strcmp(arg[iarg], "-spk") == 0){ // SPPARKS trajectory
+      spk = 1;
 
     } else {
       break;
@@ -224,7 +228,7 @@ void Driver::readdump()
 
   // read file
   while (!feof(fp)){
-    one = new DumpAtom(fp);
+    one = new DumpAtom(fp, spk);
     if (one->initialized){
       all.push_back(one);
       one->iframe = all.size();

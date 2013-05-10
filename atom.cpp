@@ -6,7 +6,7 @@
 /*------------------------------------------------------------------------------
  * Constructor, to read one image from the atom style dump file of lammps
  *----------------------------------------------------------------------------*/
-DumpAtom::DumpAtom(FILE *fp)
+DumpAtom::DumpAtom(FILE *fp, const int spk)
 {
   iframe = natom = ntype = tstep = 0;
   initialized = triclinic = 0;
@@ -87,6 +87,25 @@ DumpAtom::DumpAtom(FILE *fp)
   box[5] = axis[2][1] = yz;
   axis[0][1] = axis[0][2] = axis[1][2] = 0.;
   for (int idim=0; idim<3; idim++) hbox[idim] = 0.5*box[idim];
+
+  if (spk){
+    x = memory->create(x, natom+1, 3, "x");
+    for (int id=1; id<= natom; id++)
+    for (int idim=0; idim<3; idim++) x[id][idim] = s[id][idim];
+
+    double h_inv[6];
+    h_inv[0] = 1.0/box[0];
+    h_inv[1] = 1.0/box[1];
+    h_inv[2] = 1.0/box[2];
+    h_inv[3] = -box[3] / (box[1]*box[2]);
+    h_inv[4] = (box[3]*box[5] - box[1]*box[4]) / (box[0]*box[1]*box[2]);
+    h_inv[5] = -box[5] / (box[0]*box[1]);
+    for (int id=1; id<= natom; id++){
+      s[id][0] = h_inv[0]*x[id][0] + h_inv[5]*x[id][1] + h_inv[4]*x[id][2];
+      s[id][1] = h_inv[1]*x[id][1] + h_inv[3]*x[id][2];
+      s[id][2] = h_inv[2]*x[id][2];
+    }
+  }
 
   numtype = memory->create(numtype,ntype+1,"numtype");
   for (int i=0; i<=ntype; i++) numtype[i] = 0;
