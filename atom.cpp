@@ -770,8 +770,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 
       // output voro index info
       if (fp){
-        double wf = double(index[5])/double(nf)*100.;
-        fprintf(fp,"%d %d %lg %lg %lg %lg %s %g %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, wf, nf);
+        fprintf(fp,"%d %d %lg %lg %lg %lg %s %d %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, index[5], nf);
         for (int i=0; i<nf; i++) fprintf(fp," %d", neigh[i]);
         for (int i=0; i<nf; i++) fprintf(fp," %lg", fs[i]);
         fprintf(fp,"\n");
@@ -864,8 +863,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 
       // output voro index info
       if (fp){
-        double wf = double(index[5])/double(nf)*100.;
-        fprintf(fp,"%d %d %lg %lg %lg %lg %s %g %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, wf, nf);
+        fprintf(fp,"%d %d %lg %lg %lg %lg %s %d %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, index[5], nf);
         for (int i=0; i<nf; i++) fprintf(fp," %d", neigh[i]);
         for (int i=0; i<nf; i++) fprintf(fp," %lg", fs[i]);
         fprintf(fp,"\n");
@@ -1062,8 +1060,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
 
       // output voro index info
       if (fp){
-        double wf = double(index[5])/double(nf)*100.;
-        fprintf(fp,"%d %d %lg %lg %lg %lg %s %g %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, wf, nf);
+        fprintf(fp,"%d %d %lg %lg %lg %lg %s %d %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, index[5], nf);
         for (int i=0; i<nf; i++) fprintf(fp," %d", neigh[i]);
         for (int i=0; i<nf; i++) fprintf(fp," %lg", fs[i]);
         fprintf(fp,"\n");
@@ -1165,8 +1162,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
 
       // output voro index info
       if (fp){
-        double wf = double(index[5])/double(nf)*100.;
-        fprintf(fp,"%d %d %lg %lg %lg %lg %s %g %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, wf, nf);
+        fprintf(fp,"%d %d %lg %lg %lg %lg %s %d %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, index[5], nf);
         for (int i=0; i<nf; i++) fprintf(fp," %d", neigh[i]);
         for (int i=0; i<nf; i++) fprintf(fp," %lg", fs[i]);
         fprintf(fp,"\n");
