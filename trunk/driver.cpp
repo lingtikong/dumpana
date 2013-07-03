@@ -306,8 +306,9 @@ return;
  *------------------------------------------------------------------------------ */
 void Driver::writesel()
 {
+  char *fname; fname = NULL;
   char str[MAXLINE]; int job = 1;
-  char *prefix;
+
   printf("\n"); for (int i=0; i<7; i++) printf("====");
   printf(" Output Selected Frames ");
   for (int i=0; i<7; i++) printf("====");
@@ -315,12 +316,13 @@ void Driver::writesel()
   printf("  1. Convert into xyz files;\n");
   printf("  2. Convert into CFG format;\n");
   printf("  3. Write as dump atom;\n");
+  printf("  4. Shift selected frames;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
-  if (job < 1 || job > 3){
+  if (job < 1 || job > 4){
     for (int i=0; i<20; i++) printf("===="); printf("\n");
     return;
   }
@@ -334,10 +336,10 @@ void Driver::writesel()
     printf("\nPlease input the prefix for output files [%s]: ", dump);
     if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, dump);
     ptr = strtok(str, " \n\t\r\f");
-    prefix = new char[strlen(ptr)+1];
-    strcpy(prefix, ptr);
+    fname = new char[strlen(ptr)+1];
+    strcpy(fname, ptr);
 
-  } else if (job == 3) {
+  } else if (job == 3 || job == 4) {
     printf("\nPlease input the output file name [%s]: ", dump);
     if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, dump);
   }
@@ -348,7 +350,10 @@ void Driver::writesel()
   if (job == 1){ // xyz
 
     ptr = strtok(str, " \n\t\r\f");
-    fp = fopen(ptr, "w");
+    fname = new char [strlen(ptr)+1];
+    strcpy(fname, ptr);
+    fp = fopen(fname, "w");
+
     for (int img = istr; img<= iend; img += inc){
       one = all[img];
       fprintf(fp,"%d\n", one->natom);
@@ -388,9 +393,8 @@ void Driver::writesel()
       one = all[img];
       one->car2dir();
 
-      sprintf(str, "%s.%d.cfg\n", prefix, one->tstep);
+      sprintf(str, "%s.%d.cfg\n", fname, one->tstep);
       ptr = strtok(str, " \n\t\r\f");
-      printf("ptr=%s\n", ptr);
       fp = fopen(ptr, "w");
 
       fprintf(fp, "Number of particles = %d\n", one->natom);
@@ -454,12 +458,13 @@ void Driver::writesel()
       nused++;
       fclose(fp);
     }
-    delete []prefix;
 
   } else if (job == 3){ // dump atom
 
     ptr = strtok(str, " \n\t\r\f");
-    fp = fopen(ptr, "w");
+    fname = new char [strlen(ptr)+1];
+    strcpy(fname, ptr);
+    fp = fopen(fname, "w");
 
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
@@ -486,8 +491,132 @@ void Driver::writesel()
       nused++;
     }
     fclose(fp);
+
+  } else if (job == 4){ // shift and dump
+
+    ptr = strtok(str, " \n\t\r\f");
+    fname = new char [strlen(ptr)+1];
+    strcpy(fname, ptr);
+
+    int mjob = 0;
+    printf("\nPlease select the way to shift the simulation box:\n");
+    printf("  1. Translate the box by a defined vector;\n");
+    printf("  2. Confine the center-of-mass of a group of atoms;\n");
+    printf("  0. Return;\nYour choice [%d]: ", mjob);
+    fgets(str,MAXLINE, stdin);
+    char *ptr = strtok(str, " \n\t\r\f");
+    if (ptr) mjob = atoi(ptr);
+    printf("Your selection : %d\n", mjob);
+    if (mjob < 1 || mjob > 2){
+      delete []fname; 
+      return;
+    }
+
+    double shift[3], new_com[3];
+    int gstr, gend, dir_flag[3];
+    if (mjob == 1){
+      shift[0] = shift[1] = shift[2] = 0.;
+      printf("\nPlease input the vector (fractional) to translate the box [0. 0. 0.]: ");
+      if (count_words(fgets(str,MAXLINE,stdin)) >= 3){
+        ptr = strtok(str, " \n\t\r\f");
+        for (int i=0; i<2; i++){
+          shift[i] = atoi(ptr);
+          ptr = strtok(NULL, " \n\t\r\f");
+        }
+        shift[2] = atoi(ptr);
+      }
+      printf("The whole box will be shift by amount of [%g %g %g].\n\n", shift[0], shift[1], shift[2]);
+
+    } else if (mjob == 2){
+      gstr = 1; gend = one->natom;
+      printf("\nPlease note, PBC will not be considered when evaluating the COM of atoms!\n");
+      printf("Please input the atom id range that defines the group [1 %d]: ", one->natom);
+      if (count_words(fgets(str,MAXLINE,stdin)) >= 2){
+        gstr = atoi(strtok(str, " \n\t\r\f")); gstr = MIN(one->natom, MAX(0, gstr));
+        gend = atoi(strtok(NULL," \n\t\r\f")); gend = MIN(one->natom, MAX(gstr, gend));
+      }
+      printf("The COM of the atoms with ID [%d %d] will be shifted.\n", gstr, gend);
+      dir_flag[0] = dir_flag[1] = dir_flag[2] = 0;
+      new_com[0]  = new_com[1]  = new_com[2] = 0.;
+      printf("\nPlease input the new COM of these atoms, NULL to skip [NULL NULL NULL]: ");
+      if (count_words(fgets(str,MAXLINE,stdin)) >= 3){
+        ptr = strtok(str, " \n\t\r\f");
+        for (int i=0; i<2; i++){
+          if (strcmp(ptr, "NULL") != 0){
+            new_com[i]  = atof(ptr);
+            dir_flag[i] = 1;
+          }
+          ptr = strtok(NULL, " \n\t\r\f");
+        }
+        if (strcmp(ptr, "NULL") != 0){
+          new_com[2]  = atof(ptr);
+          dir_flag[2] = 1;
+        }
+      }
+      printf("The new COM of the selected group of atoms will be [");
+      for (int idim=0; idim<3; idim++){
+        if (dir_flag[idim] == 0) printf("NULL ");
+        else printf("%g ", new_com[idim]);
+      } printf("]\n\n");
+    }
+
+    double new_pos[3];
+
+    fp = fopen(fname, "w");
+    for (int img = istr; img <= iend; img += inc){
+      one = all[img];
+      one->car2dir();
+
+      fprintf(fp,"ITEM: TIMESTEP\n%d\n", one->tstep);
+      fprintf(fp,"ITEM: NUMBER OF ATOMS\n%d\n", one->natom);
+      if (one->triclinic){
+        fprintf(fp,"ITEM: BOX BOUNDS pp pp pp xy xz yz\n");
+        fprintf(fp,"%lg %lg %lg\n", one->xlo, one->xhi, one->xy);
+        fprintf(fp,"%lg %lg %lg\n", one->ylo, one->yhi, one->xz);
+        fprintf(fp,"%lg %lg %lg\n", one->zlo, one->zhi, one->yz);
+      } else {
+        fprintf(fp,"ITEM: BOX BOUNDS pp pp pp\n");
+        fprintf(fp,"%lg %lg\n", one->xlo, one->xhi);
+        fprintf(fp,"%lg %lg\n", one->ylo, one->yhi);
+        fprintf(fp,"%lg %lg\n", one->zlo, one->zhi);
+      }
+      fprintf(fp,"ITEM: ATOMS\n");
+
+      if (mjob == 1){
+        for (int id=1; id<= one->natom; id++){
+          for (int idim=0; idim<3; idim++){
+            new_pos[idim] = one->atpos[id][idim] + shift[idim];
+            while (new_pos[idim] <  0.) new_pos[idim] += 1.;
+            while (new_pos[idim] >= 1.) new_pos[idim] -= 1.;
+          }
+          fprintf(fp,"%d %d %lg %lg %lg\n", id, one->attyp[id], new_pos[0], new_pos[1], new_pos[2]);
+        }
+
+      } else if (mjob == 2){
+
+        double old_com[3]; old_com[0] = old_com[1] = old_com[2] = 0.;
+        for (int id=gstr; id <= gend; id++){
+          for (int idim=0; idim<3; idim++) old_com[idim] += one->atpos[id][idim];
+        }
+        for (int idim=0; idim<3; idim++) shift[idim] = new_com[idim] - old_com[idim]/double(gend-gstr+1);
+
+        for (int id=1; id<= one->natom; id++){
+          for (int idim=0; idim<3; idim++){
+            new_pos[idim] = one->atpos[id][idim];
+            if (dir_flag[idim]) new_pos[idim] += shift[idim];
+            while (new_pos[idim] <  0.) new_pos[idim] += 1.;
+            while (new_pos[idim] >= 1.) new_pos[idim] -= 1.;
+          }
+          fprintf(fp,"%d %d %lg %lg %lg\n", id, one->attyp[id], new_pos[0], new_pos[1], new_pos[2]);
+        }
+      }
+
+      nused++;
+    }
+    fclose(fp);
   }
-  printf("Mission completed, %d frames written to file: %s\n", nused, ptr);
+  printf("Mission completed, %d frames written to file: %s\n", nused, fname);
+  if (fname) delete [] fname;
   for (int i=0; i<20; i++) printf("===="); printf("\n"); 
 return;
 }
