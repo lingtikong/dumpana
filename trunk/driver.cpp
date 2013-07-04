@@ -504,7 +504,7 @@ void Driver::writesel()
     printf("  2. Confine the center-of-mass of a group of atoms;\n");
     printf("  0. Return;\nYour choice [%d]: ", mjob);
     fgets(str,MAXLINE, stdin);
-    char *ptr = strtok(str, " \n\t\r\f");
+    ptr = strtok(str, " \n\t\r\f");
     if (ptr) mjob = atoi(ptr);
     printf("Your selection : %d\n", mjob);
     if (mjob < 1 || mjob > 2){
@@ -513,7 +513,7 @@ void Driver::writesel()
     }
 
     double shift[3], new_com[3];
-    int gstr, gend, dir_flag[3];
+    int dir_flag[3], *list, nsel;
     if (mjob == 1){
       shift[0] = shift[1] = shift[2] = 0.;
       printf("\nPlease input the vector (fractional) to translate the box [0. 0. 0.]: ");
@@ -528,14 +528,35 @@ void Driver::writesel()
       printf("The whole box will be shift by amount of [%g %g %g].\n\n", shift[0], shift[1], shift[2]);
 
     } else if (mjob == 2){
-      gstr = 1; gend = one->natom;
+
       printf("\nPlease note, PBC will not be considered when evaluating the COM of atoms!\n");
-      printf("Please input the atom id range that defines the group [1 %d]: ", one->natom);
-      if (count_words(fgets(str,MAXLINE,stdin)) >= 2){
-        gstr = atoi(strtok(str, " \n\t\r\f")); gstr = MIN(one->natom, MAX(0, gstr));
-        gend = atoi(strtok(NULL," \n\t\r\f")); gend = MIN(one->natom, MAX(gstr, gend));
+      char selcmd[MAXLINE];
+    
+      one = all[istr];
+      // selection commands for atoms
+      while (1){
+        printf("\nPlease input the selection command for the group of atoms (NOTE, the group\n");
+        printf("definition is based on image NO. %d.), `h` for help [all]: ", istr+1);
+  
+        if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+          strcpy(selcmd, str);
+          char *ptr = strtok(str," \n\t\r\f");
+          if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
+        } else strcpy(selcmd,"all\n");
+    
+        // check the selection command on the first frame
+        one->selection(selcmd); one->SelInfo();
+        if (one->nsel > 0){
+          nsel = one->nsel;
+          list = memory->create(list, nsel, "list");
+          int ii = 0;
+          for (int id=1; id<= one->natom; id++){
+            if (one->atsel[id]) list[ii++] = id;
+          }
+          break;
+        }
       }
-      printf("The COM of the atoms with ID [%d %d] will be shifted.\n", gstr, gend);
+
       dir_flag[0] = dir_flag[1] = dir_flag[2] = 0;
       new_com[0]  = new_com[1]  = new_com[2] = 0.;
       printf("\nPlease input the new COM of these atoms, NULL to skip [NULL NULL NULL]: ");
@@ -595,10 +616,11 @@ void Driver::writesel()
       } else if (mjob == 2){
 
         double old_com[3]; old_com[0] = old_com[1] = old_com[2] = 0.;
-        for (int id=gstr; id <= gend; id++){
+        for (int ii=0; ii<nsel; ii++){
+          int id = list[ii];
           for (int idim=0; idim<3; idim++) old_com[idim] += one->atpos[id][idim];
         }
-        for (int idim=0; idim<3; idim++) shift[idim] = new_com[idim] - old_com[idim]/double(gend-gstr+1);
+        for (int idim=0; idim<3; idim++) shift[idim] = new_com[idim] - old_com[idim]/double(nsel);
 
         for (int id=1; id<= one->natom; id++){
           for (int idim=0; idim<3; idim++){
@@ -613,6 +635,8 @@ void Driver::writesel()
 
       nused++;
     }
+
+    memory->destroy(list);
     fclose(fp);
   }
   printf("Mission completed, %d frames written to file: %s\n", nused, fname);
@@ -734,7 +758,8 @@ void Driver::help()
   printf("             clusters; instead, output the CN info only.\n");
   printf("    -w/-x    To or not to perform weighted Voronoi tessellation, if possible;\n");
   printf("             by default, weigthed will be done if element mapping has been done;\n");
-  printf("    file     Must be lammps atom style dump file, by default: dump.lammpstrj.\n");
+  printf("    -spk     To indicate the dump file is of SPPARKS format;\n");
+  printf("    file     Must be lammps atom style or spparks dump file, by default: dump.lammpstrj.\n");
   printf("\n\n");
   exit(0);
 return;
