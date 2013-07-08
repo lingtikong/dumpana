@@ -15,6 +15,9 @@ private:
   void init();
   void compute_cna();
   void compute_cnp();
+  void centro_atom(const int);
+
+  void apply_pbc(double &, double &, double &);
 
   void output(FILE *);
 
@@ -28,6 +31,10 @@ private:
   double *pattern;
 
   int bonded(int,int);
+
+  // copied from LAMMPS compute_centro_atom
+  void select(int, int, double *);
+  void select2(int, int, double *, int *);
 };
 
 #endif

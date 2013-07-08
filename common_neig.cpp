@@ -38,7 +38,8 @@ ComputeCNAAtom::ComputeCNAAtom(const int job, const int ntm, int **list, double 
 
   // to the real job
   if (job == 1) compute_cna();
-  else          compute_cnp();
+  else if (job == 2) compute_cnp();
+  else centro_atom(-job);
 
   output(fp);
 
@@ -208,65 +209,10 @@ void ComputeCNAAtom::compute_cnp()
             xjk[idim] = x[k][idim] - x[j][idim];
           }
           // apply pbc
-          if (non_ortho_box){
-            while (xik[2] > hL[2]){
-              xik[0] -= xz;
-              xik[1] -= yz;
-              xik[2] -= L[2];
-            }
-            while (xik[2] <-hL[2]){
-              xik[0] += xz;
-              xik[1] += yz;
-              xik[2] += L[2];
-            }
-
-            while (xik[1] > hL[1]){
-              xik[0] -= xy;
-              xik[1] -= L[1];
-            }
-            while (xik[1] <-hL[1]){
-              xik[0] += xy;
-              xik[1] += L[1];
-            }
-
-            while (xik[0] > hL[0]) xik[0] -= L[0];
-            while (xik[0] <-hL[0]) xik[0] += L[0];
-
-            while (xjk[2] > hL[2]){
-              xjk[0] -= xz;
-              xjk[1] -= yz;
-              xjk[2] -= L[2];
-            }
-            while (xjk[2] <-hL[2]){
-              xjk[0] += xz;
-              xjk[1] += yz;
-              xjk[2] += L[2];
-            }
-
-            while (xjk[1] > hL[1]){
-              xjk[0] -= xy;
-              xjk[1] -= L[1];
-            }
-            while (xjk[1] <-hL[1]){
-              xjk[0] += xy;
-              xjk[1] += L[1];
-            }
-
-            while (xjk[0] > hL[0]) xjk[0] -= L[0];
-            while (xjk[0] <-hL[0]) xjk[0] += L[0];
+          apply_pbc(xik[0], xik[1], xik[2]);
+          apply_pbc(xjk[0], xjk[1], xjk[2]);
             
-            for (int idim=0; idim<3; idim++) Rij[idim] += xik[idim] + xjk[idim];
-
-          } else {
-            for (int idim=0; idim<3; idim++){
-              while (xik[idim] > hL[idim]) xik[idim] -= L[idim];
-              while (xik[idim] <-hL[idim]) xik[idim] += L[idim];
-              while (xjk[idim] > hL[idim]) xjk[idim] -= L[idim];
-              while (xjk[idim] <-hL[idim]) xjk[idim] += L[idim];
-          
-              Rij[idim] += xik[idim] + xjk[idim];
-            }
-          }
+          for (int idim=0; idim<3; idim++) Rij[idim] += xik[idim] + xjk[idim];
         }
 	   }
       pattern[i] += Rij[0]*Rij[0] + Rij[1]*Rij[1] + Rij[2]*Rij[2];
@@ -299,4 +245,247 @@ int ComputeCNAAtom::bonded(int id, int jd)
 return 0;
 }
 
+/* ----------------------------------------------------------------------
+ * Private method, Copied from LAMMPS compute_centro_atom
+ * ---------------------------------------------------------------------- */
+#define SWAP(a,b)   tmp = a; a = b; b = tmp;
+#define ISWAP(a,b) itmp = a; a = b; b = itmp;
+
+void ComputeCNAAtom::select(int k, int n, double *arr)
+{
+  int i,ir,j,l,mid;
+  double a,tmp;
+
+  arr--;
+  l = 1;
+  ir = n;
+  for (;;) {
+    if (ir <= l+1) {
+      if (ir == l+1 && arr[ir] < arr[l]) {
+        SWAP(arr[l],arr[ir])
+      }
+      return;
+    } else {
+      mid=(l+ir) >> 1;
+      SWAP(arr[mid],arr[l+1])
+      if (arr[l] > arr[ir]) {
+        SWAP(arr[l],arr[ir])
+      }
+      if (arr[l+1] > arr[ir]) {
+        SWAP(arr[l+1],arr[ir])
+      }
+      if (arr[l] > arr[l+1]) {
+        SWAP(arr[l],arr[l+1])
+      }
+      i = l+1;
+      j = ir;
+      a = arr[l+1];
+      for (;;) {
+        do i++; while (arr[i] < a);
+        do j--; while (arr[j] > a);
+        if (j < i) break;
+        SWAP(arr[i],arr[j])
+      }
+      arr[l+1] = arr[j];
+      arr[j] = a;
+      if (j >= k) ir = j-1;
+      if (j <= k) l = i;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+
+void ComputeCNAAtom::select2(int k, int n, double *arr, int *iarr)
+{
+  int i,ir,j,l,mid,ia,itmp;
+  double a,tmp;
+
+  arr--;
+  iarr--;
+  l = 1;
+  ir = n;
+  for (;;) {
+    if (ir <= l+1) {
+      if (ir == l+1 && arr[ir] < arr[l]) {
+        SWAP(arr[l],arr[ir])
+        ISWAP(iarr[l],iarr[ir])
+      }
+      return;
+    } else {
+      mid=(l+ir) >> 1;
+      SWAP(arr[mid],arr[l+1])
+      ISWAP(iarr[mid],iarr[l+1])
+      if (arr[l] > arr[ir]) {
+        SWAP(arr[l],arr[ir])
+        ISWAP(iarr[l],iarr[ir])
+      }
+      if (arr[l+1] > arr[ir]) {
+        SWAP(arr[l+1],arr[ir])
+        ISWAP(iarr[l+1],iarr[ir])
+      }
+      if (arr[l] > arr[l+1]) {
+        SWAP(arr[l],arr[l+1])
+        ISWAP(iarr[l],iarr[l+1])
+      }
+      i = l+1;
+      j = ir;
+      a = arr[l+1];
+      ia = iarr[l+1];
+      for (;;) {
+        do i++; while (arr[i] < a);
+        do j--; while (arr[j] > a);
+        if (j < i) break;
+        SWAP(arr[i],arr[j])
+        ISWAP(iarr[i],iarr[j])
+      }
+      arr[l+1] = arr[j];
+      arr[j] = a;
+      iarr[l+1] = iarr[j];
+      iarr[j] = ia;
+      if (j >= k) ir = j-1;
+      if (j <= k) l = i;
+    }
+  }
+}
+
+/* ----------------------------------------------------------------------
+ * Central symmetry parameter
+ * ---------------------------------------------------------------------- */
+void ComputeCNAAtom::centro_atom(const int nnn)
+{
+
+  int nhalf = nnn/2;
+  int npairs = nnn * (nnn-1) / 2;
+  double *pairs = memory->create(pairs, npairs, "pairs");
+
+  double *distsq;
+  int *neighb;
+  int maxneigh = nnn+nnn;
+  distsq = memory->create(distsq,maxneigh,"centro/atom:distsq");
+  neighb = memory->create(neighb,maxneigh,"centro/atom:neighb");
+
+  // compute centro-symmetry parameter for each atom in group, use full neighbor list
+
+  for (int i = 1; i <= natom; i++) {
+    pattern[i] = 0.;
+    int jnum = nearest[0][i];
+
+    // insure distsq and nearest arrays are long enough
+    if (jnum > maxneigh) {
+      maxneigh = jnum;
+      distsq = memory->grow(distsq,maxneigh,"centro/atom:distsq");
+      neighb = memory->grow(neighb,maxneigh,"centro/atom:neighb");
+    }
+
+    // loop over list of all neighbors within force cutoff
+    // distsq[] = distance sq to each
+    // nearest[] = atom indices of neighbors
+
+    int n = 0;
+    for (int jj = 1; jj <= jnum; jj++) {
+      int j = nearest[jj][i];
+
+      double delx = x[i][0] - x[j][0];
+      double dely = x[i][1] - x[j][1];
+      double delz = x[i][2] - x[j][2];
+      apply_pbc(delx, dely, delz);
+
+      double rsq = delx*delx + dely*dely + delz*delz;
+
+      distsq[n] = rsq;
+      neighb[n++] = j;
+    }
+
+    // if not nnn neighbors, centro = 0.0
+
+    if (n < nnn) {
+      pattern[i] = 0.;
+      continue;
+    }
+
+    // store nnn nearest neighs in 1st nnn locations of distsq and nearest
+
+    select2(nnn,n,distsq,neighb);
+
+    // R = Ri + Rj for each of npairs i,j pairs among nnn neighbors
+    // pairs = squared length of each R
+    n = 0;
+    for (int jj = 0; jj < nnn; jj++) {
+      int j = neighb[jj];
+      for (int kk = jj+1; kk < nnn; kk++) {
+        int k = neighb[kk];
+        double xij[3], xik[3];
+        for (int idim=0; idim<3; idim++){
+          xij[idim] = x[j][idim] - x[i][idim];
+          xik[idim] = x[k][idim] - x[i][idim];
+        }
+        double delx = xij[0] + xik[0];
+        double dely = xij[1] + xik[1];
+        double delz = xij[2] + xik[2];
+        apply_pbc(delx, dely, delz);
+
+        pairs[n++] = delx*delx + dely*dely + delz*delz;
+      }
+    }
+
+    // store nhalf smallest pair distances in 1st nhalf locations of pairs
+
+    select(nhalf,npairs,pairs);
+
+    // centrosymmetry = sum of nhalf smallest squared values
+
+    double value = 0.;
+    for (int jj = 0; jj < nhalf; jj++) value += pairs[jj];
+    pattern[i] = value;
+  }
+
+  memory->destroy(pairs);
+  memory->destroy(distsq);
+  memory->destroy(neighb);
+return;
+}
+
+/* ----------------------------------------------------------------------
+ * To apply PBC
+ * ---------------------------------------------------------------------- */
+void ComputeCNAAtom::apply_pbc(double &xtmp, double &ytmp, double &ztmp)
+{
+  if (non_ortho_box){
+    while (ztmp > hL[2]){
+      xtmp -= xz;
+      ytmp -= yz;
+      ztmp -= L[2];
+    }
+    while (ztmp <-hL[2]){
+      xtmp += xz;
+      ytmp += yz;
+      ztmp += L[2];
+    }
+  
+    while (ytmp > hL[1]){
+      xtmp -= xy;
+      ytmp -= L[1];
+    }
+    while (ytmp <-hL[1]){
+      xtmp += xy;
+      ytmp += L[1];
+    }
+  
+    while (xtmp > hL[0]) xtmp -= L[0];
+    while (xtmp <-hL[0]) xtmp += L[0];
+  
+  } else {
+
+    while (xtmp > hL[0]) xtmp -= L[0];
+    while (ytmp > hL[1]) ytmp -= L[1];
+    while (ztmp > hL[2]) ztmp -= L[2];
+    while (xtmp <-hL[0]) xtmp += L[0];
+    while (ytmp <-hL[1]) ytmp += L[1];
+    while (ztmp <-hL[2]) ztmp += L[2];
+  
+  }
+
+return;
+}
 /*------------------------------------------------------------------------------ */
