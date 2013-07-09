@@ -132,8 +132,8 @@ void Driver::bonds()
   const double rad2ang = 45./atan(1.);
   int natom = one->natom;
   int *is, *js, *ks;
-  is = memory->create(is, natom+1, "is");
-  js = memory->create(js, natom+1, "is");
+  memory->create(is, natom+1, "is");
+  memory->create(js, natom+1, "is");
   ks = NULL;
 
   int nused = 0;
@@ -149,8 +149,8 @@ void Driver::bonds()
     if (one->nsel < 1) continue;
     if (one->natom > natom){
       natom = one->natom;
-      is = memory->grow(is, natom+1, "is:grow");
-      js = memory->grow(js, natom+1, "is:grow");
+      memory->grow(is, natom+1, "is:grow");
+      memory->grow(js, natom+1, "is:grow");
     }
     for (int id=1; id<= one->natom; id++) is[id] = one->atsel[id];
 

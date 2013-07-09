@@ -116,7 +116,7 @@ void Driver::spatial()
   }
 
   // allocate the memory for accumulation
-  hits = memory->create(hits, nbin[0], nbin[1], nbin[2], "hits");
+  memory->create(hits, nbin[0], nbin[1], nbin[2], "hits");
   for (int i= 0; i< nbin[0]; i++)
   for (int j= 0; j< nbin[1]; j++)
   for (int k= 0; k< nbin[2]; k++) hits[i][j][k] = 0.;

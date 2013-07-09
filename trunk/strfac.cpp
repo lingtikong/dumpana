@@ -85,16 +85,16 @@ void Driver::strfac()
 
   // S(kx,ky,kz) accumulator
   double ***skall;
-  skall = memory->create(skall, nk[0], nk[1], nk[2], "skall");
+  memory->create(skall, nk[0], nk[1], nk[2], "skall");
   for (int i= 0; i< nk[0]; i++)
   for (int j= 0; j< nk[1]; j++)
   for (int k= 0; k< nk[2]; k++) skall[i][j][k] = 0.;
 
   // space for exp(-i*K_a*r_a)
   complex<double> **kxrx, **kyry, **kzrz;
-  kxrx = memory->create(kxrx, nk[0], one->nsel+1, "kxrx");
-  kyry = memory->create(kyry, nk[1], one->nsel+1, "kyry");
-  kzrz = memory->create(kzrz, nk[2], one->nsel+1, "kzrz");
+  memory->create(kxrx, nk[0], one->nsel+1, "kxrx");
+  memory->create(kyry, nk[1], one->nsel+1, "kyry");
+  memory->create(kzrz, nk[2], one->nsel+1, "kzrz");
   int nprev = one->nsel;
 
   // S(k) is only valid for k > pi/L_min; here we use LMax instead for practical reason
@@ -130,9 +130,9 @@ void Driver::strfac()
       memory->destroy(kyry);
       memory->destroy(kzrz);
 
-      kxrx = memory->create(kxrx, nk[0], one->nsel, "kxrx");
-      kyry = memory->create(kyry, nk[1], one->nsel, "kyry");
-      kzrz = memory->create(kzrz, nk[2], one->nsel, "kzrz");
+      memory->create(kxrx, nk[0], one->nsel, "kxrx");
+      memory->create(kyry, nk[1], one->nsel, "kyry");
+      memory->create(kzrz, nk[2], one->nsel, "kzrz");
       nprev = one->nsel;
     }
 
@@ -189,8 +189,8 @@ void Driver::strfac()
   double fac = 1./double(nnorm);
   // output the result, and compute S(k)
   int *hit; double *Sk;
-  Sk  = memory->create(Sk,  nbin, "Sk");
-  hit = memory->create(hit, nbin, "hit");
+  memory->create(Sk,  nbin, "Sk");
+  memory->create(hit, nbin, "hit");
   for (int i=0; i< nbin; i++) Sk[i]  = 0.;
   for (int i=0; i< nbin; i++) hit[i] = 0;
 

@@ -34,7 +34,7 @@ ComputeCNAAtom::ComputeCNAAtom(const int job, const int ntm, int **list, double 
   if (xy*xy+xz*xz+yz*yz > ZERO) non_ortho_box = 1;
 
   memory = new Memory();
-  pattern  = memory->create(pattern, natom+1, "pattern");
+  memory->create(pattern, natom+1, "pattern");
 
   // to the real job
   if (job == 1) compute_cna();
@@ -70,9 +70,9 @@ void ComputeCNAAtom::compute_cna()
 
   int **cna, *common, *bonds;
 
-  cna = memory->create(cna,MaxNear+1,4,"cna");
-  bonds = memory->create(bonds, MaxComm, "bonds");
-  common = memory->create(common, MaxComm, "common");
+  memory->create(cna,MaxNear+1,4,"cna");
+  memory->create(bonds, MaxComm, "bonds");
+  memory->create(common, MaxComm, "common");
 
   // compute CNA for each atom in group
   // only performed if # of nearest neighbors = 12 or 14 (fcc,hcp)
@@ -88,11 +88,6 @@ void ComputeCNAAtom::compute_cna()
     // cna[k][NBONDS] = # of bonds between those common neighbors
     // cna[k][MAXBOND] = max # of bonds of any common neighbor
     // cna[k][MINBOND] = min # of bonds of any common neighbor
-    /* not necessary, since only considers 12 and 14
-    if (nearest[0][i] > MaxNear){
-      MaxNear = nearest[0][i];
-      cna = memory->grow(cna,MaxNear+1,4,"cna");
-    } */
 
     for (m = 1; m <= nearest[0][i]; m++) {
       j = nearest[m][i];
@@ -108,8 +103,8 @@ void ComputeCNAAtom::compute_cna()
 	     if (nearest[inear][i] == nearest[jnear][j]) {
           if (ncommon >= MaxComm){
             MaxComm = ncommon + 5;
-            bonds = memory->grow(bonds,MaxComm,"bonds");
-            common = memory->grow(common,MaxComm,"common");
+            memory->grow(bonds,MaxComm,"bonds");
+            memory->grow(common,MaxComm,"common");
           }
 	       common[ncommon++] = nearest[inear][i];
         }
@@ -228,6 +223,7 @@ return;
  * ---------------------------------------------------------------------- */
 void ComputeCNAAtom::output(FILE *fp)
 {
+  fprintf(fp,"# box info: %lg %lg %lg %lg %lg %lg\n", L[0], L[1], L[2], xy, xz, yz);
   for (int i=1; i<=natom; i++) fprintf(fp,"%d %lg %lg %lg %lg\n", i, x[i][0], x[i][1], x[i][2], pattern[i]);
 return;
 }
@@ -357,13 +353,14 @@ void ComputeCNAAtom::centro_atom(const int nnn)
 
   int nhalf = nnn/2;
   int npairs = nnn * (nnn-1) / 2;
-  double *pairs = memory->create(pairs, npairs, "pairs");
+  double *pairs;
+  memory->create(pairs, npairs, "pairs");
 
   double *distsq;
   int *neighb;
   int maxneigh = nnn+nnn;
-  distsq = memory->create(distsq,maxneigh,"centro/atom:distsq");
-  neighb = memory->create(neighb,maxneigh,"centro/atom:neighb");
+  memory->create(distsq,maxneigh,"centro/atom:distsq");
+  memory->create(neighb,maxneigh,"centro/atom:neighb");
 
   // compute centro-symmetry parameter for each atom in group, use full neighbor list
 
@@ -374,8 +371,8 @@ void ComputeCNAAtom::centro_atom(const int nnn)
     // insure distsq and nearest arrays are long enough
     if (jnum > maxneigh) {
       maxneigh = jnum;
-      distsq = memory->grow(distsq,maxneigh,"centro/atom:distsq");
-      neighb = memory->grow(neighb,maxneigh,"centro/atom:neighb");
+      memory->grow(distsq,maxneigh,"centro/atom:distsq");
+      memory->grow(neighb,maxneigh,"centro/atom:neighb");
     }
 
     // loop over list of all neighbors within force cutoff
@@ -397,15 +394,13 @@ void ComputeCNAAtom::centro_atom(const int nnn)
       neighb[n++] = j;
     }
 
-    // if not nnn neighbors, centro = 0.0
-
-    if (n < nnn) {
-      pattern[i] = 0.;
-      continue;
+    // if not nnn neighbors, set central atom as its own neighbors
+    for (int ii=n; ii<nnn; ii++){
+      distsq[ii] = 0.;
+      neighb[ii] = i;
     }
 
     // store nnn nearest neighs in 1st nnn locations of distsq and nearest
-
     select2(nnn,n,distsq,neighb);
 
     // R = Ri + Rj for each of npairs i,j pairs among nnn neighbors
