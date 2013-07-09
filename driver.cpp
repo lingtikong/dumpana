@@ -176,7 +176,7 @@ void Driver::MainMenu()
   printf("  1. Voronoi diagram analysis;         |  11. Output selected frames;\n");
   printf("  2. Chemical Short Range Order;       |  12. Average over frames;   \n");
   printf("  3. Honeycutt-Andersen bond index;    |  13. Pair correlation function;\n");
-  printf("  4. Common neighbor analysis;         |  14. Static structure factor;\n");
+  printf("  4. Common Neighbor/Centro-symmetry;  |  14. Static structure factor;\n");
   printf("  5. Prepare for FEFF9;                |  15. Bond length/angles;\n");
   printf("  6. Voronoi cluster connectivity;     |  16. Spatial distribution of atoms;\n");
   printf("  7. Output selected Voronoi clusters; | \n");
@@ -548,7 +548,7 @@ void Driver::writesel()
         one->selection(selcmd); one->SelInfo();
         if (one->nsel > 0){
           nsel = one->nsel;
-          list = memory->create(list, nsel, "list");
+          memory->create(list, nsel, "list");
           int ii = 0;
           for (int id=1; id<= one->natom; id++){
             if (one->atsel[id]) list[ii++] = id;
@@ -655,7 +655,9 @@ void Driver::avedump()
   double lx = first->lx, ly = first->ly, lz = first->lz;
   double xy = first->xy, xz = first->xz, yz = first->yz;
   int nfirst = first->natom;
-  double **atpos = memory->create(atpos,nfirst+1,3,"avedump:atpos");
+
+  double **atpos;
+  memory->create(atpos,nfirst+1,3,"avedump:atpos");
   for (int ii=1; ii<=nfirst; ii++)
   for (int idim=0; idim<3; idim++) atpos[ii][idim] = 0.;
 
@@ -771,7 +773,8 @@ return;
 int Driver::count_words(const char *line)
 {
   int n = strlen(line) + 1;
-  char *copy = (char *) memory->smalloc(n*sizeof(char),"copy");
+  char *copy;
+  memory->create(copy, n, "copy");
   strcpy(copy,line);
 
   char *ptr;
@@ -814,8 +817,8 @@ void Driver::MapType2Elem(const int flag, const int ntype)
     if (type2atnum)  memory->destroy(type2atnum);
     if (type2radius) memory->destroy(type2radius);
     element = new ChemElements();
-    type2atnum = memory->create(type2atnum, ntype+1, "type2atnum");
-    type2radius= memory->create(type2radius,ntype+1, "type2radius");
+    memory->create(type2atnum, ntype+1, "type2atnum");
+    memory->create(type2radius,ntype+1, "type2radius");
 
     char *ptr = strtok(str," \n\t\r\f");
     for (int ip=1; ip<= ntype; ip++){

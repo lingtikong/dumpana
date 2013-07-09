@@ -81,7 +81,7 @@ void Driver::paircorr()
         }
         break;
       }
-      insrc = memory->create(insrc, one->natom+1, "insrc");
+      memory->create(insrc, one->natom+1, "insrc");
       sprintf(header,"# g(r) between two selections:\n# source atoms: %s# neighbors: %s", srcsel, dessel);
     }
     
@@ -110,8 +110,8 @@ void Driver::paircorr()
     
     // working space
     double *gr, *hit;
-    gr  = memory->create(gr,nbin,"gr");
-    hit = memory->create(hit,nbin,"gr");
+    memory->create(gr,nbin,"gr");
+    memory->create(hit,nbin,"gr");
     for (int i=0; i<nbin; i++) gr[i] = 0.;
     for (int i=0; i<nbin; i++) hit[i] = 0.;
     
@@ -164,7 +164,7 @@ void Driver::paircorr()
         // select atoms as source
         one->selection(srcsel);
         if (one->nsel < 1) continue;
-        insrc = memory->grow(insrc, one->natom+1, "insrc");
+        memory->grow(insrc, one->natom+1, "insrc");
         for (int ii=1; ii<= one->natom; ii++) insrc[ii] = one->atsel[ii];
         int nsrc = one->nsel;
   

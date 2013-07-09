@@ -150,7 +150,7 @@ void Driver::ClusterConnectivity()
   // work space for Voronoi
   int *cenlist;
   int natom = one->natom;
-  cenlist = memory->create(cenlist, natom+1, "cenlist");
+  memory->create(cenlist, natom+1, "cenlist");
 
   for (int img = istr; img <= iend; img += inc){ // loop over frames
     one = all[img];
@@ -161,7 +161,7 @@ void Driver::ClusterConnectivity()
     one->selection(selcmd);
 
     // work space for Voronoi
-    if (natom > one->natom) cenlist = memory->grow(cenlist, natom+1, "cenlist");
+    if (natom > one->natom) memory->grow(cenlist, natom+1, "cenlist");
 
     natom = one->natom;
     for (int ii=0; ii<=natom; ii++) cenlist[ii] = 0;

@@ -56,14 +56,14 @@ DumpAtom::DumpAtom(FILE *fp, const int spk)
   fgets(str,MAXLINE, fp);
 
   memory = new Memory();
-  attyp = memory->create(attyp, natom+1, "attyp");
-  atsel = memory->create(atsel, natom+1, "atsel");
+  memory->create(attyp, natom+1, "attyp");
+  memory->create(atsel, natom+1, "atsel");
 
   for (int i=1; i<=natom; i++) atsel[i] = 1; atsel[0] = 0;
   realcmd = new char [MAXLINE]; strcpy(realcmd, "all\n");
   nsel = natom;
 
-  s = memory->create(s, natom+1, 3, "s");
+  memory->create(s, natom+1, 3, "s");
   atpos = s;
 
   for (int i=0; i<natom; i++){
@@ -89,7 +89,7 @@ DumpAtom::DumpAtom(FILE *fp, const int spk)
   for (int idim=0; idim<3; idim++) hbox[idim] = 0.5*box[idim];
 
   if (spk){
-    x = memory->create(x, natom+1, 3, "x");
+    memory->create(x, natom+1, 3, "x");
     for (int id=1; id<= natom; id++)
     for (int idim=0; idim<3; idim++) x[id][idim] = s[id][idim];
 
@@ -107,7 +107,7 @@ DumpAtom::DumpAtom(FILE *fp, const int spk)
     }
   }
 
-  numtype = memory->create(numtype,ntype+1,"numtype");
+  memory->create(numtype,ntype+1,"numtype");
   for (int i=0; i<=ntype; i++) numtype[i] = 0;
   for (int i=1; i<=natom; i++) numtype[attyp[i]]++;
 
@@ -149,7 +149,7 @@ void DumpAtom::dir2car()
     return;
   }
 
-  x = memory->create(x,natom+1, 3,"x");
+  memory->create(x,natom+1, 3,"x");
 
   if (triclinic){
     for (int i=1; i<=natom; i++){
@@ -184,7 +184,8 @@ return;
 void DumpAtom::selection(const char *line)
 {
   int n = strlen(line) + 1;
-  char *selcmd = memory->create(selcmd, n, "selcmd"); //(char *) memory->smalloc(n*sizeof(char),"selcmd");
+  char *selcmd;
+  memory->create(selcmd, n, "selcmd"); //(char *) memory->smalloc(n*sizeof(char),"selcmd");
   strcpy(selcmd,line);
 
   char *key, *oper, *ptr;
@@ -625,7 +626,8 @@ return;
 int DumpAtom::count_words(const char *line)
 {
   int n = strlen(line) + 1;
-  char *copy = (char *) memory->smalloc(n*sizeof(char),"copy");
+  char *copy;
+  memory->create(copy, n, "copy");
   strcpy(copy,line);
 
   char *ptr;
@@ -669,8 +671,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
   voro.clear();
   if (neilist) memory->destroy(neilist);
   if (volume)  memory->destroy(volume);
-  neilist = memory->create(neilist, MaxNei+1, natom+1, "neilist");
-  volume  = memory->create(volume,  natom+1, "volume");
+  memory->create(neilist, MaxNei+1, natom+1, "neilist");
+  memory->create(volume,  natom+1, "volume");
   
   // need cartesian coordinates
   dir2car();
@@ -762,7 +764,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       voro[id].assign(vstr);
       if (nf > MaxNei){
         MaxNei = nf + 2;
-        neilist = memory->grow(neilist, MaxNei+1, natom+1, "neilist");
+        memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
       neilist[0][id] = nf;
       for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];
@@ -855,7 +857,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       voro[id].assign(vstr);
       if (nf > MaxNei){
         MaxNei = nf + 2;
-        neilist = memory->grow(neilist, MaxNei+1, natom+1, "neilist");
+        memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
       neilist[0][id] = nf;
       for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];
@@ -950,8 +952,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
   voro.clear();
   if (neilist) memory->destroy(neilist);
   if (volume)  memory->destroy(volume);
-  neilist = memory->create(neilist, MaxNei+1, natom+1, "neilist");
-  volume  = memory->create(volume,  natom+1, "volume");
+  memory->create(neilist, MaxNei+1, natom+1, "neilist");
+  memory->create(volume,  natom+1, "volume");
   
   // need cartesian coordinates
   dir2car();
@@ -1052,7 +1054,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
       voro[id].assign(vstr);
       if (nf > MaxNei){
         MaxNei = nf + 2;
-        neilist = memory->grow(neilist, MaxNei+1, natom+1, "neilist");
+        memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
       neilist[0][id] = nf;
       for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];
@@ -1154,7 +1156,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
       voro[id].assign(vstr);
       if (nf > MaxNei){
         MaxNei = nf + 2;
-        neilist = memory->grow(neilist, MaxNei+1, natom+1, "neilist");
+        memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
       neilist[0][id] = nf;
       for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];

@@ -48,9 +48,9 @@ void Driver::csro()
   int ntype = all[istr]->ntype;
   // work spaces
   bigint *NumType, **NumNei, *nnei;
-  nnei   = memory->create(nnei, ntype+1, "csro:nnei"); // per atom info
-  NumType= memory->create(NumType,ntype+1,"csro:NumType");
-  NumNei = memory->create(NumNei,ntype+1,ntype+1,"csro:NumNei");
+  memory->create(nnei, ntype+1, "csro:nnei"); // per atom info
+  memory->create(NumType,ntype+1,"csro:NumType");
+  memory->create(NumNei,ntype+1,ntype+1,"csro:NumNei");
   for (int i=0; i<= ntype; i++){
     NumType[i] = 0;
     for (int j=0; j<= ntype; j++) NumNei[i][j] = 0;
