@@ -19,13 +19,15 @@ using namespace std;
 
 class DumpAtom {
 public:
-  DumpAtom(FILE *fp, const int);
+  DumpAtom(FILE *fp, const char *, const int);
   ~DumpAtom();
 
   int iframe;
   int natom, ntype, tstep, nsel;
   int initialized;
   int triclinic;
+
+  char *fname;
 
   Memory *memory;
   double xlo, xhi, ylo, yhi, zlo, zhi;

@@ -20,13 +20,13 @@ public:
   ~Driver();
 
 private:
-  char *dump;                         // input file name
-  int spk;                            // SPPARKS trajectory, cartesian coordinate
-  int nframe;                         // total # of frames
-  int istr, iend, inc;                // frame range
-  DumpAtom *one;                      // pointer to one frame
-  vector<DumpAtom *> all;             // all frames from lammps atom style dump
-  void readdump();                    // to read in the dump file
+  char *dump;                             // dump file name; should carries the last file name
+  int spk;                                // SPPARKS trajectory, cartesian coordinate
+  int nframe;                             // total # of frames
+  int istr, iend, inc;                    // frame range
+  DumpAtom *one;                          // pointer to one frame
+  vector<DumpAtom *> all;                 // all frames from lammps atom style dump
+  void readdump(const int,int,char **);   // to read in the dump file
   void MainMenu();
 
   // private method to set the cutoff for face or edge, needed by most others
@@ -83,6 +83,9 @@ private:
 
   // spatial distribution of atoms
   void spatial();
+
+  // compare the rmsd between frames
+  void compare_rmsd();
 
   // help info
   void help();

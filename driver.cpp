@@ -1,5 +1,8 @@
 #include "driver.h"
 #include "version.h"
+#include <set>
+#include <list>
+#include <string>
 
 /*------------------------------------------------------------------------------
  * Constructor of driver, main menu
@@ -59,19 +62,12 @@ Driver::Driver(int narg, char** arg)
     iarg++;
   }
 
-  // get dump file name if supplied, othewise assume "dump.lammpstrj"
-  if (narg > iarg){
-    int n = strlen(arg[iarg])+1;
-    dump = new char[n];
-    strcpy(dump, arg[iarg]);
-  } else {
-    dump = new char[15];
-    strcpy(dump,"dump.lammpstrj");
-  }
-
+  // show dumpana version info
   ShowVersion();
-  // read dump file
-  readdump();
+
+  // read dump files
+  readdump(narg, iarg, arg);
+
   if (nframe < 1) return;
 
   // main menu
@@ -156,6 +152,10 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) spatial();
       break;
 
+    case 17:
+      compare_rmsd();
+      break;
+
     default:
       loop = 0;
       break;
@@ -179,7 +179,7 @@ void Driver::MainMenu()
   printf("  4. Common Neighbor/Centro-symmetry;  |  14. Static structure factor;\n");
   printf("  5. Prepare for FEFF9;                |  15. Bond length/angles;\n");
   printf("  6. Voronoi cluster connectivity;     |  16. Spatial distribution of atoms;\n");
-  printf("  7. Output selected Voronoi clusters; | \n");
+  printf("  7. Output selected Voronoi clusters; |  17. RMSD between frames;\n");
   for (int i=0; i<20; i++) printf("----"); printf("\n");
 
 return;
@@ -210,47 +210,83 @@ return;
 /*------------------------------------------------------------------------------
  * Method to read the dump file from lammps
  *------------------------------------------------------------------------------ */
-void Driver::readdump()
+void Driver::readdump(const int narg, int inow, char **arg)
 {
-  // open file
-  FILE *fp = fopen(dump,"r");
-  if (fp == NULL){
-    printf("\nError: file %s not found!\n", dump);
-    return;
+  // get the dump files
+  std::set<std::string> df_set;
+  std::list<std::string> df_list;
+  std::string fname;
+
+  df_set.clear(); df_list.clear();
+
+  int iarg = inow;
+  // get dump file names if supplied, othewise assume "dump.lammpstrj"
+  while (narg > iarg){
+    fname.assign(arg[iarg++]);
+    if (df_set.count(fname) == 0) {df_set.insert(fname); df_list.push_back(fname);}
   }
-  
+  df_set.clear();
+
+  if (df_list.size() < 1){
+    fname.assign("dump.lammpstrj");
+    df_list.push_back(fname);
+  }
+
   // set flags
+  int idum = 0, id_max = 0, nmax = 0;
   char flag[4];
   flag[0] = '-'; flag[1] = '\\'; flag[2] = '|'; flag[3] = '/';
-  printf("\n"); for (int i=0; i<20; i++) printf("====");
-  printf("\nNow to read atomic configurationss from file: %s...  ", dump);
-  int i=0;
+  printf("\n"); for (int i=0; i<20; i++) printf("===="); printf("\n");
 
-  // read file
-  while (!feof(fp)){
-    one = new DumpAtom(fp, spk);
-    if (one->initialized){
-      all.push_back(one);
-      one->iframe = all.size();
-      one = NULL;
-    } else {
-      delete one;
-      break;
+  // read dump file one by one
+  while (! df_list.empty()){
+    fname.assign(df_list.front()); df_list.pop_front();
+    if (dump) delete []dump;
+    dump = new char [strlen(fname.c_str())+1];
+    strcpy(dump, fname.c_str());
+
+    // open file
+    FILE *fp = fopen(dump, "r");
+    if (fp == NULL){
+      printf("WARNING: File %s not found, skipped.\n", dump);
+      continue;
     }
-    printf("\b%c", flag[++i%4]); fflush(stdout);
+    
+    printf("Now to read atomic configurationss from file: %s...  ", dump);
+    int nf_one = 0;
+
+    // read file
+    while (!feof(fp)){
+      one = new DumpAtom(fp, dump, spk);
+
+      if (one->initialized){
+        all.push_back(one); ++nf_one;
+        one->iframe = all.size();
+        if (one->ntype > nmax) {nmax = one->ntype; id_max = one->iframe-1;}
+        one = NULL;
+
+      } else {
+        delete one;
+        break;
+      }
+      printf("\b%c", flag[++idum%4]); fflush(stdout);
+    }
+    fclose(fp);
+
+    nframe = all.size();
+    printf("\b%d frames read!\n", nf_one);
   }
-  fclose(fp);
-  nframe = all.size();
-  printf("\bDone!\n");
+  df_list.clear(); fname.clear();
 
   // display read dump info
   for (int i=0; i<20; i++) printf("----");
-  printf("\n  Total number of  frames  read: %d\n", nframe);
+  printf("\n  Total number  of  frames  read: %d\n", nframe);
   if (nframe > 0){
-    one = all[nframe-1];
-    printf("  Number of atoms in last frame: %d\n", one->natom);
-    printf("  Number of types in last frame: %d\n", one->ntype);
-    printf("  Number of atoms for each type: ");
+    one = all[id_max];
+    printf("  Frame with the most atom types: %d\n", id_max+1);
+    printf("  Number of atoms in that  frame: %d\n", one->natom);
+    printf("  Number of types in that  frame: %d\n", one->ntype);
+    printf("  Number of atoms for each  type: ");
     for (int i=1; i<=one->ntype; i++) printf("%d, %d; ", i, one->numtype[i]);
     printf("\n");
   }
