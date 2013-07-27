@@ -6,7 +6,7 @@
 /*------------------------------------------------------------------------------
  * Constructor, to read one image from the atom style dump file of lammps
  *----------------------------------------------------------------------------*/
-DumpAtom::DumpAtom(FILE *fp, const int spk)
+DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int spk)
 {
   iframe = natom = ntype = tstep = 0;
   initialized = triclinic = 0;
@@ -21,6 +21,9 @@ DumpAtom::DumpAtom(FILE *fp, const int spk)
   volume = NULL;
   MaxNei = 20;
   vmins[0] = vmins[1] = vmins[2] = 0.;
+
+  fname = new char [strlen(dumpfile)+1];
+  strcpy(fname, dumpfile);
 
   char str[MAXLINE];
   if (fgets(str,MAXLINE, fp) == NULL) return;
@@ -121,6 +124,7 @@ return;
  *----------------------------------------------------------------------------*/
 DumpAtom::~DumpAtom()
 {
+  if (fname)   delete []fname;
   if (realcmd) delete []realcmd;
   memory->destroy(attyp);
   memory->destroy(atsel);
