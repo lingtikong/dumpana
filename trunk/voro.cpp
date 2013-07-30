@@ -7,9 +7,9 @@
 void Driver::voro()
 {
   char str[MAXLINE];
-  printf("\n"); for (int i=0; i<6; i++) printf("====");
+  printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
   printf("   Voronoi  Diagram  Analysis   ");
-  for (int i=0; i<6; i++) printf("====");
+  for (int i = 0; i < 6; ++i) printf("====");
 
   // thresholds for surface and edges
   set_cutoffs(1);
@@ -53,7 +53,7 @@ void Driver::voro()
   if (fpedge) fclose(fpedge);
 
   delete []prefix;
-  for (int i=0; i<20; i++) printf("===="); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 return;
 }
 

@@ -8,11 +8,11 @@
 void Driver::bonds()
 {
   char str[MAXLINE]; int job = 1;
-  printf("\n"); for (int i=0; i<6; i++) printf("====");
+  printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
   printf("    Bond length / bond angle    ");
-  for (int i=0; i<6; i++) printf("====");
+  for (int i = 0; i < 6; ++i) printf("====");
   printf("\nPlease select your desired job:\n");
-  for (int i=0; i<20; i++) printf("----"); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
   printf("  1. bond lengths between selected atoms;\n");
   printf("  2. bond angles  between selected atoms;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
@@ -21,7 +21,7 @@ void Driver::bonds()
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
   if (job < 1 || job > 2){
-    for (int i=0; i<20; i++) printf("===="); printf("\n");
+    for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
     return;
   }
   printf("\n");
@@ -152,12 +152,12 @@ void Driver::bonds()
       memory->grow(is, natom+1, "is:grow");
       memory->grow(js, natom+1, "is:grow");
     }
-    for (int id=1; id<= one->natom; id++) is[id] = one->atsel[id];
+    for (int id = 1; id <= one->natom; ++id) is[id] = one->atsel[id];
 
     // make the second selection
     one->selection(jsel);
     if (one->nsel < 1) continue;
-    for (int id=1; id<= one->natom; id++) js[id] = one->atsel[id];
+    for (int id = 1; id <= one->natom; ++id) js[id] = one->atsel[id];
 
     // make the third selection if needed
     if (job == 2){
@@ -180,19 +180,19 @@ void Driver::bonds()
       int ibond = 0;
       set<int> counted; counted.clear();
 
-      for (int id=1; id<= one->natom; id++){
+      for (int id = 1; id <= one->natom; ++id){
         if (is[id] == 0) continue;
         int ip = one->attyp[id];
   
         int ni = one->neilist[0][id];
-        for (int jj=1; jj<= ni; jj++){
+        for (int jj = 1; jj <= ni; ++jj){
           int jd = one->neilist[jj][id];
           int index = MIN(id,jd)*(one->natom+1)+MAX(id,jd);
           if (js[jd] == 0 || counted.count(index)) continue;
           counted.insert(index);
           int jp = one->attyp[jd];
   
-          for (int idim=0; idim<3; idim++){
+          for (int idim = 0; idim < 3; ++idim){
             xij[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
             while (xij[idim] > 0.5) xij[idim] -= 1.;
             while (xij[idim] <-0.5) xij[idim] += 1.;
@@ -211,15 +211,15 @@ void Driver::bonds()
 
       int iangle = 0;
 
-      for (int id=1; id<= one->natom; id++){
+      for (int id = 1; id <= one->natom; ++id){
         if (is[id] == 0) continue;
 
         int ni = one->neilist[0][id];
-        for (int jj=1; jj< ni; jj++){
+        for (int jj = 1; jj < ni; ++jj){
           int jd = one->neilist[jj][id];
           if (js[jd] == 0 && ks[jd] == 0) continue;
   
-          for (int idim=0; idim<3; idim++){
+          for (int idim = 0; idim < 3; ++idim){
             xij[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
             while (xij[idim] > 0.5) xij[idim] -= 1.;
             while (xij[idim] <-0.5) xij[idim] += 1.;
@@ -229,10 +229,10 @@ void Driver::bonds()
           xij[2] = xij[2] * lz;
           rij = xij[0]*xij[0] + xij[1]*xij[1] + xij[2]*xij[2];
   
-          for (int kk=jj+1; kk<= ni; kk++){
+          for (int kk = jj+1; kk <= ni; ++kk){
             int kd = one->neilist[kk][id];
             if ( (js[jd] & ks[kd]) || (js[kd] & ks[jd]) ){
-              for (int idim=0; idim<3; idim++){
+              for (int idim = 0; idim < 3; ++idim){
                 xik[idim] = one->atpos[kd][idim] - one->atpos[id][idim];
                 while (xik[idim] > 0.5) xik[idim] -= 1.;
                 while (xik[idim] <-0.5) xik[idim] += 1.;
@@ -252,14 +252,14 @@ void Driver::bonds()
       }
     }
 
-    nused++;
+    ++nused;
   }
   fclose(fp);
   memory->destroy(is); memory->destroy(js); ks = NULL;
   printf("\n%d images were used in counting bonds, the results is written to %s\n", nused, fname);
   delete []fname;
 
-  for (int i=0; i<20; i++) printf("===="); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;
 }

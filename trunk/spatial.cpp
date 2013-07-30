@@ -16,9 +16,9 @@ void Driver::spatial()
   lo[0] = lo[1] = lo[2] = 0.;
   hi[0] = hi[1] = hi[2] = 1.;
 
-  printf("\n"); for (int i=0; i<6; i++) printf("====");
+  printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
   printf("  Spatial distribution of atoms ");
-  for (int i=0; i<6; i++) printf("====");
+  for (int i = 0; i < 6; ++i) printf("====");
 
   // ask for the # of bins along each direction
   printf("\nThe spatial distribution of atoms will be evaluated. You can define the\n");
@@ -31,7 +31,7 @@ void Driver::spatial()
   printf("whole box along that direction is seen as a block.\n");
   printf("\nNow, please input your command: ");
   if (count_words(fgets(str,MAXLINE, stdin)) < 4){
-    for (int i=0; i<20; i++) printf("===="); printf("\n");
+    for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
     return;
   }
   // analyse the input
@@ -46,7 +46,7 @@ void Driver::spatial()
       idir = 2;
     } else {
       printf("\nWrong input: %s\n", ptr);
-      for (int i=0; i<20; i++) printf("===="); printf("\n");
+      for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
       return;
     }
     ptr = strtok(NULL, " \n\t\r\f"); if (ptr == NULL) break;
@@ -59,7 +59,7 @@ void Driver::spatial()
 
     if (lo[idir] >= hi[idir]){
       printf("\nWrong input: lo[%c] >= hi[%c]!\n", idir+'x', idir+'x');
-      for (int i=0; i<20; i++) printf("===="); printf("\n");
+      for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
       return;
     }
 
@@ -72,22 +72,22 @@ void Driver::spatial()
   int nb = nbin[0]*nbin[1]*nbin[2];
   if (nb <= 1){
     printf("\nThe whole simulation box is set as one bin, no computation needed!\n");
-    for (int i=0; i<20; i++) printf("===="); printf("\n");
+    for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
     return;
   }
 
   // print out the dicretization info
   printf("\nSpace discretization info based on your input:\n");
-  for (int i=0; i<20; i++) printf("----");
+  for (int i = 0; i < 20; ++i) printf("----");
   printf("\ndirection    lower-bound    upper-bound   #-of-bins");
-  printf("\n"); for (int i=0; i<20; i++) printf("----");
-  for (int idim=0; idim<3; idim++){
+  printf("\n"); for (int i = 0; i < 20; ++i) printf("----");
+  for (int idim = 0; idim < 3; ++idim){
     printf("\n    %c   %14g %14g %8d", idim+'x', lo[idim], hi[idim], nbin[idim]);
   }
-  printf("\n"); for (int i=0; i<20; i++) printf("----"); printf("\n");
+  printf("\n"); for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
   // assign the step size
-  for (int i=0; i<3; i++){
+  for (int i = 0; i < 3; ++i){
     ds[i] = (hi[i]-lo[i])/double(nbin[i]);
     inv_ds[i] = 1./ds[i];
   }
@@ -117,9 +117,9 @@ void Driver::spatial()
 
   // allocate the memory for accumulation
   memory->create(hits, nbin[0], nbin[1], nbin[2], "hits");
-  for (int i= 0; i< nbin[0]; i++)
-  for (int j= 0; j< nbin[1]; j++)
-  for (int k= 0; k< nbin[2]; k++) hits[i][j][k] = 0.;
+  for (int i = 0; i < nbin[0]; ++i)
+  for (int j = 0; j < nbin[1]; ++j)
+  for (int k = 0; k < nbin[2]; ++k) hits[i][j][k] = 0.;
 
   int nused = 0;
 
@@ -137,11 +137,11 @@ void Driver::spatial()
     // factional coordinate needed
     one->car2dir();
 
-    for (int ii=1; ii<= one->natom; ii++){
+    for (int ii = 1; ii <= one->natom; ++ii){
       if (one->atsel[ii] == 0) continue;
       int idx[3];
       int outside = 0;
-      for (int idim=0; idim<3; idim++){
+      for (int idim = 0; idim < 3; ++idim){
         idx[idim] = (one->atpos[ii][idim] - lo[idim])*inv_ds[idim];
         if (idx[idim] < 0 || idx[idim] >= nbin[idim]) outside = 1;
       }
@@ -149,15 +149,15 @@ void Driver::spatial()
       if (outside == 0) hits[idx[0]][idx[1]][idx[2]] += 1.;
     }
 
-    nused++;
+    ++nused;
   }
   if (nused < 1) return;
 
   // normalize the data
   double fac = 1./double(nused);
-  for (int ii = 0; ii < nbin[0]; ii++)
-  for (int jj = 0; jj < nbin[1]; jj++)
-  for (int kk = 0; kk < nbin[2]; kk++) hits[ii][jj][kk] *= fac;
+  for (int ii = 0; ii < nbin[0]; ++ii)
+  for (int jj = 0; jj < nbin[1]; ++jj)
+  for (int kk = 0; kk < nbin[2]; ++kk) hits[ii][jj][kk] *= fac;
 
   // output the result
   int fastz = 1;
@@ -185,18 +185,18 @@ void Driver::spatial()
   fprintf(fp,"# 0 %d\n", nbin[0]*nbin[1]*nbin[2]);
   int index = 0;
   if (fastz){
-    for (int ii=0; ii< nbin[0]; ii++)
-    for (int jj=0; jj< nbin[1]; jj++){
-      for (int kk=0; kk< nbin[2]; kk++){
+    for (int ii = 0; ii < nbin[0]; ++ii)
+    for (int jj = 0; jj < nbin[1]; ++jj){
+      for (int kk = 0; kk < nbin[2]; ++kk){
         fprintf(fp, "%d %lg %lg %lg %lg\n", index++, (double(ii)+0.5)*ds[0]+lo[0],
         (double(jj)+0.5)*ds[1]+lo[1], (double(kk)+0.5)*ds[2]+lo[2],hits[ii][jj][kk]);
       }
       if (blank) fprintf(fp,"\n");
     }
   } else {
-    for (int kk=0; kk< nbin[2]; kk++)
-    for (int jj=0; jj< nbin[1]; jj++){
-      for (int ii=0; ii< nbin[0]; ii++){
+    for (int kk = 0; kk < nbin[2]; ++kk)
+    for (int jj = 0; jj < nbin[1]; ++jj){
+      for (int ii = 0; ii < nbin[0]; ++ii){
         fprintf(fp, "%d %lg %lg %lg %lg\n", index++, (double(ii)+0.5)*ds[0]+lo[0],
         (double(jj)+0.5)*ds[1]+lo[1], (double(kk)+0.5)*ds[2]+lo[2], hits[ii][jj][kk]);
       }
@@ -208,7 +208,7 @@ void Driver::spatial()
   memory->destroy(hits);
   printf("\n%d images were used in the evaluation and the result is written to %s\n", nused, ptr);
 
-  for (int i=0; i<20; i++) printf("===="); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;
 }

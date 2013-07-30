@@ -6,8 +6,8 @@
 void Driver::FEFF_main()
 {
   char str[MAXLINE];
-  printf("\n"); for (int i=0; i<9; i++) printf("===="); printf("  FEFF  ");
-  for (int i=0; i<9; i++) printf("===="); printf("\n");
+  printf("\n"); for (int i = 0; i < 9; ++i) printf("===="); printf("  FEFF  ");
+  for (int i = 0; i < 9; ++i) printf("===="); printf("\n");
   one = all[istr];
 
   // map atomic type to elements
@@ -123,7 +123,7 @@ void Driver::FEFF_main()
     if (one->nsel < 1) continue;
 
     // loop over all selected absorbing atoms
-    for (int id=1; id <= one->natom; id++){
+    for (int id = 1; id <= one->natom; ++id){
       if (one->atsel[id] == 0) continue;
 
       // find atoms in the cluster
@@ -140,7 +140,7 @@ void Driver::FEFF_main()
       map<int,int> attyp2pot;
       attyp2pot.clear(); attyp2pot[0] = 0;
       int npottype = 0;
-      for (list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
+      for (list<int>::iterator it = cluster.begin(); it != cluster.end(); ++it){
         int jd = *it;
         int jp = one->attyp[jd];
         if (jd == id) jp = 0;
@@ -149,7 +149,7 @@ void Driver::FEFF_main()
 
       // open the feff.inp file for current frame
       sprintf(dirname, "%s/F%dA%d", workdir, img+1, id);
-      fprintf(fpx, "%s", dirname); ndir++;
+      fprintf(fpx, "%s", dirname); ++ndir;
       if (flag_out & OutFeff){
         strcpy(mkdir,"mkdir -p "); strcat(mkdir,dirname);
         system(mkdir);
@@ -163,7 +163,7 @@ void Driver::FEFF_main()
         fprintf(fp,"TITLE Total number of atoms in cluster: %d\n\n", nclus);
 
         fprintf(fp,"POTENTIALS\n*  ipot Z   tag lmax1 lmax2\n");
-        for (map<int,int>::iterator it = attyp2pot.begin(); it != attyp2pot.end(); it++){
+        for (map<int,int>::iterator it = attyp2pot.begin(); it != attyp2pot.end(); ++it){
           int ip = it->first; if (ip == 0) ip = one->attyp[id];
           int IP = it->second;
           element->Num2Name(type2atnum[ip], ename);
@@ -177,7 +177,7 @@ void Driver::FEFF_main()
       // storage for coordination number and dist info
       int CN[one->ntype+1], CNtot = 0;
       double nndist[one->ntype+1], nndist2[one->ntype+1];
-      for (int ip = 1; ip <= one->ntype; ip++){
+      for (int ip = 1; ip <= one->ntype; ++ip){
         CN[ip] = 0;
         nndist[ip] = nndist2[ip] = 0.;
       }
@@ -186,12 +186,12 @@ void Driver::FEFF_main()
       one->car2dir();
  
       if (flag_out & OutFeff) fprintf(fp,"\n* Atomci positions in Angstrom\nATOMS\n* x y z ipot tag ishell dist id\n");
-      for (list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
+      for (list<int>::iterator it = cluster.begin(); it != cluster.end(); ++it){
         int jd = *it;
         int jp = one->attyp[jd];
         if (jd == id) jp = 0;
         double dx[3];
-        for (int idim=0; idim<3; idim++){
+        for (int idim = 0; idim < 3; ++idim){
           dx[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
           while (dx[idim] > 0.5) dx[idim] -= 1.;
           while (dx[idim] <-0.5) dx[idim] += 1.;
@@ -206,7 +206,7 @@ void Driver::FEFF_main()
         if (flag_out & OutFeff) fprintf(fp,"%15.8f %15.8f %15.8f %d %s %d %g %d\n", dx[0], dx[1], dx[2], attyp2pot[jp], ename, shell[jd], rij, jd);
  
         if (shell[jd] == 1){
-          CN[jp]++; CNtot++;
+          ++CN[jp]; ++CNtot;
           nndist[jp] += rij;
           nndist2[jp] += r2;
         }
@@ -220,7 +220,7 @@ void Driver::FEFF_main()
       }
       fprintf(fpx," %d :", CNtot);
  
-      for (int ip = 1; ip <= one->ntype; ip++){
+      for (int ip = 1; ip <= one->ntype; ++ip){
         double stdv = 0.;
         if (CN[ip] > 0){
           nndist[ip] /= double(CN[ip]);
@@ -252,7 +252,7 @@ void Driver::FEFF_main()
     system(fname);
   }
   printf("\nJob done, %d directorys are created and listed in `%s/DirList`.\n", ndir, workdir);
-  for (int i=0; i<20; i++) printf("===="); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 return;
 }
 

@@ -59,7 +59,7 @@ Driver::Driver(int narg, char** arg)
       break;
     }
 
-    iarg++;
+    ++iarg;
   }
 
   // show dumpana version info
@@ -74,7 +74,7 @@ Driver::Driver(int narg, char** arg)
   char str[MAXLINE];
   int job = 1;
   do {
-    printf("\n"); for (int i=0; i<20; i++) printf("====");
+    printf("\n"); for (int i = 0; i < 20; ++i) printf("====");
     printf("\nPlease select your desired task to perform:\n");
     MainMenu();
     printf("  0. Exit.\nYour choice [%d]: ", job);
@@ -83,7 +83,7 @@ Driver::Driver(int narg, char** arg)
     char *ptr = strtok(str," \n\t\r\f");
     if (ptr) job = atoi(ptr);
     printf("Your selection : %d\n", job);
-    for (int i=0; i<20; i++) printf("===="); printf("\n");
+    for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
     // main driver
     switch (job){
@@ -172,7 +172,7 @@ return;
  *------------------------------------------------------------------------------ */
 void Driver::MainMenu()
 {
-  for (int i=0; i<20; i++) printf("----"); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
   printf("  1. Voronoi diagram analysis;         |  11. Output selected frames;\n");
   printf("  2. Chemical Short Range Order;       |  12. Average over frames;   \n");
   printf("  3. Honeycutt-Andersen bond index;    |  13. Pair correlation function;\n");
@@ -180,7 +180,7 @@ void Driver::MainMenu()
   printf("  5. Prepare for FEFF9;                |  15. Bond length/angles;\n");
   printf("  6. Voronoi cluster connectivity;     |  16. Spatial distribution of atoms;\n");
   printf("  7. Output selected Voronoi clusters; |  17. RMSD between frames;\n");
-  for (int i=0; i<20; i++) printf("----"); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;
 }
@@ -196,7 +196,7 @@ Driver::~Driver()
   if (type2atnum)  memory->destroy(type2atnum);
   if (type2radius) memory->destroy(type2radius);
   
-  for (int img=0; img<nframe; img++){
+  for (int img = 0; img < nframe; ++img){
     one = all[img];
     delete one;
   }
@@ -236,7 +236,7 @@ void Driver::readdump(const int narg, int inow, char **arg)
   int idum = 0, id_max = 0, nmax = 0;
   char flag[4];
   flag[0] = '-'; flag[1] = '\\'; flag[2] = '|'; flag[3] = '/';
-  printf("\n"); for (int i=0; i<20; i++) printf("===="); printf("\n");
+  printf("\n"); for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
   // read dump file one by one
   while (! df_list.empty()){
@@ -279,7 +279,7 @@ void Driver::readdump(const int narg, int inow, char **arg)
   df_list.clear(); fname.clear();
 
   // display read dump info
-  for (int i=0; i<20; i++) printf("----");
+  for (int i = 0; i < 20; ++i) printf("----");
   printf("\n  Total number  of  frames  read: %d\n", nframe);
   if (nframe > 0){
     one = all[id_max];
@@ -287,11 +287,11 @@ void Driver::readdump(const int narg, int inow, char **arg)
     printf("  Number of atoms in that  frame: %d\n", one->natom);
     printf("  Number of types in that  frame: %d\n", one->ntype);
     printf("  Number of atoms for each  type: ");
-    for (int i=1; i<=one->ntype; i++) printf("%d, %d; ", i, one->numtype[i]);
+    for (int i = 1; i <= one->ntype; ++i) printf("%d, %d; ", i, one->numtype[i]);
     printf("\n");
   }
   MapType2Elem(0, one->ntype);
-  for (int i=0; i<20; i++) printf("===="); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;
 }
@@ -302,7 +302,7 @@ return;
 void Driver::setrange()
 {
   char str[MAXLINE];
-  printf("\n"); for (int i=0; i<20; i++) printf("====");
+  printf("\n"); for (int i = 0; i < 20; ++i) printf("====");
   printf("\nTotal number of frames read: %d\n", nframe);
   printf("Please input your desired frame, or frame range to analyse [1]: ");
   fgets(str,MAXLINE,stdin);
@@ -330,7 +330,7 @@ void Driver::setrange()
   inc = MAX(1,inc);
 
   printf("Frames from No. %d to No. %d with increment of %d will be analysed.\n", istr+1, iend+1, inc);
-  for (int i=0; i<20; i++) printf("===="); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
   nsel = (iend-istr+1)/inc;
 
@@ -345,9 +345,9 @@ void Driver::writesel()
   char *fname; fname = NULL;
   char str[MAXLINE]; int job = 1;
 
-  printf("\n"); for (int i=0; i<7; i++) printf("====");
+  printf("\n"); for (int i = 0; i < 7; ++i) printf("====");
   printf(" Output Selected Frames ");
-  for (int i=0; i<7; i++) printf("====");
+  for (int i = 0; i < 7; ++i) printf("====");
   printf("\nPlease select your desired job:\n");
   printf("  1. Convert into xyz files;\n");
   printf("  2. Convert into CFG format;\n");
@@ -359,7 +359,7 @@ void Driver::writesel()
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
   if (job < 1 || job > 4){
-    for (int i=0; i<20; i++) printf("===="); printf("\n");
+    for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
     return;
   }
   printf("\n");
@@ -397,28 +397,28 @@ void Driver::writesel()
   
       one->dir2car();
       if (type2atnum == NULL){ // no elements assigned, print atomic type num as element
-        for (int i=1; i<=MIN(3,one->natom); i++){
+        for (int i = 1; i <= MIN(3,one->natom); ++i){
           fprintf(fp,"%d %lg %lg %lg crystal_vector %d %lg %lg %lg\n",
           one->attyp[i], one->atpos[i][0], one->atpos[i][1], one->atpos[i][2], i,
           one->axis[i-1][0], one->axis[i-1][1], one->axis[i-1][2]);
         }
-        for (int i=MIN(3,one->natom)+1; i<= one->natom; i++){
+        for (int i = MIN(3,one->natom)+1; i <= one->natom; ++i){
           fprintf(fp,"%d %lg %lg %lg\n", one->attyp[i], one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
         }
       } else { // in case elements are assigned, print true element names
         char ename[3];
-        for (int i=1; i<=MIN(3,one->natom); i++){
+        for (int i = 1; i <= MIN(3,one->natom); ++i){
           element->Num2Name(type2atnum[one->attyp[i]], ename);
           fprintf(fp,"%2s %lg %lg %lg crystal_vector %d %lg %lg %lg\n",
           ename, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2], i,
           one->axis[i-1][0], one->axis[i-1][1], one->axis[i-1][2]);
         }
-        for (int i=MIN(3,one->natom)+1; i<= one->natom; i++){
+        for (int i = MIN(3,one->natom)+1; i <= one->natom; ++i){
           element->Num2Name(type2atnum[one->attyp[i]], ename);
           fprintf(fp,"%2s %lg %lg %lg\n", ename, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
         }
       }
-      nused++;
+      ++nused;
     }
     fclose(fp);
 
@@ -485,13 +485,13 @@ void Driver::writesel()
       fprintf(fp, "# (optional) basic rate-scale: default R = 1.0 [ns^-1]\n\n");
 
       char ename[3]; double mass;
-      for (int i=1; i<=one->natom; i++){
+      for (int i = 1; i <= one->natom; ++i){
         element->Num2Name(type2atnum[one->attyp[i]], ename);
         mass = element->Name2Mass(ename);
         fprintf(fp, "%8.4f %2s %20.16f %20.16f %20.16f 0. 0. 0.\n", mass, ename, one->atpos[i][0], one->atpos[i][1], one->atpos[i][2]);
       }
 
-      nused++;
+      ++nused;
       fclose(fp);
     }
 
@@ -521,10 +521,10 @@ void Driver::writesel()
       }
       fprintf(fp,"ITEM: ATOMS\n");
 
-      for (int id=1; id<= one->natom; id++) fprintf(fp,"%d %d %lg %lg %lg\n", id, one->attyp[id],
+      for (int id = 1; id <= one->natom; ++id) fprintf(fp,"%d %d %lg %lg %lg\n", id, one->attyp[id],
       one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
 
-      nused++;
+      ++nused;
     }
     fclose(fp);
 
@@ -555,7 +555,7 @@ void Driver::writesel()
       printf("\nPlease input the vector (fractional) to translate the box [0. 0. 0.]: ");
       if (count_words(fgets(str,MAXLINE,stdin)) >= 3){
         ptr = strtok(str, " \n\t\r\f");
-        for (int i=0; i<2; i++){
+        for (int i = 0; i < 2; ++i){
           shift[i] = atoi(ptr);
           ptr = strtok(NULL, " \n\t\r\f");
         }
@@ -586,7 +586,7 @@ void Driver::writesel()
           nsel = one->nsel;
           memory->create(list, nsel, "list");
           int ii = 0;
-          for (int id=1; id<= one->natom; id++){
+          for (int id = 1; id <= one->natom; ++id){
             if (one->atsel[id]) list[ii++] = id;
           }
           break;
@@ -598,7 +598,7 @@ void Driver::writesel()
       printf("\nPlease input the new COM of these atoms, NULL to skip [NULL NULL NULL]: ");
       if (count_words(fgets(str,MAXLINE,stdin)) >= 3){
         ptr = strtok(str, " \n\t\r\f");
-        for (int i=0; i<2; i++){
+        for (int i = 0; i < 2; ++i){
           if (strcmp(ptr, "NULL") != 0){
             new_com[i]  = atof(ptr);
             dir_flag[i] = 1;
@@ -611,7 +611,7 @@ void Driver::writesel()
         }
       }
       printf("The new COM of the selected group of atoms will be [");
-      for (int idim=0; idim<3; idim++){
+      for (int idim = 0; idim < 3; ++idim){
         if (dir_flag[idim] == 0) printf("NULL ");
         else printf("%g ", new_com[idim]);
       } printf("]\n\n");
@@ -640,8 +640,8 @@ void Driver::writesel()
       fprintf(fp,"ITEM: ATOMS\n");
 
       if (mjob == 1){
-        for (int id=1; id<= one->natom; id++){
-          for (int idim=0; idim<3; idim++){
+        for (int id = 1; id <= one->natom; ++id){
+          for (int idim = 0; idim < 3; ++idim){
             new_pos[idim] = one->atpos[id][idim] + shift[idim];
             while (new_pos[idim] <  0.) new_pos[idim] += 1.;
             while (new_pos[idim] >= 1.) new_pos[idim] -= 1.;
@@ -652,14 +652,14 @@ void Driver::writesel()
       } else if (mjob == 2){
 
         double old_com[3]; old_com[0] = old_com[1] = old_com[2] = 0.;
-        for (int ii=0; ii<nsel; ii++){
+        for (int ii = 0; ii < nsel; ++ii){
           int id = list[ii];
-          for (int idim=0; idim<3; idim++) old_com[idim] += one->atpos[id][idim];
+          for (int idim = 0; idim < 3; ++idim) old_com[idim] += one->atpos[id][idim];
         }
-        for (int idim=0; idim<3; idim++) shift[idim] = new_com[idim] - old_com[idim]/double(nsel);
+        for (int idim = 0; idim < 3; ++idim) shift[idim] = new_com[idim] - old_com[idim]/double(nsel);
 
-        for (int id=1; id<= one->natom; id++){
-          for (int idim=0; idim<3; idim++){
+        for (int id = 1; id <= one->natom; ++id){
+          for (int idim = 0; idim < 3; ++idim){
             new_pos[idim] = one->atpos[id][idim];
             if (dir_flag[idim]) new_pos[idim] += shift[idim];
             while (new_pos[idim] <  0.) new_pos[idim] += 1.;
@@ -669,7 +669,7 @@ void Driver::writesel()
         }
       }
 
-      nused++;
+      ++nused;
     }
 
     memory->destroy(list);
@@ -677,7 +677,7 @@ void Driver::writesel()
   }
   printf("Mission completed, %d frames written to file: %s\n", nused, fname);
   if (fname) delete [] fname;
-  for (int i=0; i<20; i++) printf("===="); printf("\n"); 
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n"); 
 return;
 }
 
@@ -694,8 +694,8 @@ void Driver::avedump()
 
   double **atpos;
   memory->create(atpos,nfirst+1,3,"avedump:atpos");
-  for (int ii=1; ii<=nfirst; ii++)
-  for (int idim=0; idim<3; idim++) atpos[ii][idim] = 0.;
+  for (int ii = 1; ii <= nfirst; ++ii)
+  for (int idim = 0; idim < 3; ++idim) atpos[ii][idim] = 0.;
 
   int ncount = 1;
   for (int img = istr+inc; img<= iend; img += inc){
@@ -707,8 +707,8 @@ void Driver::avedump()
     lx += one->lx; ly += one->ly; lz += one->lz;
     xy += one->xy; xz += one->xz; yz += one->yz;
 
-    for (int ii=1; ii<= nfirst; ii++){
-      for (int idim=0; idim<3; idim++){
+    for (int ii = 1; ii <= nfirst; ++ii){
+      for (int idim = 0; idim < 3; ++idim){
         double dx = one->atpos[ii][idim] - first->atpos[ii][idim];
         while (dx >= 0.5) dx -= 1.;
         while (dx < -0.5) dx += 1.;
@@ -716,11 +716,11 @@ void Driver::avedump()
         atpos[ii][idim] += dx;
       }
     }
-    ncount++;
+    ++ncount;
   }
   if (ncount < 1) return;
 
-  for (int ii=1; ii<= nfirst; ii++){
+  for (int ii = 1; ii <= nfirst; ++ii){
     atpos[ii][0] = atpos[ii][0]/double(ncount) + first->atpos[ii][0];
     atpos[ii][1] = atpos[ii][1]/double(ncount) + first->atpos[ii][1];
     atpos[ii][2] = atpos[ii][2]/double(ncount) + first->atpos[ii][2];
@@ -730,14 +730,14 @@ void Driver::avedump()
   xy /= double(ncount); xz /= double(ncount); yz /= double(ncount);
 
   // convert fractional into cartesian
-  for (int ii=1; ii<= nfirst; ii++){
+  for (int ii = 1; ii <= nfirst; ++ii){
     atpos[ii][0] = atpos[ii][0]*lx + atpos[ii][1]*xy + atpos[ii][2]*xz;
     atpos[ii][1] = atpos[ii][1]*ly + atpos[ii][2]*yz;
     atpos[ii][2] = atpos[ii][2]*lz;
   }
   
   char str[MAXLINE];
-  printf("\n"); for (int i=0; i<20; i++) printf("====");
+  printf("\n"); for (int i = 0; i < 20; ++i) printf("====");
   printf("\nPlease input the output xyz file name [dumpave.xyz]: ");
   if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str,"dumpave.xyz");
 
@@ -749,15 +749,15 @@ void Driver::avedump()
   istr+1, iend+1, inc, lx, ly, lz, xy, xz, yz);
   int ii = 1;
   if (nfirst >= 3){
-    fprintf(fp,"%d %lg %lg %lg crystal_vector 1 %lg 0.   0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], lx); ii++;
-    fprintf(fp,"%d %lg %lg %lg crystal_vector 2 %lg %lg  0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], xy, ly); ii++;
-    fprintf(fp,"%d %lg %lg %lg crystal_vector 3 %lg %lg %lg\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], xz, yz, lz); ii++;
+    fprintf(fp,"%d %lg %lg %lg crystal_vector 1 %lg 0.   0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], lx); ++ii;
+    fprintf(fp,"%d %lg %lg %lg crystal_vector 2 %lg %lg  0.\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], xy, ly); ++ii;
+    fprintf(fp,"%d %lg %lg %lg crystal_vector 3 %lg %lg %lg\n", first->attyp[ii], atpos[ii][0], atpos[ii][1], atpos[ii][2], xz, yz, lz); ++ii;
   }
-  for (int i=ii; i<= nfirst; i++) fprintf(fp,"%d %lg %lg %lg\n", first->attyp[i], atpos[i][0], atpos[i][1], atpos[i][2]);
+  for (int i = ii; i <= nfirst; ++i) fprintf(fp,"%d %lg %lg %lg\n", first->attyp[i], atpos[i][0], atpos[i][1], atpos[i][2]);
   fclose(fp);
 
   memory->destroy(atpos);
-  for (int i=0; i<20; i++) printf("===="); printf("\n"); 
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n"); 
 
 return;
 }
@@ -783,7 +783,7 @@ void Driver::help()
   printf("     #     #  #    #  #    #  #      #     #  #   ##  #    #\n");
   printf("     ######    ####   #    #  #      #     #  #    #  #    #\n");
   ShowVersion();
-  for (int i=0; i<20; i++) printf("----");
+  for (int i = 0; i < 20; ++i) printf("----");
   printf("\nCode to analyse the atom style dump files of lammps. Functions available:\n");
   MainMenu();
   printf("\nUsage:\n    dumpana [options] [file]\n\nAvailable options:\n");
@@ -821,7 +821,7 @@ int Driver::count_words(const char *line)
     return 0;
   }
   n = 1;
-  while (strtok(NULL," \t\n\r\f")) n++;
+  while (strtok(NULL," \t\n\r\f")) ++n;
 
   memory->sfree(copy);
   return n;
@@ -857,13 +857,13 @@ void Driver::MapType2Elem(const int flag, const int ntype)
     memory->create(type2radius,ntype+1, "type2radius");
 
     char *ptr = strtok(str," \n\t\r\f");
-    for (int ip=1; ip<= ntype; ip++){
+    for (int ip = 1; ip <= ntype; ++ip){
       type2atnum[ip] =  element->Name2Num(ptr);
       type2radius[ip]=  element->Name2Radius(ptr);
       ptr = strtok(NULL, " \n\t\r\f");
     }
     printf("\nThe atomic types are assigned as:");
-    for (int ip=1; ip<=ntype; ip++){
+    for (int ip = 1; ip <= ntype; ++ip){
       char ename[3];
       int num = type2atnum[ip];
       element->Num2Name(num, ename);
@@ -883,7 +883,7 @@ void Driver::ShowRadius4Voro()
   if ((flag_out&WtdVoro)==0 || one==NULL || type2radius==NULL) return;
 
   printf("\nWeighted Voronoi tesselation will be performed, with atomic radii:\n");
-  for (int ip = 1; ip <= one->ntype; ip++){
+  for (int ip = 1; ip <= one->ntype; ++ip){
     char ename[3];
     int num = type2atnum[ip];
     element->Num2Name(num, ename);

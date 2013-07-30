@@ -50,20 +50,20 @@ void RMSD::setup_rotation(double ref_xlist[][3],
   double ref_com[3];
 
   // calculate the centre of mass
-  for (i=0; i<3; i++)
+  for (i = 0; i < 3; ++i)
   { 
     mov_com[i] = 0.0;
     ref_com[i] = 0.0;
   }
   
-  for (n=0; n<n_list; n++) 
-    for (i=0; i<3; i++)
+  for (n = 0; n < n_list; ++n) 
+    for (i = 0; i < 3; ++i)
     { 
       mov_com[i] += mov_xlist[n][i];
       ref_com[i] += ref_xlist[n][i];
     }
     
-  for (i=0; i<3; i++)
+  for (i = 0; i < 3; ++i)
   {
     mov_com[i] /= n_list;
     ref_com[i] /= n_list;
@@ -71,25 +71,25 @@ void RMSD::setup_rotation(double ref_xlist[][3],
   }
 
   // shift mov_xlist and ref_xlist to centre of mass
-  for (n=0; n<n_list; n++) 
-    for (i=0; i<3; i++)
+  for (n = 0; n < n_list; ++n) 
+    for (i = 0; i < 3; ++i)
     { 
       mov_xlist[n][i] -= mov_com[i];
       ref_xlist[n][i] -= ref_com[i];
     }
 
   /* initialize */
-  for (i=0; i<3; i++)
-    for (j=0; j<3; j++) 
+  for (i = 0; i < 3; ++i)
+    for (j = 0; j < 3; ++j) 
       R[i][j] = 0.0;
   *E0 = 0.0;
 
-  for (n=0; n<n_list; n++) 
+  for (n = 0; n < n_list; ++n) 
   {
     /* 
      * E0 = 1/2 * sum(over n): y(n)*y(n) + x(n)*x(n) 
      */
-    for (i=0; i<3; i++)
+    for (i = 0; i < 3; ++i)
       *E0 +=  mov_xlist[n][i] * mov_xlist[n][i]  
             + ref_xlist[n][i] * ref_xlist[n][i];
     
@@ -98,9 +98,9 @@ void RMSD::setup_rotation(double ref_xlist[][3],
      *   R[i,j) = sum(over n): y(n,i) * x(n,j)  
      *   where x(n) and y(n) are two vector sets   
      */
-    for (i=0; i<3; i++)
+    for (i = 0; i < 3; ++i)
     {
-      for (j=0; j<3; j++)
+      for (j = 0; j < 3; ++j)
         R[i][j] += mov_xlist[n][i] * ref_xlist[n][j];
     }
   }
@@ -129,32 +129,32 @@ int RMSD::jacobi3(double a[3][3], double d[3], double v[3][3], int* n_rot)
   double tresh, theta, tau, t, sum, s, h, g, c, b[3], z[3];
 
   /*Initialize v to the identity matrix.*/
-  for (i=0; i<3; i++) 
+  for (i = 0; i < 3; ++i) 
   { 
-    for (j=0; j<3; j++) 
+    for (j = 0; j < 3; ++j) 
       v[i][j] = 0.0;
     v[i][i] = 1.0;
   }
 
   /* Initialize b and d to the diagonal of a */
-  for (i=0; i<3; i++) 
+  for (i = 0; i < 3; ++i) 
     b[i] = d[i] = a[i][i];
 
   /* z will accumulate terms */
-  for (i=0; i<3; i++) 
+  for (i = 0; i < 3; ++i) 
     z[i] = 0.0; 
   
   *n_rot = 0;
 
   /* 50 tries */
-  for (count=0; count<50; count++)     
+  for (count = 0; count < 50; ++count)     
   {
 
     /* sum off-diagonal elements */
     sum = 0.0;
-    for (i=0; i<2; i++) 
+    for (i = 0; i < 2; ++i) 
     {
-      for (j=i+1; j<3; j++)
+      for (j = i+1; j < 3; ++j)
          sum += fabs(a[i][j]);
     }
 
@@ -168,9 +168,9 @@ int RMSD::jacobi3(double a[3][3], double d[3], double v[3][3], int* n_rot)
     else       
       tresh = 0.0;      
 
-    for (i=0; i<2; i++) 
+    for (i = 0; i < 2; ++i) 
     {
-      for (j=i+1; j<3; j++) 
+      for (j = i+1; j < 3; ++j) 
       {
         g = 100.0 * fabs(a[i][j]);
 
@@ -211,16 +211,16 @@ int RMSD::jacobi3(double a[3][3], double d[3], double v[3][3], int* n_rot)
 
           a[i][j] = 0.0;
 
-          for (k=0; k<=i-1; k++) 
+          for (k = 0; k <= i-1; ++k) 
             ROTATE(a, k, i, k, j)
 
-          for (k=i+1; k<=j-1; k++) 
+          for (k = i+1; k <= j-1; ++k) 
             ROTATE(a, i, k, k, j)
 
-          for (k=j+1; k<3; k++) 
+          for (k = j+1; k < 3; ++k) 
             ROTATE(a, i, k, j, k)
 
-          for (k=0; k<3; k++) 
+          for (k = 0; k < 3; ++k) 
             ROTATE(v, k, i, k, j)
 
           ++(*n_rot);
@@ -228,7 +228,7 @@ int RMSD::jacobi3(double a[3][3], double d[3], double v[3][3], int* n_rot)
       }
     }
 
-    for (i=0; i<3; i++) 
+    for (i = 0; i < 3; ++i) 
     {
       b[i] += z[i];
       d[i] = b[i];
@@ -262,12 +262,12 @@ int RMSD::diagonalize_symmetric(double matrix[3][3],
   }
 
   /* sort solutions by eigenval */
-  for (i=0; i<3; i++) 
+  for (i = 0; i < 3; ++i) 
   {
     k = i;
     val = eigenval[i];
     
-    for (j=i+1; j<3; j++)
+    for (j = i+1; j < 3; ++j)
       if (eigenval[j] >= val)
       { 
         k = j;
@@ -278,7 +278,7 @@ int RMSD::diagonalize_symmetric(double matrix[3][3],
     {
       eigenval[k] = eigenval[i];
       eigenval[i] = val;
-      for (j=0; j<3; j++) 
+      for (j = 0; j < 3; ++j) 
       {
         val = vec[j][i];
         vec[j][i] = vec[j][k];
@@ -288,8 +288,8 @@ int RMSD::diagonalize_symmetric(double matrix[3][3],
   }
 
   /* transpose such that first index refers to solution index */
-  for (i=0; i<3; i++)
-    for (j=0; j<3; j++)
+  for (i = 0; i < 3; ++i)
+    for (j = 0; j < 3; ++j)
       eigen_vec[i][j] = vec[j][i];
 
   return (1);
@@ -315,16 +315,16 @@ int RMSD::calculate_rotation_matrix(double R[3][3],
   double sigma;
 
   /* build Rt, transpose of R  */
-  for (i=0; i<3; i++)
-    for (j=0; j<3; j++)
+  for (i = 0; i < 3; ++i)
+    for (j = 0; j < 3; ++j)
       Rt[i][j] = R[j][i];
 
   /* make symmetric RtR = Rt X R */
-  for (i=0; i<3; i++) 
-    for (j=0; j<3; j++)
+  for (i = 0; i < 3; ++i) 
+    for (j = 0; j < 3; ++j)
     {
-      RtR[i][j] = 0.0;
-      for (k = 0; k<3; k++)
+      RtR[i][j] = 0.;
+      for (k = 0; k < 3; ++k)
         RtR[i][j] += Rt[k][i] * R[j][k];
     }
 
@@ -340,11 +340,11 @@ int RMSD::calculate_rotation_matrix(double R[3][3],
    * are identical to the right_eigenvec's of R.
    * This means that left_eigenvec = R x right_eigenvec 
    */
-  for (i=0; i<3; i++) 
-    for (j=0; j<3; j++) 
+  for (i = 0; i < 3; ++i) 
+    for (j = 0; j < 3; ++j) 
       left_eigenvec[i][j] = dot(&right_eigenvec[i][0], &Rt[j][0]);
 
-  for (i=0; i<3; i++) 
+  for (i = 0; i < 3; ++i) 
     normalize(&left_eigenvec[i][0]);
 
   /* 
@@ -359,15 +359,15 @@ int RMSD::calculate_rotation_matrix(double R[3][3],
     sigma = -1.0;
   else 
     sigma = 1.0;
-  for (i=0; i<3; i++)
+  for (i = 0; i < 3; ++i)
     left_eigenvec[2][i] = v[i]; 
 
   /* calc optimal rotation matrix U that minimises residual */
-  for (i=0;i<3; i++)
-    for (j=0; j<3; j++) 
+  for (i = 0; i < 3; ++i)
+    for (j = 0; j < 3; ++j) 
     {
       U[i][j] = 0.0;
-      for (k=0; k<3; k++)
+      for (k = 0; k < 3; ++k)
         U[i][j] += left_eigenvec[k][i] * right_eigenvec[k][j];
     }
     

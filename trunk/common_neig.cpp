@@ -28,7 +28,7 @@ ComputeCNAAtom::ComputeCNAAtom(const int job, const int ntm, int **list, double 
   nearest = list;
   L[0] = box[0]; L[1] = box[1]; L[2] = box[2];
   xy = box[3]; xz = box[4]; yz = box[5];
-  for (int i=0; i<3; i++) hL[i] = 0.5*L[i];
+  for (int i = 0; i < 3; ++i) hL[i] = 0.5*L[i];
 
   non_ortho_box = 0;
   if (xy*xy+xz*xz+yz*yz > ZERO) non_ortho_box = 1;
@@ -77,7 +77,7 @@ void ComputeCNAAtom::compute_cna()
   // compute CNA for each atom in group
   // only performed if # of nearest neighbors = 12 or 14 (fcc,hcp)
 
-  for (i = 1; i <= natom; i++) {
+  for (i = 1; i <= natom; ++i) {
     if (nearest[0][i] != 12 && nearest[0][i] != 14) {
       pattern[i] = OTHER;
       continue;
@@ -89,7 +89,7 @@ void ComputeCNAAtom::compute_cna()
     // cna[k][MAXBOND] = max # of bonds of any common neighbor
     // cna[k][MINBOND] = min # of bonds of any common neighbor
 
-    for (m = 1; m <= nearest[0][i]; m++) {
+    for (m = 1; m <= nearest[0][i]; ++m) {
       j = nearest[m][i];
 
       // common = list of neighbors common to atom I and atom J
@@ -98,8 +98,8 @@ void ComputeCNAAtom::compute_cna()
       // in latter case, must exclude J from I's neighbor list
 
 	   ncommon = 0;
-	   for (inear = 1; inear <= nearest[0][i]; inear++)
-	   for (jnear = 1; jnear <= nearest[0][j]; jnear++){
+	   for (inear = 1; inear <= nearest[0][i]; ++inear)
+	   for (jnear = 1; jnear <= nearest[0][j]; ++jnear){
 	     if (nearest[inear][i] == nearest[jnear][j]) {
           if (ncommon >= MaxComm){
             MaxComm = ncommon + 5;
@@ -116,17 +116,17 @@ void ComputeCNAAtom::compute_cna()
       // also max and min # of common atoms any common atom is bonded to
       // bond = pair of atoms within cutoff
 
-      for (n = 0; n < ncommon; n++) bonds[n] = 0;
+      for (n = 0; n < ncommon; ++n) bonds[n] = 0;
 
       nbonds = 0;
-      for (jj = 0; jj < ncommon; jj++) {
+      for (jj = 0; jj < ncommon; ++jj) {
 	     j = common[jj];
-	     for (kk = jj+1; kk < ncommon; kk++) {
+	     for (kk = jj+1; kk < ncommon; ++kk) {
 	       k = common[kk];
 	       if (bonded(j,k)) {
-	         nbonds++;
-	         bonds[jj]++;
-	         bonds[kk]++;
+	         ++nbonds;
+	         ++bonds[jj];
+	         ++bonds[kk];
 	       }
 	     }
       }
@@ -134,7 +134,7 @@ void ComputeCNAAtom::compute_cna()
 
       maxbonds = 0;
       minbonds = MaxComm;
-      for (n = 0; n < ncommon; n++) {
+      for (n = 0; n < ncommon; ++n) {
 	     maxbonds = MAX(bonds[n],maxbonds);
 	     minbonds = MIN(bonds[n],minbonds);
       }      
@@ -148,27 +148,27 @@ void ComputeCNAAtom::compute_cna()
     pattern[i] = OTHER;
 
     if (nearest[0][i] == 12) {
-      for (inear = 0; inear < 12; inear++) {
+      for (inear = 0; inear < 12; ++inear) {
         cj = cna[inear+1][NCOMMON];
         ck = cna[inear+1][NBOND];
         cl = cna[inear+1][MAXBOND];
         cm = cna[inear+1][MINBOND];
-        if (cj == 4 && ck == 2 && cl == 1 && cm == 1) nfcc++;
-        else if (cj == 4 && ck == 2 && cl == 2 && cm == 0) nhcp++;
-        else if (cj == 5 && ck == 5 && cl == 2 && cm == 2) nico++;
+        if (cj == 4 && ck == 2 && cl == 1 && cm == 1) ++nfcc;
+        else if (cj == 4 && ck == 2 && cl == 2 && cm == 0) ++nhcp;
+        else if (cj == 5 && ck == 5 && cl == 2 && cm == 2) ++nico;
       }
       if (nfcc == 12) pattern[i] = FCC;
       else if (nfcc == 6 && nhcp == 6) pattern[i] = HCP;
       else if (nico == 12) pattern[i] = ICOS;
       
     } else if (nearest[0][i] == 14) {
-      for (inear = 0; inear < 14; inear++) {
+      for (inear = 0; inear < 14; ++inear) {
         cj = cna[inear+1][NCOMMON];
         ck = cna[inear+1][NBOND];
         cl = cna[inear+1][MAXBOND];
         cm = cna[inear+1][MINBOND];
-        if (cj == 4 && ck == 4 && cl == 2 && cm == 2) nbcc4++;
-        else if (cj == 6 && ck == 6 && cl == 2 && cm == 2) nbcc6++;
+        if (cj == 4 && ck == 4 && cl == 2 && cm == 2) ++nbcc4;
+        else if (cj == 6 && ck == 6 && cl == 2 && cm == 2) ++nbcc6;
       }
       if (nbcc4 == 6 && nbcc6 == 8) pattern[i] = BCC;
     }
@@ -184,22 +184,22 @@ void ComputeCNAAtom::compute_cna()
  * ---------------------------------------------------------------------- */
 void ComputeCNAAtom::compute_cnp()
 {
-  for (int i = 1; i <= natom; i++) {
+  for (int i = 1; i <= natom; ++i) {
     pattern[i] = 0.;
-    for (int m = 1; m <= nearest[0][i]; m++) {
+    for (int m = 1; m <= nearest[0][i]; ++m) {
       int j = nearest[m][i];
 
       // common = list of neighbors common to atom I and atom J
       double Rij[3], xik[3], xjk[3];
       Rij[0] = Rij[1] = Rij[2] = 0.;
 
-	   for (int inear = 1; inear <= nearest[0][i]; inear++)
-	   for (int jnear = 1; jnear <= nearest[0][j]; jnear++){
+	   for (int inear = 1; inear <= nearest[0][i]; ++inear)
+	   for (int jnear = 1; jnear <= nearest[0][j]; ++jnear){
 	     if (nearest[inear][i] == nearest[jnear][j]) {
           int k = nearest[inear][i];
           double xik[3], xjk[3];
           
-          for (int idim=0; idim<3; idim++){
+          for (int idim = 0; idim < 3; ++idim){
             xik[idim] = x[k][idim] - x[i][idim];
             xjk[idim] = x[k][idim] - x[j][idim];
           }
@@ -207,7 +207,7 @@ void ComputeCNAAtom::compute_cnp()
           apply_pbc(xik[0], xik[1], xik[2]);
           apply_pbc(xjk[0], xjk[1], xjk[2]);
             
-          for (int idim=0; idim<3; idim++) Rij[idim] += xik[idim] + xjk[idim];
+          for (int idim = 0; idim < 3; ++idim) Rij[idim] += xik[idim] + xjk[idim];
         }
 	   }
       pattern[i] += Rij[0]*Rij[0] + Rij[1]*Rij[1] + Rij[2]*Rij[2];
@@ -224,7 +224,7 @@ return;
 void ComputeCNAAtom::output(FILE *fp)
 {
   fprintf(fp,"# box info: %lg %lg %lg %lg %lg %lg\n", L[0], L[1], L[2], xy, xz, yz);
-  for (int i=1; i<=natom; i++) fprintf(fp,"%d %lg %lg %lg %lg\n", i, x[i][0], x[i][1], x[i][2], pattern[i]);
+  for (int i = 1; i <= natom; ++i) fprintf(fp,"%d %lg %lg %lg %lg\n", i, x[i][0], x[i][1], x[i][2], pattern[i]);
 return;
 }
 
@@ -234,7 +234,7 @@ return;
 int ComputeCNAAtom::bonded(int id, int jd)
 {
   int ni = nearest[0][id];
-  for (int jj=1; jj <= ni; jj++){
+  for (int jj = 1; jj <= ni; ++jj){
     if (nearest[jj][id] == jd) return 1;
   }
 
@@ -297,8 +297,8 @@ void ComputeCNAAtom::select2(int k, int n, double *arr, int *iarr)
   int i,ir,j,l,mid,ia,itmp;
   double a,tmp;
 
-  arr--;
-  iarr--;
+  --arr;
+  --iarr;
   l = 1;
   ir = n;
   for (;;) {
@@ -364,7 +364,7 @@ void ComputeCNAAtom::centro_atom(const int nnn)
 
   // compute centro-symmetry parameter for each atom in group, use full neighbor list
 
-  for (int i = 1; i <= natom; i++) {
+  for (int i = 1; i <= natom; ++i) {
     pattern[i] = 0.;
     int jnum = nearest[0][i];
 
@@ -380,7 +380,7 @@ void ComputeCNAAtom::centro_atom(const int nnn)
     // nearest[] = atom indices of neighbors
 
     int n = 0;
-    for (int jj = 1; jj <= jnum; jj++) {
+    for (int jj = 1; jj <= jnum; ++jj) {
       int j = nearest[jj][i];
 
       double delx = x[i][0] - x[j][0];
@@ -395,7 +395,7 @@ void ComputeCNAAtom::centro_atom(const int nnn)
     }
 
     // if not nnn neighbors, set central atom as its own neighbors
-    for (int ii=n; ii<nnn; ii++){
+    for (int ii = n; ii < nnn; ++ii){
       distsq[ii] = 0.;
       neighb[ii] = i;
     }
@@ -406,12 +406,12 @@ void ComputeCNAAtom::centro_atom(const int nnn)
     // R = Ri + Rj for each of npairs i,j pairs among nnn neighbors
     // pairs = squared length of each R
     n = 0;
-    for (int jj = 0; jj < nnn; jj++) {
+    for (int jj = 0; jj < nnn; ++jj) {
       int j = neighb[jj];
-      for (int kk = jj+1; kk < nnn; kk++) {
+      for (int kk = jj+1; kk < nnn; ++kk) {
         int k = neighb[kk];
         double xij[3], xik[3];
-        for (int idim=0; idim<3; idim++){
+        for (int idim = 0; idim < 3; ++idim){
           xij[idim] = x[j][idim] - x[i][idim];
           xik[idim] = x[k][idim] - x[i][idim];
         }
@@ -431,7 +431,7 @@ void ComputeCNAAtom::centro_atom(const int nnn)
     // centrosymmetry = sum of nhalf smallest squared values
 
     double value = 0.;
-    for (int jj = 0; jj < nhalf; jj++) value += pairs[jj];
+    for (int jj = 0; jj < nhalf; ++jj) value += pairs[jj];
     pattern[i] = value;
   }
 
