@@ -7,8 +7,8 @@ void Driver::ClusterConnectivity()
 {
   int job = 1;
   char str[MAXLINE];
-  printf("\n"); for (int i=0; i<8; i++) printf("===="); printf("  Connectivity  ");
-  for (int i=0; i<8; i++) printf("===="); printf("\n");
+  printf("\n"); for (int i = 0; i < 8; ++i) printf("===="); printf("  Connectivity  ");
+  for (int i = 0; i < 8; ++i) printf("===="); printf("\n");
   printf("  1. Voronoi indices for neighbors of certain clusters;\n");
   printf("  2. Statistics on connectivities of certain clusters;\n");
   printf("  0. return.\nYour choice [%d]: ", job);
@@ -18,9 +18,9 @@ void Driver::ClusterConnectivity()
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
   if (job < 1 || job > 2){
-    for (int i=0; i<20; i++) printf("===="); printf("\n");
+    for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
     return;
-  } else for (int i=0; i<20; i++) printf("----"); printf("\n");
+  } else for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
   // voro refinement info
   set_cutoffs(1);
@@ -71,7 +71,7 @@ void Driver::ClusterConnectivity()
     if (count_words(fgets(str,MAXLINE,stdin)) > 0){
       ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"n")==0 || strcmp(ptr,"N")==0){
-        for (int i=0; i<20; i++) printf("===="); printf("\n");
+        for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
         return;
       }
     }
@@ -111,7 +111,7 @@ void Driver::ClusterConnectivity()
     fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
     fprintf(fp,"#Voronoi indices of the %d%s shell neighbors of atoms selected by: %s", nshell, Nos[nshell], selcmd);
     fprintf(fp,"# centered on clusters: ");
-    for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) fprintf(fp," %s", it->c_str());
+    for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); ++it) fprintf(fp," %s", it->c_str());
     fprintf(fp,"\n# frame atom type voronoi-index\n");
 
   } else if (job == 2){
@@ -138,7 +138,7 @@ void Driver::ClusterConnectivity()
       fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
       fprintf(fpx,"# Cluster connectivity info for atoms selected by: %s", selcmd);
       fprintf(fpx,"# centered on clsuters:" );
-      for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) fprintf(fpx," %s", it->c_str());
+      for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); ++it) fprintf(fpx," %s", it->c_str());
       fprintf(fpx,"\n# frame atom SC-id voronoi-index #connected connected-clusters\n");
     }
   }
@@ -164,11 +164,11 @@ void Driver::ClusterConnectivity()
     if (natom > one->natom) memory->grow(cenlist, natom+1, "cenlist");
 
     natom = one->natom;
-    for (int ii=0; ii<=natom; ii++) cenlist[ii] = 0;
+    for (int ii = 0; ii <= natom; ++ii) cenlist[ii] = 0;
 
     // look for the list of desired centeral atoms
     natom = one->natom;
-    for (int ii=1; ii<=natom; ii++){
+    for (int ii = 1; ii <= natom; ++ii){
       cenlist[ii] = 0;
       if (one->atsel[ii] == 0) continue;
 
@@ -177,13 +177,13 @@ void Driver::ClusterConnectivity()
 
     // check the # of selected clusters
     int nc = 0;
-    for (int ii=1; ii<=natom; ii++) nc += cenlist[ii];
+    for (int ii = 1; ii <= natom; ++ii) nc += cenlist[ii];
     if (nc < 1) continue;
 
     // analyse the result
     if (job == 1){ // Voronoi index for neighbors of selected clusters
 
-      for (int id=1; id <= natom; id++){
+      for (int id = 1; id <= natom; ++id){
         if (cenlist[id] == 0) continue;
 
         // find atoms in the the desired shell
@@ -195,7 +195,7 @@ void Driver::ClusterConnectivity()
           
         cluster.sort(); cluster.unique();
 
-        for (list<int>::iterator it = cluster.begin(); it != cluster.end(); it++){
+        for (list<int>::iterator it = cluster.begin(); it != cluster.end(); ++it){
           int jd = *it;
           if (shell[jd] == nshell) fprintf(fp,"%d %d %d %s\n", img+1, jd, one->attyp[jd], one->voro[jd].c_str());
         }
@@ -207,27 +207,27 @@ void Driver::ClusterConnectivity()
       map<bigint,int> conns, connt;
       nconn.clear(); SCid.clear(); conns.clear(); connt.clear();
 
-      for (int id=1; id <= natom; id++){
+      for (int id = 1; id <= natom; ++id){
         if (cenlist[id] == 0) continue;
 
-        nclus++;
+        ++nclus;
         if (nconn.count(id) < 1){
           nconn[id] = 0;
           SCid[id] = ++nsuper;
         }
           
-        for (int jd=id+1; jd <= natom; jd++){
+        for (int jd = id+1; jd <= natom; ++jd){
           if (cenlist[jd] == 0) continue;
 
           int ncomm = 0, paired = 0;
           int ni = one->neilist[0][id];
           int nj = one->neilist[0][jd];
-          for (int ii=1; ii<= ni; ii++){
+          for (int ii = 1; ii <= ni; ++ii){
             int iid = one->neilist[ii][id];
             if (iid == jd) paired = 1;
-            for (int jj=1; jj<= nj; jj++){
+            for (int jj = 1; jj <= nj; ++jj){
               int jjd = one->neilist[jj][jd];
-              if (iid == jjd) ncomm++;
+              if (iid == jjd) ++ncomm;
             }
           }
           ncomm = MIN(3,ncomm);
@@ -235,7 +235,7 @@ void Driver::ClusterConnectivity()
           if (ncomm){
             SCid[jd] = SCid[id];
             if (nconn.count(jd) < 1) nconn[jd] = 0;
-            nconn[id]++; nconn[jd]++;
+            ++nconn[id]; ++nconn[jd];
 
             conns[(id-1)*natom+nconn[id]] = jd;
             connt[(id-1)*natom+jd] = ncomm;
@@ -243,19 +243,19 @@ void Driver::ClusterConnectivity()
             conns[(jd-1)*natom+nconn[jd]] = id;
             connt[(jd-1)*natom+id] = ncomm;
 
-            counts[0]++; counts[ncomm]++;
+            ++counts[0]; ++counts[ncomm];
           }
         }
-        if (nconn[id] == 0) niso++;
+        if (nconn[id] == 0) ++niso;
       }
 
       // output connectivity info if asked
       if (fpx){
-        for (int id=1; id <= natom; id++){
+        for (int id = 1; id <= natom; ++id){
           if (cenlist[id] == 0) continue;
 
           fprintf(fpx,"%d %d %d %s %d", img+1, id, SCid[id], one->voro[id].c_str(), nconn[id]);
-          for (int ii=1; ii<= nconn[id]; ii++){
+          for (int ii = 1; ii <= nconn[id]; ++ii){
             int jd = conns[(id-1)*natom+ii];
             int ct = connt[(id-1)*natom+jd];
             fprintf(fpx," %d-(%s):%d", jd, one->voro[jd].c_str(), ct);
@@ -270,18 +270,18 @@ void Driver::ClusterConnectivity()
   memory->destroy(cenlist);
 
   if (job == 2){
-    printf("\n"); for (int i=0; i<20; i++) printf("----");
+    printf("\n"); for (int i = 0; i < 20; ++i) printf("----");
     printf("\nConnectivity info for clusters:");
-    for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) printf(" %s", it->c_str());
-    printf("\n"); for (int i=0; i<20; i++) printf("----");
+    for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); ++it) printf(" %s", it->c_str());
+    printf("\n"); for (int i = 0; i < 20; ++i) printf("----");
     printf("\nNClus NSuper Niso NLinked Vertex%% Edge%% Face%% Penetrate%%\n");
     printf("%d %d  %d %d", nclus, nsuper, niso, nsuper-niso); counts[0] = MAX(1,counts[0]);
-    for (int ii=1; ii<5; ii++) printf(" %g", double(counts[ii])/double(counts[0])*100.);
-    printf("\n"); for (int i=0; i<20; i++) printf("----"); printf("\n");
+    for (int ii = 1; ii < 5; ++ii) printf(" %g", double(counts[ii])/double(counts[0])*100.);
+    printf("\n"); for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
     
     fprintf(fp,"# Connectivity info for clusters:");
-    for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); it++) fprintf(fp," %s", it->c_str());
-    fprintf(fp,"\n#"); for (int i=0; i<20; i++) fprintf(fp,"----");
+    for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); ++it) fprintf(fp," %s", it->c_str());
+    fprintf(fp,"\n#"); for (int i = 0; i < 20; ++i) fprintf(fp,"----");
     fprintf(fp,"\n# Definitions\n#  NClus      : total number of clusters;\n");
     fprintf(fp,"#  NSuper     : total number of super clusters;\n");
     fprintf(fp,"#  Niso       : total number of isolated clusters, ie, not linked;\n");
@@ -291,16 +291,16 @@ void Driver::ClusterConnectivity()
     fprintf(fp,"#  Face%%      : for linked clusters, the percentage of shared via face;\n");
     fprintf(fp,"#  Penetrate%% : for linked clusters, the percentage of shared via volume,\n");
     fprintf(fp,"#                i.e., nearby cluster centers are bonded to each other;\n#");
-    for (int i=0; i<20; i++) fprintf(fp,"----");
+    for (int i = 0; i < 20; ++i) fprintf(fp,"----");
     fprintf(fp,"\n#NClus NSuper Niso NLinked Vertex%% Edge%% Face%% Penetrate%%\n");
     fprintf(fp,"%d %d  %d %d", nclus, nsuper, niso, nsuper-niso); counts[0] = MAX(1,counts[0]);
-    for (int ii=1; ii<5; ii++) fprintf(fp," %g", double(counts[ii])/double(counts[0])*100.); fprintf(fp,"\n");
+    for (int ii = 1; ii < 5; ++ii) fprintf(fp," %g", double(counts[ii])/double(counts[0])*100.); fprintf(fp,"\n");
   }
 
   fclose(fp);
   if (fpx) fclose(fpx);
   printf("\nJob done, the results are written to file: %s.\n", fname); delete []fname;
-  for (int i=0; i<20; i++) printf("===="); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;
 }

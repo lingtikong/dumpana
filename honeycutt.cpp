@@ -14,9 +14,9 @@
 void Driver::honeycutt_andersen()
 {
   char str[MAXLINE];
-  printf("\n"); for (int i=0; i<5; i++) printf("====");
+  printf("\n"); for (int i = 0; i < 5; ++i) printf("====");
   printf("   Honeycutt-Andersen  Bond  Analysis   ");
-  for (int i=0; i<5; i++) printf("===="); printf("\n");
+  for (int i = 0; i < 5; ++i) printf("===="); printf("\n");
 
   // voronoi refinement
   set_cutoffs(0);
@@ -56,16 +56,16 @@ void Driver::honeycutt_andersen()
 
     fprintf(fp,"# frame number: %d\n", img);
     // now to analyse the Honeycutt-Andersen bond type info
-    for (int id=1; id<= one->natom; id++){
+    for (int id = 1; id <= one->natom; ++id){
       if (unbond){
-        for (int jd=id+1; jd<= one->natom; jd++){
+        for (int jd = id+1; jd <= one->natom; ++jd){
           count_HA(id, jd, fp, outcomm);
         }
 
       } else {
 
         int nni = one->neilist[0][id];
-        for (int kk=1; kk<= nni; kk++){
+        for (int kk = 1; kk <= nni; ++kk){
           int jd  = one->neilist[kk][id];
           if (id > jd) continue;
 
@@ -75,7 +75,7 @@ void Driver::honeycutt_andersen()
     }
     printf("Frame %d done, HA info written to: %s\n", img+1, fname);
   }
-  printf("\n"); for (int i=0; i<20; i++) printf("===="); printf("\n");
+  printf("\n"); for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
   fclose(fp);
 
 return;
@@ -97,33 +97,33 @@ void Driver::count_HA(int id, int jd, FILE * fp, const int flag)
 
   std::vector<int> comms;
   comms.clear();
-  for (int ii=1; ii<= nni; ii++)
-  for (int jj=1; jj<= nnj; jj++) if (list[ii][id] == list[jj][jd]) comms.push_back(list[ii][id]);
+  for (int ii = 1; ii <= nni; ++ii)
+  for (int jj = 1; jj <= nnj; ++jj) if (list[ii][id] == list[jj][jd]) comms.push_back(list[ii][id]);
   int ncomm = comms.size();
 
   if (ibond == 2 && ncomm < 3) return;
 
   int nbond = 0;
-  for (int mm=0; mm<ncomm; mm++)
-  for (int nn=mm+1; nn<ncomm; nn++) nbond += one->bonded(comms[mm],comms[nn]);
+  for (int mm = 0; mm < ncomm; ++mm)
+  for (int nn = mm+1; nn < ncomm; ++nn) nbond += one->bonded(comms[mm],comms[nn]);
 
   int nconf = 1;
   // needs to distinct same ncomm-nbond for 144, 142
   // See Annals of Physics 324(2):332-342, 2009.
   if (ncomm == 4 && (nbond == 4 || nbond == 2) ){
     int ned[4]; ned[0] = ned[1] = ned[2] = ned[3] = 0;
-    for (int mm=0; mm<ncomm; mm++)
-    for (int nn=mm+1; nn<ncomm; nn++){
+    for (int mm = 0; mm < ncomm; ++mm)
+    for (int nn = mm+1; nn < ncomm; ++nn){
       int md = comms[mm], nd = comms[nn];
       ned[mm] += one->bonded(md, nd);
       ned[nn] += one->bonded(md, nd);
     }
     int nmin = nbond/2;
-    for (int mm=0; mm<ncomm; mm++) if (ned[mm] < nmin) nconf = 2;
+    for (int mm = 0; mm < ncomm; ++mm) if (ned[mm] < nmin) nconf = 2;
   }
 
   fprintf(fp,"%d %d %d%d%d%d", id, jd, ibond, ncomm, nbond, nconf);
-  if (flag) for (int ii=0; ii<ncomm; ii++) fprintf(fp," %d", comms[ii]);
+  if (flag) for (int ii = 0; ii < ncomm; ++ii) fprintf(fp," %d", comms[ii]);
   fprintf(fp,"\n");
 
 return;

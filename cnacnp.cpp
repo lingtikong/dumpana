@@ -9,13 +9,13 @@
 void Driver::Compute_CNACNP()
 {
   char str[MAXLINE], jobstr[MAXLINE];
-  printf("\n"); for (int i=0; i<6; i++) printf("====");
+  printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
   printf("   Common  Neighber  Analysis   ");
-  for (int i=0; i<6; i++) printf("====");
+  for (int i = 0; i < 6; ++i) printf("====");
 
   int job = 1;
   printf("\nReference: Comp. Phys. Comm. 177:518, 2007.\n");
-  for (int i=0; i<20; i++) printf("----");
+  for (int i = 0; i < 20; ++i) printf("----");
   printf("\nNow please select your desired job:\n");
   printf("  1. CNA based on Voronoi info;\n");
   printf("  2. CNP based on Voronoi info;\n");
@@ -26,7 +26,7 @@ void Driver::Compute_CNACNP()
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
   if (job < 1 || job > 3){
-    for (int i=0; i<20; i++) printf("===="); printf("\n");
+    for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
     return;
   }
   printf("\n");
@@ -100,7 +100,7 @@ void Driver::Compute_CNACNP()
   fclose(fp);
   delete []fname;
 
-  printf("\n"); for (int i=0; i<20; i++) printf("===="); printf("\n");
+  printf("\n"); for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;
 }

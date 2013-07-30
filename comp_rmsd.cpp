@@ -44,15 +44,25 @@ void Driver::compare_rmsd()
 
   FILE *fp1 = NULL, *fp2 = NULL;
   printf("Frames from No. %d to No. %d with increment of %d will be compared to %d.\n", istr+1, iend+1, inc, iref);
-  printf("\nIf you want to output the result to file, input the file name now: ");
+  printf("\nIf you want to output the results to a file, input the filename now: ");
   if (count_words(fgets(str,MAXLINE,stdin)) > 0){
     char *ptr = strtok(str, " \n\t\r\f");
     fp1 = fopen(ptr, "w");
+    if (fp1) printf("The related info will be written to file: %s\n", ptr);
   }
-  printf("\nIf you want the per-atom displacement info, input the output filename now: ");
+  printf("If you want to output per-atom displacement, input the filename now: ");
   if (count_words(fgets(str,MAXLINE,stdin)) > 0){
     char *ptr = strtok(str, " \n\t\r\f");
     fp2 = fopen(ptr, "w");
+    if (fp2) printf("The related info will be written to file: %s\n", ptr);
+  }
+  double disp_tol = 0.;
+  if (fp2){
+    printf("If you want to count  the displaced atoms, input a threshold  now: ");
+    if (count_words(fgets(str,MAXLINE,stdin)) > 0) disp_tol = atof(strtok(str, " \n\t\r\f"));
+    if (disp_tol > 0.) printf("Atoms with a displacment > %g will be counted as moved.\n", disp_tol);
+    else printf("All atoms will be counted as moved.\n");
+    disp_tol *= disp_tol;
   }
 
   one = all[iref];
@@ -111,6 +121,7 @@ void Driver::compare_rmsd()
     // output the per-atom info for each frame, similar to dump atomic style
     if (fp2){
       double rotated[3], disp[nref], dr_all = 0.;
+      int nmoved = 0;
       for (int i = 0; i < nref; ++i){
         rotated[0] = rotated[1] = rotated[2] = 0.;
         for (int j = 0; j < 3; ++j)
@@ -121,11 +132,12 @@ void Driver::compare_rmsd()
           disp[i] += pos_one[i][j] * pos_one[i][j];
         }
         dr_all += disp[i];
+        if (disp[i] >= disp_tol) ++nmoved;
       }
 
       fprintf(fp2, "# natom timestep source frame-id\n");
       fprintf(fp2, "# %d %d %s %d\n", one->natom, one->tstep, one->fname, img+1);
-      fprintf(fp2, "# Total rmsd: %lg, rmsd-per-atom: %g\n", sqrt(dr_all), sqrt(dr_all/double(nref)));
+      fprintf(fp2, "# Total rmsd: %lg, rmsd-per-atom: %g; total # of atoms moved: %d\n", sqrt(dr_all), sqrt(dr_all/double(nref)), nmoved);
       fprintf(fp2, "# 1  2   3    4  5   6 \n");
       fprintf(fp2, "# id ip  dx  dy  dz  dr\n");
       for (int i = 0; i < nref; ++i){

@@ -13,16 +13,16 @@ void Driver::strfac()
   double kmax[3], dk[3], qmax, rdq;
   int nk[3], nbin = 101;
 
-  printf("\n"); for (int i=0; i<6; i++) printf("====");
+  printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
   printf("    Static  Structure  Factor   ");
-  for (int i=0; i<6; i++) printf("====");
+  for (int i = 0; i < 6; ++i) printf("====");
 
   // ask for the max value of k's
   kmax[0] = kmax[1] = kmax[2] = 10.;
   printf("\nPlease input the upper bound of the k-vectors [%g %g %g]: ", kmax[0], kmax[1], kmax[2]);
   if (count_words(fgets(str,MAXLINE, stdin)) >= 3){
     ptr = strtok(str, " \n\t\r\f");
-    for (int i=0; i<2; i++){
+    for (int i = 0; i < 2; ++i){
       kmax[i] = atof(ptr);
       ptr = strtok(NULL, " \n\t\r\f");
     }
@@ -31,19 +31,19 @@ void Driver::strfac()
   
   // ask for the # of bins of k along each direction
   nk[0] = nk[1] = nk[2] = 20;
-  for (int i=0; i<3; i++) if (abs(kmax[i]) < ZERO) nk[i] = 1;
+  for (int i = 0; i < 3; ++i) if (abs(kmax[i]) < ZERO) nk[i] = 1;
 
   printf("\nThe computation for 3D is rather expensive, be patient if you use a large k-mesh.\n");
   printf("Please input the # of k-points along each direction [%d %d %d]: ", nk[0], nk[1], nk[2]);
   if (count_words(fgets(str,MAXLINE, stdin)) >= 3){
     ptr = strtok(str, " \n\t\r\f");
-    for (int i=0; i<2; i++){
+    for (int i = 0; i < 2; ++i){
       nk[i] = atoi(ptr);
       ptr = strtok(NULL, " \n\t\r\f");
     }
     nk[2] = atoi(ptr);
   }
-  for (int i=0; i<3; i++){
+  for (int i = 0; i < 3; ++i){
     if (abs(kmax[i]) < ZERO) nk[i] = 1;
     nk[i] = MAX(1,nk[i]);
   }
@@ -58,7 +58,7 @@ void Driver::strfac()
   qmax = MAX(kmax[0], MAX(kmax[1], kmax[2]));
   rdq = double(nbin-1)/qmax;
   
-  for (int i=0; i<3; i++) dk[i] = kmax[i]/MAX(1.,double(nk[i]-1));
+  for (int i = 0; i < 3; ++i) dk[i] = kmax[i]/MAX(1.,double(nk[i]-1));
 
   // selection commands for atoms
   one = all[istr];
@@ -86,9 +86,9 @@ void Driver::strfac()
   // S(kx,ky,kz) accumulator
   double ***skall;
   memory->create(skall, nk[0], nk[1], nk[2], "skall");
-  for (int i= 0; i< nk[0]; i++)
-  for (int j= 0; j< nk[1]; j++)
-  for (int k= 0; k< nk[2]; k++) skall[i][j][k] = 0.;
+  for (int i = 0; i < nk[0]; ++i)
+  for (int j = 0; j < nk[1]; ++j)
+  for (int k = 0; k < nk[2]; ++k) skall[i][j][k] = 0.;
 
   // space for exp(-i*K_a*r_a)
   complex<double> **kxrx, **kyry, **kzrz;
@@ -138,43 +138,43 @@ void Driver::strfac()
 
     // loops over k
     complex<double> dq[3];
-    for (int idim=0; idim<3; idim++) dq[idim] = dk[idim]*one->box[idim]*I0;
+    for (int idim = 0; idim < 3; ++idim) dq[idim] = dk[idim]*one->box[idim]*I0;
 
     int inext = 0;
-    for (int ii=1; ii<= one->natom; ii++){
+    for (int ii = 1; ii <= one->natom; ++ii){
       if (one->atsel[ii] == 0) continue;
 
-      for (int i = 0; i < nk[0]; i++){
+      for (int i = 0; i < nk[0]; ++i){
         complex<double> kx = double(i) * dq[0];
 
         kxrx[i][inext] = exp(kx*one->atpos[ii][0]);
       }
 
-      for (int j = 0; j < nk[1]; j++){
+      for (int j = 0; j < nk[1]; ++j){
         complex<double> ky = double(j) * dq[1];
 
         kyry[j][inext] = exp(ky*one->atpos[ii][1]);
       }
 
-      for (int k = 0; k < nk[2]; k++){
+      for (int k = 0; k < nk[2]; ++k){
         complex<double> kz = double(k) * dq[2];
 
         kzrz[k][inext] = exp(kz*one->atpos[ii][2]);
       }
 
-      inext++;
+      ++inext;
     }
 
-    for (int i = 0; i < nk[0]; i++)
-    for (int j = 0; j < nk[1]; j++)
-    for (int k = 0; k < nk[2]; k++){
+    for (int i = 0; i < nk[0]; ++i)
+    for (int j = 0; j < nk[1]; ++j)
+    for (int k = 0; k < nk[2]; ++k){
       complex<double> skone = complex<double>(0.,0.);
-      for (int ii = 0; ii < one->nsel; ii++) skone += kxrx[i][ii]*kyry[j][ii]*kzrz[k][ii];
+      for (int ii = 0; ii < one->nsel; ++ii) skone += kxrx[i][ii]*kyry[j][ii]*kzrz[k][ii];
 
       skall[i][j][k] += real(skone*conj(skone));
     }
 
-    nused++; nnorm += one->nsel;
+    ++nused; nnorm += one->nsel;
     printf("Done! Time used: %g seconds.\n", timer->sincelast());
   }
   memory->destroy(kxrx);
@@ -191,8 +191,8 @@ void Driver::strfac()
   int *hit; double *Sk;
   memory->create(Sk,  nbin, "Sk");
   memory->create(hit, nbin, "hit");
-  for (int i=0; i< nbin; i++) Sk[i]  = 0.;
-  for (int i=0; i< nbin; i++) hit[i] = 0;
+  for (int i = 0; i < nbin; ++i) Sk[i]  = 0.;
+  for (int i = 0; i < nbin; ++i) hit[i] = 0;
 
   printf("\nPlease input the file name to output S(kx,ky,kz) [skv.dat]: ");
   fgets(str,MAXLINE, stdin);
@@ -202,9 +202,9 @@ void Driver::strfac()
   FILE *fp = fopen(ptr,"w");
   fprintf(fp,"# kx ky kz  S(k)\n");
   double q[3];
-  for (int i = 0; i < nk[0]; i++){ q[0] = double(i)*dk[0];
-  for (int j = 0; j < nk[1]; j++){ q[1] = double(j)*dk[1];
-  for (int k = 0; k < nk[2]; k++){ q[2] = double(k)*dk[2];
+  for (int i = 0; i < nk[0]; ++i){ q[0] = double(i)*dk[0];
+  for (int j = 0; j < nk[1]; ++j){ q[1] = double(j)*dk[1];
+  for (int k = 0; k < nk[2]; ++k){ q[2] = double(k)*dk[2];
 
     double sknow = skall[i][j][k]*fac;
     fprintf(fp,"%g %g %g %lg\n", q[0], q[1], q[2], sknow);
@@ -212,7 +212,7 @@ void Driver::strfac()
     int ibin = int(sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])*rdq + 0.5);
     if (ibin < nbin){
       Sk[ibin]  += sknow;
-      hit[ibin] ++;
+      ++hit[ibin];
     }
   } fprintf(fp,"\n"); }}
   fclose(fp);
@@ -227,7 +227,7 @@ void Driver::strfac()
 
   int nmin = int(double(nused)*4.*atan(1.)/LMax*rdq + 0.5);
   double dq = 1./rdq, qr = double(nmin)*dq;
-  for (int i=nmin; i<nbin; i++){
+  for (int i = nmin; i < nbin; ++i){
     if (hit[i] > 0) fprintf(fp,"%lg %lg\n", qr, Sk[i]/double(hit[i]));
     qr += dq;
   }
@@ -238,7 +238,7 @@ void Driver::strfac()
   memory->destroy(Sk);
   printf("\n%d images were used in the evaluation of S(k), which is written to %s\n", nused, ptr);
 
-  for (int i=0; i<20; i++) printf("===="); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;
 }

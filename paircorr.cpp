@@ -13,11 +13,11 @@ void Driver::paircorr()
   // menu
   int job = 1;
   while (1){
-    printf("\n"); for (int i=0; i<6; i++) printf("====");
+    printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
     printf("  Pair  Correlation  Functions  ");
-    for (int i=0; i<6; i++) printf("====");
+    for (int i = 0; i < 6; ++i) printf("====");
     printf("\nPlease select your desired job:\n");
-    for (int i=0; i<20; i++) printf("----"); printf("\n");
+    for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
     printf("  1. g(r) of selected atoms;\n");
     printf("  2. g(r) between two selections;\n");
     printf("  0. Return;\nYour choice [%d]: ", job);
@@ -26,7 +26,7 @@ void Driver::paircorr()
     if (ptr) job = atoi(ptr);
     printf("Your selection : %d\n", job);
     if (job < 1 || job > 2){
-      for (int i=0; i<20; i++) printf("===="); printf("\n");
+      for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
       return;
     }
     printf("\n");
@@ -112,8 +112,8 @@ void Driver::paircorr()
     double *gr, *hit;
     memory->create(gr,nbin,"gr");
     memory->create(hit,nbin,"gr");
-    for (int i=0; i<nbin; i++) gr[i] = 0.;
-    for (int i=0; i<nbin; i++) hit[i] = 0.;
+    for (int i = 0; i < nbin; ++i) gr[i] = 0.;
+    for (int i = 0; i < nbin; ++i) hit[i] = 0.;
     
     const double tpi = 8.*atan(1.);
     int nused = 0;
@@ -134,13 +134,13 @@ void Driver::paircorr()
         one->car2dir();
     
         // set local variables
-        for (int i=1; i< one->natom; i++){
+        for (int i = 1; i < one->natom; ++i){
           if (one->atsel[i] == 0) continue;
   
-          for (int j=i+1; j<= one->natom; j++){
+          for (int j = i+1; j <= one->natom; ++j){
             if (one->atsel[j] == 0) continue;
             double dx[3];
-            for (int idim=0; idim<3; idim++){
+            for (int idim = 0; idim < 3; ++idim){
               dx[idim] = one->atpos[j][idim] - one->atpos[i][idim];
               while (dx[idim] > 0.5) dx[idim] -= 1.;
               while (dx[idim] <-0.5) dx[idim] += 1.;
@@ -153,7 +153,7 @@ void Driver::paircorr()
             if (ibin >= 0 && ibin<nbin){ gr[ibin] += dg; hit[ibin] += dh; }
           }
         }
-        nused++;
+        ++nused;
       } // end loop over frames
   
     } else {        // g(r) between two selections
@@ -165,7 +165,7 @@ void Driver::paircorr()
         one->selection(srcsel);
         if (one->nsel < 1) continue;
         memory->grow(insrc, one->natom+1, "insrc");
-        for (int ii=1; ii<= one->natom; ii++) insrc[ii] = one->atsel[ii];
+        for (int ii = 1; ii <= one->natom; ++ii) insrc[ii] = one->atsel[ii];
         int nsrc = one->nsel;
   
         // select atoms as neighbors
@@ -179,13 +179,13 @@ void Driver::paircorr()
         one->car2dir();
   
         // set local variables
-        for (int i=1; i<= one->natom; i++){
+        for (int i = 1; i <= one->natom; ++i){
           if (insrc[i] == 0) continue;
   
-          for (int j=1; j<= one->natom; j++){
+          for (int j = 1; j <= one->natom; ++j){
             if (one->atsel[j] == 0 || i==j) continue;
             double dx[3];
-            for (int idim=0; idim<3; idim++){
+            for (int idim = 0; idim < 3; ++idim){
               dx[idim] = one->atpos[j][idim] - one->atpos[i][idim];
               while (dx[idim] > 0.5) dx[idim] -= 1.;
               while (dx[idim] <-0.5) dx[idim] += 1.;
@@ -199,13 +199,13 @@ void Driver::paircorr()
           }
         }
   
-        nused++;
+        ++nused;
       }
     }
   
     // normalize the g(r)
     double r = rmin - 0.5*delr;
-    for (int i=0; i<nbin; i++){
+    for (int i = 0; i < nbin; ++i){
       r += delr;
       gr[i] /= r*r*MAX(1,nused);
       hit[i] /= MAX(1,nused);
@@ -226,7 +226,7 @@ void Driver::paircorr()
     fprintf(fp,"# r  g(r) int\n");
     r = rmin - 0.5*delr;
     double nsum = 0.;
-    for (int i=0; i<nbin; i++){
+    for (int i = 0; i < nbin; ++i){
       r += delr; nsum += hit[i];
       fprintf(fp,"%lg %lg %g\n", r, gr[i], nsum);
     }
@@ -236,7 +236,7 @@ void Driver::paircorr()
     memory->destroy(hit);
     printf("\n%d images were used in the evaluation of g(r), which is written to %s\n", nused, ptr);
   
-    for (int i=0; i<20; i++) printf("===="); printf("\n");
+    for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
     job = 0;
   }
 

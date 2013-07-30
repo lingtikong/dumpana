@@ -10,9 +10,9 @@
 void Driver::OutputVoroCells( )
 {
   char str[MAXLINE];
-  printf("\n"); for (int i=0; i<6; ++i) printf("====");
+  printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
   printf("   Output  Voronoi  Clusters    ");
-  for (int i=0; i<6; ++i) printf("====");
+  for (int i = 0; i < 6; ++i) printf("====");
 
   // thresholds for surface and edges
   set_cutoffs(1);
@@ -77,7 +77,7 @@ void Driver::OutputVoroCells( )
       dx.clear(); dy.clear(); dz.clear(); vertex.clear();
       dx.resize(nei+1); dy.resize(nei+1); dz.resize(nei+1);
 
-      for (int jj=1; jj<= nei; ++jj){
+      for (int jj = 1; jj <= nei; ++jj){
         int jd = one->neilist[jj][id];
   
         // apply pbc
@@ -130,7 +130,7 @@ void Driver::OutputVoroCells( )
   vertex.clear(); dx.clear(); dy.clear(); dz.clear();
 
   printf("\n%d clusters were selected and written to: %s\n", nclus, fname);
-  for (int i=0; i<20; ++i) printf("===="); printf("\n");
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
   delete []fname;
 return;
 }
