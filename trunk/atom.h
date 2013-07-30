@@ -62,7 +62,7 @@ public:
   void car2dir();
   void dir2car();
 
-  void ApplyPBC(double &, double &, double &, const int);
+  void ApplyPBC(double &, double &, double &);
 
 private:
   int MaxNei;

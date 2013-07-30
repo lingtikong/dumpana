@@ -62,14 +62,14 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int spk)
   memory->create(attyp, natom+1, "attyp");
   memory->create(atsel, natom+1, "atsel");
 
-  for (int i=1; i<=natom; i++) atsel[i] = 1; atsel[0] = 0;
+  for (int i = 1; i <= natom; ++i) atsel[i] = 1; atsel[0] = 0;
   realcmd = new char [MAXLINE]; strcpy(realcmd, "all\n");
   nsel = natom;
 
   memory->create(s, natom+1, 3, "s");
   atpos = s;
 
-  for (int i=0; i<natom; i++){
+  for (int i = 0; i < natom; ++i){
     fgets(str,MAXLINE, fp);
     int id = atoi(strtok(str, " \n\t\r\f"));
     int ip = atoi(strtok(NULL," \n\t\r\f"));
@@ -89,12 +89,12 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int spk)
   box[4] = axis[2][0] = xz;
   box[5] = axis[2][1] = yz;
   axis[0][1] = axis[0][2] = axis[1][2] = 0.;
-  for (int idim=0; idim<3; idim++) hbox[idim] = 0.5*box[idim];
+  for (int idim = 0; idim < 3; ++idim) hbox[idim] = 0.5*box[idim];
 
   if (spk){
     memory->create(x, natom+1, 3, "x");
-    for (int id=1; id<= natom; id++)
-    for (int idim=0; idim<3; idim++) x[id][idim] = s[id][idim];
+    for (int id = 1; id <= natom; ++id)
+    for (int idim = 0; idim < 3; ++idim) x[id][idim] = s[id][idim];
 
     double h_inv[6];
     h_inv[0] = 1.0/box[0];
@@ -103,7 +103,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int spk)
     h_inv[3] = -box[3] / (box[1]*box[2]);
     h_inv[4] = (box[3]*box[5] - box[1]*box[4]) / (box[0]*box[1]*box[2]);
     h_inv[5] = -box[5] / (box[0]*box[1]);
-    for (int id=1; id<= natom; id++){
+    for (int id = 1; id <= natom; ++id){
       s[id][0] = h_inv[0]*x[id][0] + h_inv[5]*x[id][1] + h_inv[4]*x[id][2];
       s[id][1] = h_inv[1]*x[id][1] + h_inv[3]*x[id][2];
       s[id][2] = h_inv[2]*x[id][2];
@@ -111,8 +111,8 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int spk)
   }
 
   memory->create(numtype,ntype+1,"numtype");
-  for (int i=0; i<=ntype; i++) numtype[i] = 0;
-  for (int i=1; i<=natom; i++) numtype[attyp[i]]++;
+  for (int i = 0; i <=ntype; ++i) numtype[i] = 0;
+  for (int i = 1; i <=natom; ++i) ++numtype[attyp[i]];
 
   initialized = 1;
 
@@ -153,16 +153,16 @@ void DumpAtom::dir2car()
     return;
   }
 
-  memory->create(x,natom+1, 3,"x");
+  memory->create(x, natom+1, 3,"x");
 
   if (triclinic){
-    for (int i=1; i<=natom; i++){
+    for (int i = 1; i <= natom; ++i){
       x[i][0] = s[i][0]*lx + s[i][1]*xy + s[i][2]*xz + xlo;
       x[i][1] = s[i][1]*ly + s[i][2]*yz + ylo;
       x[i][2] = s[i][2]*lz + zlo;
     }
   } else {
-    for (int i=1; i<=natom; i++){
+    for (int i = 1; i <= natom; ++i){
       x[i][0] = s[i][0]*lx + xlo;
       x[i][1] = s[i][1]*ly + ylo;
       x[i][2] = s[i][2]*lz + zlo;
@@ -201,7 +201,7 @@ void DumpAtom::selection(const char *line)
   strcpy(realcmd," ");
 
   // by default, all are selected
-  for (int i = 1; i <= natom; i++) atsel[i] = 1;
+  for (int i = 1; i <= natom; ++i) atsel[i] = 1;
 
   key = strtok(selcmd, " \n\t\r\f");
 
@@ -225,28 +225,28 @@ void DumpAtom::selection(const char *line)
       strcat(onecmd," "); strcat(onecmd,ptr);
 
       if (strcmp(oper, "=") == 0){
-        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i] != ilow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (attyp[i] == ilow) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i] != ilow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (attyp[i] == ilow) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,">") == 0){
-        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i] <= ilow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (attyp[i] > ilow) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i] <= ilow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (attyp[i] > ilow) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,">=") == 0){
-        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i] < ilow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (attyp[i] >= ilow) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i] < ilow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (attyp[i] >= ilow) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"<") == 0){
-        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i] >= ilow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (attyp[i] < ilow) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i] >= ilow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (attyp[i] < ilow) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"<=") == 0){
-        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i] > ilow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (attyp[i] <= ilow) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i] > ilow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (attyp[i] <= ilow) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"<>") == 0){
@@ -254,8 +254,8 @@ void DumpAtom::selection(const char *line)
         if (ptr == NULL) break;
         strcat(onecmd," "); strcat(onecmd,ptr);
         ihigh = atoi(ptr);
-        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i]<ilow || attyp[i]>ihigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (attyp[i]>=ilow && attyp[i]<=ihigh) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i]<ilow || attyp[i]>ihigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (attyp[i]>=ilow && attyp[i]<=ihigh) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"><") == 0){
@@ -263,8 +263,8 @@ void DumpAtom::selection(const char *line)
         if (ptr == NULL) break;
         strcat(onecmd," "); strcat(onecmd,ptr);
         ihigh = atoi(ptr);
-        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i]>ilow && attyp[i]<ihigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (attyp[i]<=ilow || attyp[i]>=ihigh) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i]>ilow && attyp[i]<ihigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (attyp[i]<=ilow || attyp[i]>=ihigh) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"%") == 0){
@@ -272,8 +272,8 @@ void DumpAtom::selection(const char *line)
         if (ptr == NULL) break;
         strcat(onecmd," "); strcat(onecmd,ptr);
         ihigh = atoi(ptr);
-        if (logand){ for (int i = 1; i <= natom; i++) if (attyp[i]%ilow != ihigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (attyp[i]%ilow == ihigh) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i]%ilow != ihigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (attyp[i]%ilow == ihigh) atsel[i] = 1;
         }
 
       } else break;
@@ -292,13 +292,13 @@ void DumpAtom::selection(const char *line)
       strcat(onecmd," "); strcat(onecmd,ptr);
 
       if (strcmp(oper,">")==0 || strcmp(oper,">=")==0){
-        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir] < rlow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir] >= rlow) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir] < rlow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir] >= rlow) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"<")==0 || strcmp(oper,"<=")==0){
-        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir] > rlow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir] <= rlow) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir] > rlow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir] <= rlow) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"<>") == 0){
@@ -307,8 +307,8 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         rhigh = atof(ptr);
 
-        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir]<rlow || atpos[i][dir]>rhigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir]>=rlow && atpos[i][dir]<=rhigh) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir]<rlow || atpos[i][dir]>rhigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir]>=rlow && atpos[i][dir]<=rhigh) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"><") == 0){
@@ -317,8 +317,8 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         rhigh = atof(ptr);
 
-        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir]>rlow && atpos[i][dir]<rhigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir]<=rlow || atpos[i][dir]>=rhigh) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir]>rlow && atpos[i][dir]<rhigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir]<=rlow || atpos[i][dir]>=rhigh) atsel[i] = 1;
         }
 
       } else break;
@@ -337,13 +337,13 @@ void DumpAtom::selection(const char *line)
       strcat(onecmd," "); strcat(onecmd,ptr);
 
       if (strcmp(oper,">")==0 || strcmp(oper,">=")==0){
-        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir] < rlow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir] >= rlow) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir] < rlow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir] >= rlow) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"<")==0 || strcmp(oper,"<=")==0){
-        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir] > rlow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir] <= rlow) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir] > rlow) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir] <= rlow) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"<>") == 0){
@@ -352,8 +352,8 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         rhigh = atof(ptr);
 
-        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir]<rlow || atpos[i][dir]>rhigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir]>=rlow && atpos[i][dir]<=rhigh) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir]<rlow || atpos[i][dir]>rhigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir]>=rlow && atpos[i][dir]<=rhigh) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"><") == 0){
@@ -362,8 +362,8 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         rhigh = atof(ptr);
 
-        if (logand){ for (int i = 1; i <= natom; i++) if (atpos[i][dir]>rlow && atpos[i][dir]<rhigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (atpos[i][dir]<=rlow || atpos[i][dir]>=rhigh) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir]>rlow && atpos[i][dir]<rhigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir]<=rlow || atpos[i][dir]>=rhigh) atsel[i] = 1;
         }
 
       } else break;
@@ -379,24 +379,24 @@ void DumpAtom::selection(const char *line)
       strcat(onecmd," "); strcat(onecmd,ptr);
 
       if (strcmp(oper,"=") == 0){
-        if (logand){ for (int i = 1; i <= natom; i++) if (i != ilow) atsel[i] = 0;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (i != ilow) atsel[i] = 0;
         } else atsel[ilow] = 1;
 
       } else if (strcmp(oper,">") == 0){
-        if (logand) for (int i = 1; i <= MIN(ilow,natom); i++) atsel[i] = 0;
-        else for (int i = ilow+1; i <= natom; i++) atsel[i] = 1;
+        if (logand) for (int i = 1; i <= MIN(ilow,natom); ++i) atsel[i] = 0;
+        else for (int i = ilow+1; i <= natom; ++i) atsel[i] = 1;
 
       } else if (strcmp(oper,">=") == 0){
-        if (logand) for (int i = 1; i < MIN(ilow,natom); i++) atsel[i] = 0;
-        else for (int i = ilow; i <= natom; i++) atsel[i] = 1;
+        if (logand) for (int i = 1; i < MIN(ilow,natom); ++i) atsel[i] = 0;
+        else for (int i = ilow; i <= natom; ++i) atsel[i] = 1;
 
       } else if (strcmp(oper,"<") == 0){
-        if (logand) for (int i = ilow; i <= natom; i++) atsel[i] = 0;
-        else for (int i = 1; i < MIN(ilow,natom); i++) atsel[i] = 1;
+        if (logand) for (int i = ilow; i <= natom; ++i) atsel[i] = 0;
+        else for (int i = 1; i < MIN(ilow,natom); ++i) atsel[i] = 1;
 
       } else if (strcmp(oper,"<=") == 0){
-        if (logand) for (int i = ilow+1; i <= natom; i++) atsel[i] = 0;
-        else for (int i = 1; i <= MIN(ilow,natom); i++) atsel[i] = 1;
+        if (logand) for (int i = ilow+1; i <= natom; ++i) atsel[i] = 0;
+        else for (int i = 1; i <= MIN(ilow,natom); ++i) atsel[i] = 1;
 
       } else if (strcmp(oper,"<>") == 0){
         ptr = strtok(NULL, " \n\t\r\f");
@@ -405,9 +405,9 @@ void DumpAtom::selection(const char *line)
         ihigh = atoi(ptr);
 
         if (logand){
-          for (int i = 1; i < MIN(ilow,natom); i++) atsel[i] = 0;
-          for (int i = ihigh+1; i <= natom; i++) atsel[i] = 0;
-        } else for (int i = ilow; i <= MIN(ihigh,natom); i++) atsel[i] = 1;
+          for (int i = 1; i < MIN(ilow,natom); ++i) atsel[i] = 0;
+          for (int i = ihigh+1; i <= natom; ++i) atsel[i] = 0;
+        } else for (int i = ilow; i <= MIN(ihigh,natom); ++i) atsel[i] = 1;
 
       } else if (strcmp(oper,"><") == 0){
         ptr = strtok(NULL, " \n\t\r\f");
@@ -415,10 +415,10 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         ihigh = atoi(ptr);
 
-        if (logand) for (int i = ilow; i <= MIN(ihigh,natom); i++) atsel[i] = 0;
+        if (logand) for (int i = ilow; i <= MIN(ihigh,natom); ++i) atsel[i] = 0;
         else {
-          for (int i = 1; i < MIN(ilow,natom); i++) atsel[i] = 1;
-          for (int i = ihigh+1; i <= natom; i++) atsel[i] = 1;
+          for (int i = 1; i < MIN(ilow,natom); ++i) atsel[i] = 1;
+          for (int i = ihigh+1; i <= natom; ++i) atsel[i] = 1;
         }
 
       } else if (strcmp(oper,"%") == 0){
@@ -427,8 +427,8 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         ihigh = atoi(ptr);
 
-        if (logand){ for (int i = 1; i <= natom; i++) if (i%ilow != ihigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; i++) if (i%ilow == ihigh) atsel[i] = 1;
+        if (logand){ for (int i = 1; i <= natom; ++i) if (i%ilow != ihigh) atsel[i] = 0;
+        } else { for (int i = 1; i <= natom; ++i) if (i%ilow == ihigh) atsel[i] = 1;
         }
 
       } else break;
@@ -451,7 +451,7 @@ void DumpAtom::selection(const char *line)
       RanPark * random = new RanPark(seed);
 
       nsel = 0;
-      for (int i = 1; i <= natom; i++) nsel += atsel[i];
+      for (int i = 1; i <= natom; ++i) nsel += atsel[i];
       int ndel = nsel - ilow;
       while (ndel > 0){
         int id = MIN(random->uniform()*(natom+1), natom);
@@ -465,7 +465,7 @@ void DumpAtom::selection(const char *line)
     } else if (strcmp(key,"voro") == 0){ // selected by Voronoi indices
       set<string> voroset; string vindex;
       double mins[3];
-      for (int i=0; i<3; i++){
+      for (int i = 0; i < 3; ++i){
         ptr = strtok(NULL, " \n\t\r\f");
         if (ptr == NULL) break;
         strcat(onecmd," "); strcat(onecmd,ptr);
@@ -476,7 +476,7 @@ void DumpAtom::selection(const char *line)
       strcat(onecmd," "); strcat(onecmd,ptr);
       int nv = atoi(ptr);
 
-      for (int i=0; i<nv; i++){
+      for (int i = 0; i < nv; ++i){
         ptr = strtok(NULL, " \n\t\r\f");
         if (ptr == NULL) break;
         strcat(onecmd," "); strcat(onecmd,ptr);
@@ -489,12 +489,12 @@ void DumpAtom::selection(const char *line)
       // make the selection
       if (voroset.size() > 0){
         if (logand){
-          for (int i = 1; i <= natom; i++){
+          for (int i = 1; i <= natom; ++i){
             vindex = voro[i];
             if (voroset.count(vindex) < 1) atsel[i] = 0;
           }
         } else {
-          for (int i = 1; i <= natom; i++){
+          for (int i = 1; i <= natom; ++i){
             vindex = voro[i];
             if (voroset.count(vindex) > 0) atsel[i] = 1;
           }
@@ -514,15 +514,15 @@ void DumpAtom::selection(const char *line)
 
       if (strcmp(oper,">")==0 || strcmp(oper,">=")==0){
         if (volume){
-          if (logand){ for (int i = 1; i <= natom; i++) if (volume[i] < rlow) atsel[i] = 0;
-          } else { for (int i = 1; i <= natom; i++) if (volume[i] >= rlow) atsel[i] = 1;
+          if (logand){ for (int i = 1; i <= natom; ++i) if (volume[i] < rlow) atsel[i] = 0;
+          } else { for (int i = 1; i <= natom; ++i) if (volume[i] >= rlow) atsel[i] = 1;
           }
         }
 
       } else if (strcmp(oper,"<")==0 || strcmp(oper,"<=")==0){
         if (volume){
-          if (logand){ for (int i = 1; i <= natom; i++) if (volume[i] > rlow) atsel[i] = 0;
-          } else { for (int i = 1; i <= natom; i++) if (volume[i] <= rlow) atsel[i] = 1;
+          if (logand){ for (int i = 1; i <= natom; ++i) if (volume[i] > rlow) atsel[i] = 0;
+          } else { for (int i = 1; i <= natom; ++i) if (volume[i] <= rlow) atsel[i] = 1;
           }
         }
 
@@ -533,8 +533,8 @@ void DumpAtom::selection(const char *line)
         rhigh = atof(ptr);
 
         if (volume){
-          if (logand){ for (int i = 1; i <= natom; i++) if (volume[i]<rlow || volume[i]>rhigh) atsel[i] = 0;
-          } else { for (int i = 1; i <= natom; i++) if (volume[i]>=rlow && volume[i]<=rhigh) atsel[i] = 1;
+          if (logand){ for (int i = 1; i <= natom; ++i) if (volume[i]<rlow || volume[i]>rhigh) atsel[i] = 0;
+          } else { for (int i = 1; i <= natom; ++i) if (volume[i]>=rlow && volume[i]<=rhigh) atsel[i] = 1;
           }
         }
 
@@ -545,8 +545,8 @@ void DumpAtom::selection(const char *line)
         rhigh = atof(ptr);
 
         if (volume){
-          if (logand){ for (int i = 1; i <= natom; i++) if (volume[i]>rlow && volume[i]<rhigh) atsel[i] = 0;
-          } else { for (int i = 1; i <= natom; i++) if (volume[i]<=rlow || volume[i]>=rhigh) atsel[i] = 1;
+          if (logand){ for (int i = 1; i <= natom; ++i) if (volume[i]>rlow && volume[i]<rhigh) atsel[i] = 0;
+          } else { for (int i = 1; i <= natom; ++i) if (volume[i]<=rlow || volume[i]>=rhigh) atsel[i] = 1;
           }
         }
 
@@ -554,7 +554,7 @@ void DumpAtom::selection(const char *line)
 
     } else if (strcmp(key,"all") == 0){ // select all; it will discard all previous selections
       strcpy(realcmd,""); strcpy(onecmd,key);
-      for (int i = 1; i <= natom; i++) atsel[i] = 1;
+      for (int i = 1; i <= natom; ++i) atsel[i] = 1;
 
     } else break;
 
@@ -563,7 +563,7 @@ void DumpAtom::selection(const char *line)
   }
 
   nsel = 0;
-  for (int i = 1; i <= natom; i++) nsel += atsel[i];
+  for (int i = 1; i <= natom; ++i) nsel += atsel[i];
   memory->destroy(selcmd);
 
 return;
@@ -585,7 +585,7 @@ return;
  *----------------------------------------------------------------------------*/
 void DumpAtom::SelHelp()
 {
-  printf("\n"); for (int i=0; i<20; i++) printf("----");
+  printf("\n"); for (int i = 0; i < 20; ++i) printf("----");
   printf("\nThe grammar for the selection command is:\n\n");
   printf("  key op values [& key2 op2 values2 [| key3 op3 values3]]\n");
   printf("\nwhere `key` is either `type`, `x`,`X', `y`, 'Y', `z`, 'Z', 'vol',\n");
@@ -619,7 +619,7 @@ void DumpAtom::SelHelp()
   printf("will select nothing. `type = 1 & ran 100 0` will randomly select 100 atoms\n");
   printf("from all of type 1. `X <> 0 10 & voro 0 0 0 1 0,0,12,0' will select all atoms\n");
   printf("that have a Voronoi index of 0,0,12,0 within [0,10] along the x direction.\n");
-  for (int i=0; i<20; i++) printf("----"); printf("\n\n");
+  for (int i = 0; i < 20; ++i) printf("----"); printf("\n\n");
     
 return;
 }
@@ -642,7 +642,7 @@ int DumpAtom::count_words(const char *line)
     return 0;
   }
   n = 1;
-  while (strtok(NULL," \t\n\r\f")) n++;
+  while (strtok(NULL," \t\n\r\f")) ++n;
 
   memory->sfree(copy);
   return n;
@@ -659,14 +659,14 @@ int DumpAtom::count_words(const char *line)
 void DumpAtom::ComputeVoro(double *mins){ ComputeVoro(mins, NULL, NULL, NULL); }
 void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 {
-  for (int i=0; i<3; i++) if (mins[i] < 0.) mins[i] = vmins[i];
+  for (int i = 0; i < 3; ++i) if (mins[i] < 0.) mins[i] = vmins[i];
 
   double diff = 0.;
-  for (int i=0; i<3; i++) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
+  for (int i = 0; i < 3; ++i) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
   if (diff <= ZERO && voro.size()==natom && weighted==0) return;
 
   weighted = 0;
-  for (int i=0; i<3; i++) vmins[i] = fabs(mins[i]);
+  for (int i = 0; i < 3; ++i) vmins[i] = fabs(mins[i]);
 
   double surf_min = vmins[0];
   double edge_min = vmins[1];
@@ -696,13 +696,13 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 
     voro::container_periodic con(lx,xy,ly,xz,yz,lz,nx,ny,nz,8);
     // put atoms into the container
-    for (int i=1; i<= natom; i++) con.put(i, atpos[i][0], atpos[i][1], atpos[i][2]);
+    for (int i = 1; i <= natom; ++i) con.put(i, atpos[i][0], atpos[i][1], atpos[i][2]);
 
     // loop over all particles and compute their voronoi cell
     voro::voronoicell_neighbor c1, c2, *cell;
     voro::c_loop_all_periodic cl(con);
     if (cl.start()) do if (con.compute_cell(c1,cl)){
-      for (int i=0; i<7; i++) index[i] = 0;
+      for (int i = 0; i < 7; ++i) index[i] = 0;
        
       cl.pos(xpos,ypos,zpos);
       id = cl.pid();
@@ -714,7 +714,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       if (fpsurf){
         int nf = fs.size();
         double wt = 1./cell->surface_area();
-        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
       }
 
       // refine the voronoi cell if asked by removing tiny surfaces
@@ -724,8 +724,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         int nf = fs.size();
         // sort neighbors by area if asked to keep a minimum # of neighbors
         if (nminnei > 0){
-          for (int i=0; i<nf; i++)
-          for (int j=i+1; j<nf; j++){
+          for (int i = 0; i < nf; ++i)
+          for (int j = i+1; j < nf; ++j){
             if (fs[j] > fs[i]){
               double dswap = fs[i]; fs[i] = fs[j]; fs[j] = dswap;
               int ik = neigh[i]; neigh[i] = neigh[j]; neigh[j] = ik;
@@ -734,7 +734,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         }
 
         // add condition on surface
-        for (int i=0; i<nf; i++){
+        for (int i = 0; i < nf; ++i){
           if (i < nminnei || fs[i] > surf_min){
             int jd = neigh[i];
   
@@ -743,7 +743,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
             double yij = atpos[jd][1]-ypos;
             double zij = atpos[jd][2]-zpos;
 
-            ApplyPBC(xij, yij, zij, 1);
+            ApplyPBC(xij, yij, zij);
 
             c2.nplane(xij,yij,zij,jd);
           }
@@ -756,7 +756,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       vol = cell->volume();
       cell->face_freq_table(ff);
       int nn = ff.size()-1;
-      for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
+      for (int i = 3; i <= MIN(6,nn); ++i) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
       if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
@@ -771,14 +771,14 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
       neilist[0][id] = nf;
-      for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];
+      for (int i = 0; i < nf; ++i) neilist[i+1][id] = neigh[i];
       volume[id] = vol;
 
       // output voro index info
       if (fp){
         fprintf(fp,"%d %d %lg %lg %lg %lg %s %d %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, index[5], nf);
-        for (int i=0; i<nf; i++) fprintf(fp," %d", neigh[i]);
-        for (int i=0; i<nf; i++) fprintf(fp," %lg", fs[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fp," %d", neigh[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fp," %lg", fs[i]);
         fprintf(fp,"\n");
       }
 
@@ -789,13 +789,13 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
     voro::container con(xlo,xhi,ylo,yhi,zlo,zhi,nx,ny,nz,true,true,true,8);
 
     // put atoms into the container
-    for (int i=1; i<= natom; i++) con.put(i, atpos[i][0], atpos[i][1], atpos[i][2]);
+    for (int i = 1; i <= natom; ++i) con.put(i, atpos[i][0], atpos[i][1], atpos[i][2]);
 
     // loop over all particles and compute their voronoi cell
     voro::voronoicell_neighbor c1, c2, *cell;
     voro::c_loop_all cl(con);
     if (cl.start()) do if (con.compute_cell(c1,cl)){
-      for (int i=0; i<7; i++) index[i] = 0;
+      for (int i = 0; i < 7; ++i) index[i] = 0;
        
       cl.pos(xpos,ypos,zpos);
       id = cl.pid();
@@ -807,7 +807,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       if (fpsurf){
         int nf = fs.size();
         double wt = 1./cell->surface_area();
-        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
       }
 
       // refine the voronoi cell if asked by removing tiny surfaces
@@ -817,8 +817,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         int nf = fs.size();
         // sort neighbors by area if asked to keep a minimum # of neighbors
         if (nminnei > 0){
-          for (int i=0; i<nf; i++)
-          for (int j=i+1; j<nf; j++){
+          for (int i = 0; i < nf; ++i)
+          for (int j = i+1; j < nf; ++j){
             if (fs[j] > fs[i]){
               double dswap = fs[i]; fs[i] = fs[j]; fs[j] = dswap;
               int ik = neigh[i]; neigh[i] = neigh[j]; neigh[j] = ik;
@@ -827,7 +827,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         }
 
         // add condition on surface
-        for (int i=0; i<nf; i++){
+        for (int i = 0; i < nf; ++i){
           if (i < nminnei || fs[i] > surf_min){
             int jd = neigh[i];
   
@@ -836,7 +836,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
             double yij = atpos[jd][1]-ypos;
             double zij = atpos[jd][2]-zpos;
 
-            ApplyPBC(xij, yij, zij, 0);
+            ApplyPBC(xij, yij, zij);
 
             c2.nplane(xij,yij,zij,jd);
           }
@@ -849,7 +849,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       vol = cell->volume();
       cell->face_freq_table(ff);
       int nn = ff.size()-1;
-      for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
+      for (int i = 3; i <= MIN(6,nn); ++i) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
       if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
@@ -864,14 +864,14 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
       neilist[0][id] = nf;
-      for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];
+      for (int i = 0; i < nf; ++i) neilist[i+1][id] = neigh[i];
       volume[id] = vol;
 
       // output voro index info
       if (fp){
         fprintf(fp,"%d %d %lg %lg %lg %lg %s %d %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, index[5], nf);
-        for (int i=0; i<nf; i++) fprintf(fp," %d", neigh[i]);
-        for (int i=0; i<nf; i++) fprintf(fp," %lg", fs[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fp," %d", neigh[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fp," %lg", fs[i]);
         fprintf(fp,"\n");
       }
 
@@ -895,7 +895,7 @@ void DumpAtom::voro_cluster(int il, const int max, int id, list<int> &clist, map
   if (++il > max) return;
 
   int nn = neilist[0][id];
-  for (int ii=1; ii <= nn; ii++){
+  for (int ii = 1; ii <= nn; ++ii){
     int jd = neilist[ii][id];
 
     clist.push_back(neilist[ii][id]);
@@ -917,7 +917,7 @@ return;
 int DumpAtom::bonded(int id, int jd)
 {
   int ni = neilist[0][id];
-  for (int jj=1; jj<= ni; jj++){
+  for (int jj = 1; jj <= ni; ++jj){
     if (neilist[jj][id] == jd) return 1;
   }
 
@@ -941,13 +941,13 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
 
   // now to compute weighted voronoi info
 
-  for (int i=0; i<3; i++) if (mins[i] < 0.) mins[i] = vmins[i];
+  for (int i = 0; i < 3; ++i) if (mins[i] < 0.) mins[i] = vmins[i];
   double diff = 0.;
-  for (int i=0; i<3; i++) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
+  for (int i = 0; i < 3; ++i) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
   if (diff <= ZERO && voro.size() == natom && weighted) return;
 
   weighted = 1;
-  for (int i=0; i<3; i++) vmins[i] = fabs(mins[i]);
+  for (int i = 0; i < 3; ++i) vmins[i] = fabs(mins[i]);
 
   double surf_min = vmins[0];
   double edge_min = vmins[1];
@@ -977,7 +977,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
 
     voro::container_periodic_poly con(lx,xy,ly,xz,yz,lz,nx,ny,nz,8);
     // put atoms into the container
-    for (int i=1; i<= natom; i++){
+    for (int i = 1; i <= natom; ++i){
       double ri = typ2ra[attyp[i]];
       con.put(i, atpos[i][0], atpos[i][1], atpos[i][2], ri);
     }
@@ -986,7 +986,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
     voro::voronoicell_neighbor c1, c2, *cell;
     voro::c_loop_all_periodic cl(con);
     if (cl.start()) do if (con.compute_cell(c1,cl)){
-      for (int i=0; i<7; i++) index[i] = 0;
+      for (int i = 0; i < 7; ++i) index[i] = 0;
        
       cl.pos(xpos,ypos,zpos);
       id = cl.pid();
@@ -998,7 +998,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
       if (fpsurf){
         int nf = fs.size();
         double wt = 1./cell->surface_area();
-        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
       }
 
       // refine the voronoi cell if asked by removing tiny surfaces
@@ -1008,8 +1008,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
         int nf = fs.size();
         // sort neighbors by area if asked to keep a minimum # of neighbors
         if (nminnei > 0){
-          for (int i=0; i<nf; i++)
-          for (int j=i+1; j<nf; j++){
+          for (int i = 0; i < nf; ++i)
+          for (int j = i+1; j < nf; ++j){
             if (fs[j] > fs[i]){
               double dswap = fs[i]; fs[i] = fs[j]; fs[j] = dswap;
               int ik = neigh[i]; neigh[i] = neigh[j]; neigh[j] = ik;
@@ -1018,7 +1018,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
         }
 
         // add condition on surface
-        for (int i=0; i<nf; i++){
+        for (int i = 0; i < nf; ++i){
           if (i < nminnei || fs[i] > surf_min){
             int jd = neigh[i];
   
@@ -1027,7 +1027,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
             double yij = atpos[jd][1]-ypos;
             double zij = atpos[jd][2]-zpos;
 
-            ApplyPBC(xij, yij, zij, 1);
+            ApplyPBC(xij, yij, zij);
 
             double scale = typ2ra[attyp[id]]/(typ2ra[attyp[id]] + typ2ra[attyp[jd]]);
             scale += scale;
@@ -1046,7 +1046,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
       vol = cell->volume();
       cell->face_freq_table(ff);
       int nn = ff.size()-1;
-      for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
+      for (int i = 3; i <= MIN(6,nn); ++i) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
       if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
@@ -1061,14 +1061,14 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
         memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
       neilist[0][id] = nf;
-      for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];
+      for (int i = 0; i < nf; ++i) neilist[i+1][id] = neigh[i];
       volume[id] = vol;
 
       // output voro index info
       if (fp){
         fprintf(fp,"%d %d %lg %lg %lg %lg %s %d %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, index[5], nf);
-        for (int i=0; i<nf; i++) fprintf(fp," %d", neigh[i]);
-        for (int i=0; i<nf; i++) fprintf(fp," %lg", fs[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fp," %d", neigh[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fp," %lg", fs[i]);
         fprintf(fp,"\n");
       }
 
@@ -1079,7 +1079,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
     voro::container_poly con(xlo,xhi,ylo,yhi,zlo,zhi,nx,ny,nz,true,true,true,8);
 
     // put atoms into the container
-    for (int i=1; i<= natom; i++){
+    for (int i = 1; i <= natom; ++i){
       double ri = typ2ra[attyp[i]];
       con.put(i, atpos[i][0], atpos[i][1], atpos[i][2], ri);
     }
@@ -1088,7 +1088,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
     voro::voronoicell_neighbor c1, c2, *cell;
     voro::c_loop_all cl(con);
     if (cl.start()) do if (con.compute_cell(c1,cl)){
-      for (int i=0; i<7; i++) index[i] = 0;
+      for (int i = 0; i < 7; ++i) index[i] = 0;
        
       cl.pos(xpos,ypos,zpos);
       id = cl.pid();
@@ -1100,7 +1100,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
       if (fpsurf){
         int nf = fs.size();
         double wt = 1./cell->surface_area();
-        for (int i=0; i<nf; i++) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fpsurf, "%lg %lg\n", fs[i]*wt, fs[i]);
       }
 
       // refine the voronoi cell if asked by removing tiny surfaces
@@ -1109,8 +1109,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
         int nf = fs.size();
         // sort neighbors by area if asked to keep a minimum # of neighbors
         if (nminnei > 0){
-          for (int i=0; i<nf; i++)
-          for (int j=i+1; j<nf; j++){
+          for (int i = 0; i < nf; ++i)
+          for (int j = i+1; j < nf; ++j){
             if (fs[j] > fs[i]){
               double dswap = fs[i]; fs[i] = fs[j]; fs[j] = dswap;
               int ik = neigh[i]; neigh[i] = neigh[j]; neigh[j] = ik;
@@ -1120,7 +1120,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
 
         c2.init(-lx,lx,-ly,ly,-lz,lz);
         // add condition on surface
-        for (int i=0; i<nf; i++){
+        for (int i = 0; i < nf; ++i){
           if (i < nminnei || fs[i] > surf_min){
             int jd = neigh[i];
   
@@ -1129,7 +1129,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
             double yij = atpos[jd][1]-ypos;
             double zij = atpos[jd][2]-zpos;
 
-            ApplyPBC(xij, yij, zij, 0);
+            ApplyPBC(xij, yij, zij);
 
             double scale = typ2ra[attyp[id]]/(typ2ra[attyp[id]] + typ2ra[attyp[jd]]);
             scale += scale;
@@ -1148,7 +1148,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
       vol = cell->volume();
       cell->face_freq_table(ff);
       int nn = ff.size()-1;
-      for (int i=3; i<= MIN(6,nn); i++) index[i] = ff[i];
+      for (int i = 3; i <= MIN(6,nn); ++i) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
       if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
@@ -1163,14 +1163,14 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
         memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
       neilist[0][id] = nf;
-      for (int i=0; i<nf; i++) neilist[i+1][id] = neigh[i];
+      for (int i = 0; i < nf; ++i) neilist[i+1][id] = neigh[i];
       volume[id] = vol;
 
       // output voro index info
       if (fp){
         fprintf(fp,"%d %d %lg %lg %lg %lg %s %d %d", id, attyp[id], xpos, ypos, zpos, vol, vstr, index[5], nf);
-        for (int i=0; i<nf; i++) fprintf(fp," %d", neigh[i]);
-        for (int i=0; i<nf; i++) fprintf(fp," %lg", fs[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fp," %d", neigh[i]);
+        for (int i = 0; i < nf; ++i) fprintf(fp," %lg", fs[i]);
         fprintf(fp,"\n");
       }
 
@@ -1199,7 +1199,7 @@ void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, do
   while (k < nv){
     perim[is] = 0.;
     int ned = vlst[k++];
-    for (int ii=0; ii<ned; ii++){
+    for (int ii = 0; ii < ned; ++ii){
       int jj = (ii+1)%ned;
       int v1 = vlst[k+ii], v2 = vlst[k+jj];
       double dx = vpos[v1*3]   - vpos[v2*3];
@@ -1210,7 +1210,7 @@ void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, do
       perim[is] += r;
     }
     perim[is] = 1./perim[is];
-    is++; k += ned;
+    ++is; k += ned;
   }
   
   int ford[nf];
@@ -1219,19 +1219,19 @@ void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, do
     int ned = vlst[k++];
 
     int nuc = 0;
-    for (int ii=0; ii<ned; ii++){
+    for (int ii = 0; ii < ned; ++ii){
       double rwt = edges[ie] * perim[is];
       if (fpedge) fprintf(fpedge, "%lg %g\n", rwt, edges[ie]);
-      if (edges[ie] <= edge_min) nuc++;
-      ie++;
+      if (edges[ie] <= edge_min) ++nuc;
+      ++ie;
     }
     ford[is++] = ned - nuc;
     k += ned;
   }
 
   if (edge_min > ZERO){
-    for (int i=3; i<7; i++) idx[i] = 0;
-    for (int i=0; i<nf; i++){
+    for (int i = 3; i < 7; ++i) idx[i] = 0;
+    for (int i = 0; i < nf; ++i){
       if (ford[i] < 7) idx[ford[i]] += 1;
     }
   }
@@ -1245,12 +1245,10 @@ return;
  * xij (inout) : x
  * yij (inout) : y
  * zij (inout) : z
- * flag (in)   : 1, non-orthogonal; 0, orthogonal box
  * ---------------------------------------------------------------------------*/
-void DumpAtom::ApplyPBC(double &xij, double &yij, double &zij, const int flag)
+void DumpAtom::ApplyPBC(double &xij, double &yij, double &zij)
 {
-  if (flag){  // non-orthogonal box
-
+  if (triclinic) {  // non-orthogonal box
     while (zij > hz){
       xij -= xz;
       yij -= yz;

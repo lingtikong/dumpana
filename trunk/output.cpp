@@ -7,12 +7,12 @@
  * Atoms forming the Voronoi cluster are written together with the Voronoi
  * vertices, with an atomic type of X.
  *----------------------------------------------------------------------------*/
-void Driver::OutputVoroCells()
+void Driver::OutputVoroCells( )
 {
   char str[MAXLINE];
-  printf("\n"); for (int i=0; i<6; i++) printf("====");
+  printf("\n"); for (int i=0; i<6; ++i) printf("====");
   printf("   Output  Voronoi  Clusters    ");
-  for (int i=0; i<6; i++) printf("====");
+  for (int i=0; i<6; ++i) printf("====");
 
   // thresholds for surface and edges
   set_cutoffs(1);
@@ -66,7 +66,7 @@ void Driver::OutputVoroCells()
     if (one->nsel < 1) continue;
     one->dir2car();
 
-    for (int id = 1; id <= one->natom; id++){
+    for (int id = 1; id <= one->natom; ++id){
       if (one->atsel[id] == 0) continue;
       double xpos = one->atpos[id][0];
       double ypos = one->atpos[id][1];
@@ -77,7 +77,7 @@ void Driver::OutputVoroCells()
       dx.clear(); dy.clear(); dz.clear(); vertex.clear();
       dx.resize(nei+1); dy.resize(nei+1); dz.resize(nei+1);
 
-      for (int jj=1; jj<= nei; jj++){
+      for (int jj=1; jj<= nei; ++jj){
         int jd = one->neilist[jj][id];
   
         // apply pbc
@@ -85,7 +85,7 @@ void Driver::OutputVoroCells()
         double yij = one->atpos[jd][1] - ypos;
         double zij = one->atpos[jd][2] - zpos;
         
-        one->ApplyPBC(xij, yij, zij, 0);
+        one->ApplyPBC(xij, yij, zij);
         dx[jj] = xij; dy[jj] = yij; dz[jj] = zij;
 
         if (weighted){
@@ -105,7 +105,7 @@ void Driver::OutputVoroCells()
       
       if (type2atnum == NULL){ // no elements assigned, print atomic type num as element
         fprintf(fp,"%d 0. 0.  0.\n", one->attyp[id]);
-        for (int jj = 1; jj <= nei; jj++){
+        for (int jj = 1; jj <= nei; ++jj){
           int jd = one->neilist[jj][id];
           fprintf(fp,"%d %lg %lg %lg\n", one->attyp[jd], dx[jj], dy[jj], dz[jj]);
         }
@@ -115,14 +115,14 @@ void Driver::OutputVoroCells()
         char ename[3];
         element->Num2Name(type2atnum[one->attyp[id]], ename);
         fprintf(fp,"%2s 0. 0. 0.\n", ename);
-        for (int jj = 1; jj <= nei; jj++){
+        for (int jj = 1; jj <= nei; ++jj){
           int jd = one->neilist[jj][id];
           element->Num2Name(type2atnum[one->attyp[jd]], ename);
           fprintf(fp,"%2s %lg %lg %lg\n", ename, dx[jj], dy[jj], dz[jj]);
         }
         for (int kk = 0; kk < 3*nv; kk += 3) fprintf(fp,"X %lg %lg %lg\n", vertex[kk], vertex[kk+1], vertex[kk+2]);
       }
-      nclus++;
+      ++nclus;
     }
   }
 
@@ -130,7 +130,7 @@ void Driver::OutputVoroCells()
   vertex.clear(); dx.clear(); dy.clear(); dz.clear();
 
   printf("\n%d clusters were selected and written to: %s\n", nclus, fname);
-  for (int i=0; i<20; i++) printf("===="); printf("\n");
+  for (int i=0; i<20; ++i) printf("===="); printf("\n");
   delete []fname;
 return;
 }
