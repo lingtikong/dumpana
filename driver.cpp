@@ -1,8 +1,8 @@
 #include "driver.h"
 #include "version.h"
-#include <set>
 #include <list>
 #include <string>
+#include <algorithm>
 
 /*------------------------------------------------------------------------------
  * Constructor of driver, main menu
@@ -213,19 +213,17 @@ return;
 void Driver::readdump(const int narg, int inow, char **arg)
 {
   // get the dump files
-  std::set<std::string> df_set;
   std::list<std::string> df_list;
   std::string fname;
 
-  df_set.clear(); df_list.clear();
+  df_list.clear();
 
   int iarg = inow;
   // get dump file names if supplied, othewise assume "dump.lammpstrj"
   while (narg > iarg){
     fname.assign(arg[iarg++]);
-    if (df_set.count(fname) == 0) {df_set.insert(fname); df_list.push_back(fname);}
+    if (find(df_list.begin(), df_list.end(), fname) == df_list.end()) df_list.push_back(fname);
   }
-  df_set.clear();
 
   if (df_list.size() < 1){
     fname.assign("dump.lammpstrj");
