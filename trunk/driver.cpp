@@ -14,7 +14,7 @@ Driver::Driver(int narg, char** arg)
   nframe = 0;
   type2atnum = NULL; type2radius = weighted = NULL;
   element = NULL;
-  spk = 0;
+  spk = novoro = 0;
 
   memory = new Memory();
 
@@ -54,6 +54,9 @@ Driver::Driver(int narg, char** arg)
 
     } else if (strcmp(arg[iarg], "-spk") == 0){ // SPPARKS trajectory
       spk = 1;
+
+    } else if (strcmp(arg[iarg], "-nosave") == 0){ // Do not save voro info for each frame, so as to use less memory
+      novoro = 1;
 
     } else {
       break;
@@ -784,7 +787,7 @@ void Driver::help()
   for (int i = 0; i < 20; ++i) printf("----");
   printf("\nCode to analyse the atom style dump files of lammps. Functions available:\n");
   MainMenu();
-  printf("\nUsage:\n    dumpana [options] [file]\n\nAvailable options:\n");
+  printf("\nUsage:\n    dumpana [options] [file [file2]]\n\nAvailable options:\n");
   printf("    -h       To display this help info;\n");
   printf("    -1       To tell the code to exit once an analysis is done;\n");
   printf("    -os      To output the surface area and its ratio when analyze Voronoi diagram;\n");
@@ -795,7 +798,8 @@ void Driver::help()
   printf("    -w/-x    To or not to perform weighted Voronoi tessellation, if possible;\n");
   printf("             by default, weigthed will be done if element mapping has been done;\n");
   printf("    -spk     To indicate the dump file is of SPPARKS format;\n");
-  printf("    file     Must be lammps atom style or spparks dump file, by default: dump.lammpstrj.\n");
+  printf("    -nosave  To indicate not to save Voro info for each frame;\n");
+  printf("    file     Must be lammps atom style or spparks dump files, by default: dump.lammpstrj.\n");
   printf("\n\n");
   exit(0);
 return;

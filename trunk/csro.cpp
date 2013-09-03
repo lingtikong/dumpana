@@ -106,6 +106,8 @@ void Driver::csro()
         fprintf(fp,"\n");
       }
     }
+
+    if (novoro) one->FreeVoro();
   }
   
   bigint ntotal = 0;

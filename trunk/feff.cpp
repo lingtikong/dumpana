@@ -236,6 +236,8 @@ void Driver::FEFF_main()
       // clsoe the file
       if (flag_out & OutFeff) fclose(fp);
     } // end of loop over frames
+
+    if (novoro) one->FreeVoro();
   }
   fclose(fpx);
 

@@ -252,6 +252,7 @@ void Driver::bonds()
       }
     }
 
+    if (novoro) one->FreeVoro();
     ++nused;
   }
   fclose(fp);
