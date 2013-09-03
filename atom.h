@@ -54,6 +54,7 @@ public:
   int bonded(int,int);   // check if two atoms are neighbors to each other
   void voro_cluster(int, const int, int, list<int> &, map<int,int> &); // find neighbors of an atom upto certain Voronoi shells
   double *volume;        // Voronoi volume
+  void FreeVoro();       // free memory of neilist, voro, and volume
 
   void selection(const char *);
   void SelInfo();

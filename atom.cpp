@@ -1285,4 +1285,16 @@ void DumpAtom::ApplyPBC(double &xij, double &yij, double &zij)
   }
 return;
 }
+
+/* -----------------------------------------------------------------------------
+ * Private method to free memory of Voro info
+ * ----------------------------------------------------------------------------- */
+void DumpAtom::FreeVoro()
+{
+  voro.clear();
+  if (neilist) memory->destroy(neilist); neilist = NULL;
+  if (volume)  memory->destroy(volume);  volume  = NULL;
+
+return;
+}
 /*------------------------------------------------------------------------------ */
