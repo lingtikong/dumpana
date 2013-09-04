@@ -117,6 +117,7 @@ void Driver::strfac()
 
     // select atoms as source
     one->selection(selcmd);
+    if (min_mem) one->FreeVoro();
     if (one->nsel < 1) continue;
 
     printf("  Now to process frame %d... ", img+1); fflush(stdout);

@@ -148,7 +148,7 @@ void Driver::csro()
 
     fprintf(fp,"\n# "); for (int i = 0; i < 20; ++i) fprintf(fp,"----");
     fprintf(fp,"\n# Concentration:"); for (int ip = 1; ip <= ntype; ++ip) fprintf(fp,"%10.6f", concentration[ip]);
-    fprintf(fp,"\n"); for (int i = 0; i < 20; ++i) fprintf(fp,"____"); fprintf(fp,"\n# CSRO         :");
+    fprintf(fp,"\n# "); for (int i = 0; i < 20; ++i) fprintf(fp,"____"); fprintf(fp,"\n# CSRO         :");
     for (int jp = 1; jp <= ntype; ++jp){
       element->Num2Name(type2atnum[jp],ename);
       fprintf(fp,"    %2s    ", ename);

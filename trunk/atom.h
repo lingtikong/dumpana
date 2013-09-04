@@ -60,7 +60,6 @@ public:
   void SelInfo();
   void SelHelp();
 
-  int least_memory, cartesian;
   void car2dir();
   void dir2car();
 
@@ -70,6 +69,7 @@ private:
   int MaxNei;
   double vmins[3];
 
+  int least_memory, cartesian;
   double **x, **s;
 
   char *realcmd;

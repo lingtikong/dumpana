@@ -132,6 +132,8 @@ void Driver::spatial()
 
     // select atoms as source
     one->selection(selcmd);
+    if (min_mem) one->FreeVoro();
+
     if (one->nsel < 1) continue;
 
     // factional coordinate needed
