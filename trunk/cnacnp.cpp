@@ -94,7 +94,7 @@ void Driver::Compute_CNACNP()
     ComputeCNAAtom *cna = new ComputeCNAAtom(job, one->natom, one->neilist, one->atpos, one->box, fp);
     delete cna;
 
-    if (novoro) one->FreeVoro();
+    if (min_mem) one->FreeVoro();
     printf(" Frame %d done, %s info written to: %s\n", img+1, jobstr, fname);
   }
 

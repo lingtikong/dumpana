@@ -22,7 +22,7 @@ public:
 private:
   char *dump;                             // dump file name; should carries the last file name
   int spk;                                // SPPARKS trajectory, cartesian coordinate
-  int novoro;                             // Do not save Voro info so as to use less memory
+  int min_mem;                            // Flag, whether to minimize memory usage
   int nframe;                             // total # of frames
   int istr, iend, inc;                    // frame range
   DumpAtom *one;                          // pointer to one frame

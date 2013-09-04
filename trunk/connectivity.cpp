@@ -266,7 +266,7 @@ void Driver::ClusterConnectivity()
       nconn.clear(); SCid.clear(); conns.clear(); connt.clear();
     }
 
-    if (novoro) one->FreeVoro();
+    if (min_mem) one->FreeVoro();
   }
   memory->destroy(cenlist);
 

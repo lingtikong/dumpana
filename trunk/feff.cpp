@@ -237,7 +237,7 @@ void Driver::FEFF_main()
       if (flag_out & OutFeff) fclose(fp);
     } // end of loop over frames
 
-    if (novoro) one->FreeVoro();
+    if (min_mem) one->FreeVoro();
   }
   fclose(fpx);
 

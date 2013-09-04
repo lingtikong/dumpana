@@ -124,7 +124,7 @@ void Driver::OutputVoroCells( )
       }
       ++nclus;
     }
-    if (novoro) one->FreeVoro();
+    if (min_mem) one->FreeVoro();
   }
 
   fclose(fp);

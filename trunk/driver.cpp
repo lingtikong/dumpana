@@ -14,7 +14,7 @@ Driver::Driver(int narg, char** arg)
   nframe = 0;
   type2atnum = NULL; type2radius = weighted = NULL;
   element = NULL;
-  spk = novoro = 0;
+  spk = min_mem = 0;
 
   memory = new Memory();
 
@@ -55,8 +55,8 @@ Driver::Driver(int narg, char** arg)
     } else if (strcmp(arg[iarg], "-spk") == 0){ // SPPARKS trajectory
       spk = 1;
 
-    } else if (strcmp(arg[iarg], "-nosave") == 0){ // Do not save voro info for each frame, so as to use less memory
-      novoro = 1;
+    } else if (strcmp(arg[iarg], "-mm") == 0){  // Flag indicate to minimize memory usage
+      min_mem = 1;
 
     } else {
       break;
@@ -239,6 +239,11 @@ void Driver::readdump(const int narg, int inow, char **arg)
   flag[0] = '-'; flag[1] = '\\'; flag[2] = '|'; flag[3] = '/';
   printf("\n"); for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
+  // read dump flags
+  int rflag = 0;
+  if (spk) rflag |= 1;
+  if (min_mem) rflag |= 2;
+
   // read dump file one by one
   while (! df_list.empty()){
     fname.assign(df_list.front()); df_list.pop_front();
@@ -258,7 +263,7 @@ void Driver::readdump(const int narg, int inow, char **arg)
 
     // read file
     while (!feof(fp)){
-      one = new DumpAtom(fp, dump, spk);
+      one = new DumpAtom(fp, dump, rflag);
 
       if (one->initialized){
         all.push_back(one); ++nf_one;
@@ -798,7 +803,7 @@ void Driver::help()
   printf("    -w/-x    To or not to perform weighted Voronoi tessellation, if possible;\n");
   printf("             by default, weigthed will be done if element mapping has been done;\n");
   printf("    -spk     To indicate the dump file is of SPPARKS format;\n");
-  printf("    -nosave  To indicate not to save Voro info for each frame;\n");
+  printf("    -mm      To indicate to minimize memory usage;\n");
   printf("    file     Must be lammps atom style or spparks dump files, by default: dump.lammpstrj.\n");
   printf("\n\n");
   exit(0);
