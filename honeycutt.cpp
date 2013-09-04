@@ -74,7 +74,7 @@ void Driver::honeycutt_andersen()
       }
     }
     printf("Frame %d done, HA info written to: %s\n", img+1, fname);
-    if (novoro) one->FreeVoro();
+    if (min_mem) one->FreeVoro();
   }
   printf("\n"); for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
   fclose(fp);

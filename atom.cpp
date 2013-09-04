@@ -5,12 +5,22 @@
 
 /*------------------------------------------------------------------------------
  * Constructor, to read one image from the atom style dump file of lammps
+ *------------------------------------------------------------------------------
+ * Parameters:
+ *  fp       : (in) File pointer, of dump file
+ *  dumpfile : (in) dump file
+ *  flag     : (in) 1st bit, lammps or spk dump; 2nd bit, least memory or not
  *----------------------------------------------------------------------------*/
-DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int spk)
+DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
 {
   iframe = natom = ntype = tstep = 0;
   initialized = triclinic = 0;
   xy = xz = yz = 0.;
+  least_memory = cartesian = 0;
+
+  int spk = 0;
+  if (flag & 1) spk = 1;
+  if (flag & 2) least_memory = 1;
 
   realcmd = NULL;
   attyp = atsel = numtype = NULL; atpos = x = s = NULL;
@@ -91,22 +101,32 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int spk)
   axis[0][1] = axis[0][2] = axis[1][2] = 0.;
   for (int idim = 0; idim < 3; ++idim) hbox[idim] = 0.5*box[idim];
 
-  if (spk){
-    memory->create(x, natom+1, 3, "x");
-    for (int id = 1; id <= natom; ++id)
-    for (int idim = 0; idim < 3; ++idim) x[id][idim] = s[id][idim];
+  h_inv[0] = 1.0/box[0];
+  h_inv[1] = 1.0/box[1];
+  h_inv[2] = 1.0/box[2];
+  h_inv[3] = -box[3] / (box[1]*box[2]);
+  h_inv[4] = (box[3]*box[5] - box[1]*box[4]) / (box[0]*box[1]*box[2]);
+  h_inv[5] = -box[5] / (box[0]*box[1]);
 
-    double h_inv[6];
-    h_inv[0] = 1.0/box[0];
-    h_inv[1] = 1.0/box[1];
-    h_inv[2] = 1.0/box[2];
-    h_inv[3] = -box[3] / (box[1]*box[2]);
-    h_inv[4] = (box[3]*box[5] - box[1]*box[4]) / (box[0]*box[1]*box[2]);
-    h_inv[5] = -box[5] / (box[0]*box[1]);
-    for (int id = 1; id <= natom; ++id){
-      s[id][0] = h_inv[0]*x[id][0] + h_inv[5]*x[id][1] + h_inv[4]*x[id][2];
-      s[id][1] = h_inv[1]*x[id][1] + h_inv[3]*x[id][2];
-      s[id][2] = h_inv[2]*x[id][2];
+  if (spk){
+    if (least_memory){
+      double x0[3];
+      for (int id = 1; id <= natom; ++id){
+        for (int idim=0; idim<3; idim++) x0[idim] = s[id][idim];
+        s[id][0] = h_inv[0]*x0[0] + h_inv[5]*x0[1] + h_inv[4]*x0[2];
+        s[id][1] = h_inv[1]*x0[1] + h_inv[3]*x0[2];
+        s[id][2] = h_inv[2]*x0[2];
+      }
+    } else {
+      memory->create(x, natom+1, 3, "x");
+      for (int id = 1; id <= natom; ++id)
+      for (int idim = 0; idim < 3; ++idim) x[id][idim] = s[id][idim];
+   
+      for (int id = 1; id <= natom; ++id){
+        s[id][0] = h_inv[0]*x[id][0] + h_inv[5]*x[id][1] + h_inv[4]*x[id][2];
+        s[id][1] = h_inv[1]*x[id][1] + h_inv[3]*x[id][2];
+        s[id][2] = h_inv[2]*x[id][2];
+      }
     }
   }
 
@@ -148,28 +168,53 @@ DumpAtom::~DumpAtom()
  *----------------------------------------------------------------------------*/
 void DumpAtom::dir2car()
 {
-  if (x){
-    atpos = x;
+  if (cartesian) return;
+
+  if (least_memory == 0 && x){
+    atpos = x; cartesian = 1;
     return;
   }
 
-  memory->create(x, natom+1, 3,"x");
-
-  if (triclinic){
-    for (int i = 1; i <= natom; ++i){
-      x[i][0] = s[i][0]*lx + s[i][1]*xy + s[i][2]*xz + xlo;
-      x[i][1] = s[i][1]*ly + s[i][2]*yz + ylo;
-      x[i][2] = s[i][2]*lz + zlo;
+  if (least_memory){
+    double s0[3];
+    if (triclinic){
+      for (int i = 1; i <= natom; ++i){
+        for (int idim = 0; idim < 3; ++idim) s0[idim] = s[i][idim];
+        s[i][0] = s0[0]*lx + s0[1]*xy + s0[2]*xz + xlo;
+        s[i][1] = s0[1]*ly + s0[2]*yz + ylo;
+        s[i][2] = s0[2]*lz + zlo;
+      }
+    } else {
+      for (int i = 1; i <= natom; ++i){
+        for (int idim = 0; idim < 3; ++idim) s0[idim] = s[i][idim];
+        s[i][0] = s0[0]*lx + xlo;
+        s[i][1] = s0[1]*ly + ylo;
+        s[i][2] = s0[2]*lz + zlo;
+      }
     }
+    atpos = s;
+
   } else {
-    for (int i = 1; i <= natom; ++i){
-      x[i][0] = s[i][0]*lx + xlo;
-      x[i][1] = s[i][1]*ly + ylo;
-      x[i][2] = s[i][2]*lz + zlo;
-    }
-  }
 
-  atpos = x;
+    if (x == NULL){
+      memory->create(x, natom+1, 3,"x");
+      if (triclinic){
+        for (int i = 1; i <= natom; ++i){
+          x[i][0] = s[i][0]*lx + s[i][1]*xy + s[i][2]*xz + xlo;
+          x[i][1] = s[i][1]*ly + s[i][2]*yz + ylo;
+          x[i][2] = s[i][2]*lz + zlo;
+        }
+      } else {
+        for (int i = 1; i <= natom; ++i){
+          x[i][0] = s[i][0]*lx + xlo;
+          x[i][1] = s[i][1]*ly + ylo;
+          x[i][2] = s[i][2]*lz + zlo;
+        }
+      }
+    }
+    atpos = x;
+  }
+  cartesian = 1;
 return;
 }
 
@@ -178,7 +223,18 @@ return;
  *----------------------------------------------------------------------------*/
 void DumpAtom::car2dir()
 {
+  if (cartesian == 0) return;
+
+  if (least_memory){
+    for (int id = 1; id <= natom; ++id){
+      s[id][0] = h_inv[0]*s[id][0] + h_inv[5]*s[id][1] + h_inv[4]*s[id][2];
+      s[id][1] = h_inv[1]*s[id][1] + h_inv[3]*s[id][2];
+      s[id][2] = h_inv[2]*s[id][2];
+    }
+  }
+
   atpos = s;
+  cartesian = 0;
 return;
 }
 
@@ -189,7 +245,7 @@ void DumpAtom::selection(const char *line)
 {
   int n = strlen(line) + 1;
   char *selcmd;
-  memory->create(selcmd, n, "selcmd"); //(char *) memory->smalloc(n*sizeof(char),"selcmd");
+  memory->create(selcmd, n, "selcmd");
   strcpy(selcmd,line);
 
   char *key, *oper, *ptr;

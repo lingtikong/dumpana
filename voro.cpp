@@ -46,6 +46,7 @@ void Driver::voro()
     one->ComputeVoro(mins, fp, fpsurf, fpedge, weighted);
 
     fclose(fp);
+    if (min_mem) one->FreeVoro();
     printf("  Frame %d done, voro info written to: %s\n", img+1, ptr);
   }
 

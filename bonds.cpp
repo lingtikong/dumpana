@@ -252,7 +252,7 @@ void Driver::bonds()
       }
     }
 
-    if (novoro) one->FreeVoro();
+    if (min_mem) one->FreeVoro();
     ++nused;
   }
   fclose(fp);

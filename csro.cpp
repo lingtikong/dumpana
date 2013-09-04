@@ -107,7 +107,7 @@ void Driver::csro()
       }
     }
 
-    if (novoro) one->FreeVoro();
+    if (min_mem) one->FreeVoro();
   }
   
   bigint ntotal = 0;
