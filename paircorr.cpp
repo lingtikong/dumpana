@@ -154,6 +154,8 @@ void Driver::paircorr()
           }
         }
         ++nused;
+
+        if (min_mem) one->FreeVoro();
       } // end loop over frames
   
     } else {        // g(r) between two selections
@@ -200,6 +202,7 @@ void Driver::paircorr()
         }
   
         ++nused;
+        if (min_mem) one->FreeVoro();
       }
     }
   

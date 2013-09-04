@@ -112,20 +112,27 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
     if (least_memory){
       double x0[3];
       for (int id = 1; id <= natom; ++id){
-        for (int idim=0; idim<3; idim++) x0[idim] = s[id][idim];
+        x0[0] = s[id][0] - xlo;
+        x0[1] = s[id][1] - ylo;
+        x0[2] = s[id][2] - zlo;
         s[id][0] = h_inv[0]*x0[0] + h_inv[5]*x0[1] + h_inv[4]*x0[2];
         s[id][1] = h_inv[1]*x0[1] + h_inv[3]*x0[2];
         s[id][2] = h_inv[2]*x0[2];
       }
+
     } else {
       memory->create(x, natom+1, 3, "x");
       for (int id = 1; id <= natom; ++id)
       for (int idim = 0; idim < 3; ++idim) x[id][idim] = s[id][idim];
    
+      double x0[3];
       for (int id = 1; id <= natom; ++id){
-        s[id][0] = h_inv[0]*x[id][0] + h_inv[5]*x[id][1] + h_inv[4]*x[id][2];
-        s[id][1] = h_inv[1]*x[id][1] + h_inv[3]*x[id][2];
-        s[id][2] = h_inv[2]*x[id][2];
+        x0[0] = x[id][0] - xlo;
+        x0[1] = x[id][1] - ylo;
+        x0[2] = x[id][2] - zlo;
+        s[id][0] = h_inv[0]*x0[0] + h_inv[5]*x0[1] + h_inv[4]*x0[2];
+        s[id][1] = h_inv[1]*x0[1] + h_inv[3]*x0[2];
+        s[id][2] = h_inv[2]*x0[2];
       }
     }
   }
@@ -178,18 +185,18 @@ void DumpAtom::dir2car()
   if (least_memory){
     double s0[3];
     if (triclinic){
-      for (int i = 1; i <= natom; ++i){
-        for (int idim = 0; idim < 3; ++idim) s0[idim] = s[i][idim];
-        s[i][0] = s0[0]*lx + s0[1]*xy + s0[2]*xz + xlo;
-        s[i][1] = s0[1]*ly + s0[2]*yz + ylo;
-        s[i][2] = s0[2]*lz + zlo;
+      for (int id = 1; id <= natom; ++id){
+        for (int idim = 0; idim < 3; ++idim) s0[idim] = s[id][idim];
+        s[id][0] = s0[0]*lx + s0[1]*xy + s0[2]*xz + xlo;
+        s[id][1] = s0[1]*ly + s0[2]*yz + ylo;
+        s[id][2] = s0[2]*lz + zlo;
       }
     } else {
-      for (int i = 1; i <= natom; ++i){
-        for (int idim = 0; idim < 3; ++idim) s0[idim] = s[i][idim];
-        s[i][0] = s0[0]*lx + xlo;
-        s[i][1] = s0[1]*ly + ylo;
-        s[i][2] = s0[2]*lz + zlo;
+      for (int id = 1; id <= natom; ++id){
+        for (int idim = 0; idim < 3; ++idim) s0[idim] = s[id][idim];
+        s[id][0] = s0[0]*lx + xlo;
+        s[id][1] = s0[1]*ly + ylo;
+        s[id][2] = s0[2]*lz + zlo;
       }
     }
     atpos = s;
@@ -199,16 +206,16 @@ void DumpAtom::dir2car()
     if (x == NULL){
       memory->create(x, natom+1, 3,"x");
       if (triclinic){
-        for (int i = 1; i <= natom; ++i){
-          x[i][0] = s[i][0]*lx + s[i][1]*xy + s[i][2]*xz + xlo;
-          x[i][1] = s[i][1]*ly + s[i][2]*yz + ylo;
-          x[i][2] = s[i][2]*lz + zlo;
+        for (int id = 1; id <= natom; ++id){
+          x[id][0] = s[id][0]*lx + s[id][1]*xy + s[id][2]*xz + xlo;
+          x[id][1] = s[id][1]*ly + s[id][2]*yz + ylo;
+          x[id][2] = s[id][2]*lz + zlo;
         }
       } else {
-        for (int i = 1; i <= natom; ++i){
-          x[i][0] = s[i][0]*lx + xlo;
-          x[i][1] = s[i][1]*ly + ylo;
-          x[i][2] = s[i][2]*lz + zlo;
+        for (int id = 1; id <= natom; ++id){
+          x[id][0] = s[id][0]*lx + xlo;
+          x[id][1] = s[id][1]*ly + ylo;
+          x[id][2] = s[id][2]*lz + zlo;
         }
       }
     }
@@ -225,11 +232,25 @@ void DumpAtom::car2dir()
 {
   if (cartesian == 0) return;
 
+  double x0[3];
   if (least_memory){
-    for (int id = 1; id <= natom; ++id){
-      s[id][0] = h_inv[0]*s[id][0] + h_inv[5]*s[id][1] + h_inv[4]*s[id][2];
-      s[id][1] = h_inv[1]*s[id][1] + h_inv[3]*s[id][2];
-      s[id][2] = h_inv[2]*s[id][2];
+    if (triclinic){
+      for (int id = 1; id <= natom; ++id){
+        x0[0] = s[id][0] - xlo;
+        x0[1] = s[id][1] - ylo;
+        x0[2] = s[id][2] - zlo;
+        s[id][0] = h_inv[0]*x0[0] + h_inv[5]*x0[1] + h_inv[4]*x0[2];
+        s[id][1] = h_inv[1]*x0[1] + h_inv[3]*x0[2];
+        s[id][2] = h_inv[2]*x0[2];
+      }
+
+    } else {
+
+      for (int id = 1; id <= natom; ++id){
+        s[id][0] = h_inv[0]*(s[id][0] - xlo);
+        s[id][1] = h_inv[1]*(s[id][1] - ylo);
+        s[id][2] = h_inv[2]*(s[id][2] - zlo);
+      }
     }
   }
 
