@@ -39,14 +39,14 @@ public:
   double **atpos;
   double axis[3][3];
 
-  int weighted;
+  double *type2radius;
   // Compute the Voronoi info, equal-distance method
   void ComputeVoro(double *);
   void ComputeVoro(double *, FILE *, FILE *, FILE *);
 
   // Compute the Voronoi info, weighted-distance method
-  void ComputeVoro(double *, double *); 
-  void ComputeVoro(double *, FILE *, FILE *, FILE *, double *);
+  //void ComputeVoro(double *, const int); 
+  //void ComputeVoro(double *, FILE *, FILE *, FILE *, const int);
 
   // the following four variables/functions cannot be called before ComputeVoro
   int **neilist;         // Voronoi neighbor list, only available if voro is computed
@@ -66,6 +66,10 @@ public:
   void ApplyPBC(double &, double &, double &);
 
 private:
+  int wted;
+  void Direct_Voro(double *, FILE *, FILE *, FILE *);
+  void Radica_Voro(double *, FILE *, FILE *, FILE *);
+
   int MaxNei;
   double vmins[3];
 

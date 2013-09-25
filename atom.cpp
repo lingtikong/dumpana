@@ -17,6 +17,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   initialized = triclinic = 0;
   xy = xz = yz = 0.;
   least_memory = cartesian = 0;
+  type2radius = NULL;
 
   int spk = 0;
   if (flag & 1) spk = 1;
@@ -25,7 +26,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   realcmd = NULL;
   attyp = atsel = numtype = NULL; atpos = x = s = NULL;
 
-  weighted = 0;
+  wted = 0;
   voro.clear();
   neilist = NULL;
   volume = NULL;
@@ -559,9 +560,8 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         vindex.assign(ptr); voroset.insert(vindex);
       }
-      // don't care about if weighted or not
-      int idum = weighted;
-      weighted = 0; ComputeVoro(mins); weighted = idum;
+      int idum = mins[2]; mins[2] = mins[1]; mins[1] = idum;
+      ComputeVoro(mins);
 
       // make the selection
       if (voroset.size() > 0){
@@ -673,7 +673,7 @@ void DumpAtom::SelHelp()
   printf("random number generator, if a non-positive number is provided, it will be\n");
   printf("set automatically based on current time. The logical operation before `ran`\n");
   printf("is always assumed to be AND, no matter what is defined;\n");
-  printf("or `voro MinSurf MinEdge NMinNei NVoroIndex VoroIndices', which will\n");
+  printf("or `voro MinSurf NMinNei MinEdge NVoroIndex VoroIndices', which will\n");
   printf("select atoms with certain Voronoi indices. `MinSurf' and `MinEdge%%' defines\n");
   printf("the thresholds for surface and edge, respectively; they can be zero; `NMinNei'\n");
   printf("defines the Minimum # of neighbors wanted, zero means no limitations; `NVoroIndex'\n");
@@ -726,24 +726,22 @@ int DumpAtom::count_words(const char *line)
 }
 
 /*------------------------------------------------------------------------------
- * Method to compute the Voronoi index, Voronoi neighbor list info
+ * Private method to compute the direct Voronoi index, Voronoi neighbor list info
  * mins     (in)  : surf_min  edge_min Min#Nei; if negative, default/previous
  *                : values will be taken.
  * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
  * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing
  * fpedge   (in)  : file pointer to write edge ratio info; if NULL, write nothing
  *----------------------------------------------------------------------------*/
-void DumpAtom::ComputeVoro(double *mins){ ComputeVoro(mins, NULL, NULL, NULL); }
-void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
+void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 {
   for (int i = 0; i < 3; ++i) if (mins[i] < 0.) mins[i] = vmins[i];
 
   double diff = 0.;
   for (int i = 0; i < 3; ++i) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
-  if (diff <= ZERO && voro.size()==natom) return;
-  //if (diff <= ZERO && voro.size()==natom && weighted==0) return;
+  if (diff <= ZERO && voro.size() == natom && wted == 0) return;
 
-  weighted = 0;
+  wted = 0;
   for (int i = 0; i < 3; ++i) vmins[i] = fabs(mins[i]);
 
   double surf_min = vmins[0];
@@ -1003,28 +1001,39 @@ return 0;
 }
 
 /*------------------------------------------------------------------------------
- * Method to compute the Voronoi index, Voronoi neighbor list info
+ * Public method to compute the Voronoi index, Voronoi neighbor list info
  * mins     (in)  : surf_min edge_min Min#Nei; if negative, default/previous
  *                : values will be taken.
  * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
  * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing
  * fpedge   (in)  : file pointer to write edge ratio info; if NULL, write nothing
- * typ2ra   (in)  : array stores the radius for each atomic type
  *----------------------------------------------------------------------------*/
-void DumpAtom::ComputeVoro(double *mins, double *typ2ra){ ComputeVoro(mins, NULL, NULL, NULL, typ2ra); }
-void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, double *typ2ra)
+void DumpAtom::ComputeVoro(double *mins){ ComputeVoro(mins, NULL, NULL, NULL);}
+void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 {
-  // if typ2ra info not available, compute equal-distance voronoi
-  if (typ2ra == NULL){ComputeVoro(mins,fp,fpsurf,fpedge); return;}
+  if (type2radius) Radica_Voro(mins, fp, fpsurf, fpedge);
+  else Direct_Voro(mins, fp, fpsurf, fpedge);
 
+return;
+}
+
+/*------------------------------------------------------------------------------
+ * Private method to compute the Radical Voronoi index, Voronoi neighbor list info
+ * mins     (in)  : surf_min edge_min Min#Nei; if negative, default/previous
+ *                : values will be taken.
+ * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
+ * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing
+ * fpedge   (in)  : file pointer to write edge ratio info; if NULL, write nothing
+ *----------------------------------------------------------------------------*/
+void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
+{
   // now to compute weighted voronoi info
-
   for (int i = 0; i < 3; ++i) if (mins[i] < 0.) mins[i] = vmins[i];
   double diff = 0.;
   for (int i = 0; i < 3; ++i) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
-  if (diff <= ZERO && voro.size() == natom && weighted) return;
+  if (diff <= ZERO && voro.size() == natom && wted) return;
 
-  weighted = 1;
+  wted = 1;
   for (int i = 0; i < 3; ++i) vmins[i] = fabs(mins[i]);
 
   double surf_min = vmins[0];
@@ -1056,7 +1065,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
     voro::container_periodic_poly con(lx,xy,ly,xz,yz,lz,nx,ny,nz,8);
     // put atoms into the container
     for (int i = 1; i <= natom; ++i){
-      double ri = typ2ra[attyp[i]];
+      double ri = type2radius[attyp[i]];
       con.put(i, atpos[i][0], atpos[i][1], atpos[i][2], ri);
     }
 
@@ -1107,7 +1116,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
 
             ApplyPBC(xij, yij, zij);
 
-            double scale = typ2ra[attyp[id]]/(typ2ra[attyp[id]] + typ2ra[attyp[jd]]);
+            double scale = type2radius[attyp[id]]/(type2radius[attyp[id]] + type2radius[attyp[jd]]);
             scale += scale;
             xij *= scale;
             yij *= scale;
@@ -1158,7 +1167,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
 
     // put atoms into the container
     for (int i = 1; i <= natom; ++i){
-      double ri = typ2ra[attyp[i]];
+      double ri = type2radius[attyp[i]];
       con.put(i, atpos[i][0], atpos[i][1], atpos[i][2], ri);
     }
 
@@ -1209,7 +1218,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge, d
 
             ApplyPBC(xij, yij, zij);
 
-            double scale = typ2ra[attyp[id]]/(typ2ra[attyp[id]] + typ2ra[attyp[jd]]);
+            double scale = type2radius[attyp[id]]/(type2radius[attyp[id]] + type2radius[attyp[jd]]);
             scale += scale;
             xij *= scale;
             yij *= scale;

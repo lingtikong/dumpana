@@ -31,8 +31,8 @@ void Driver::bonds()
 
   char isel[MAXLINE], jsel[MAXLINE], ksel[MAXLINE];
   // selection commands for atoms
-  one = all[istr]; ShowRadius4Voro();
-  one->ComputeVoro(mins, weighted);
+  one = all[istr];
+  one->ComputeVoro(mins);
 
   if (job == 1) printf("\nA pair of atoms defines a bond, first define one end of the bond.\n");
   else printf("\nThree atoms define an angle, now define the central atom.\n");
@@ -142,7 +142,7 @@ void Driver::bonds()
     one = all[img];
 
     // Compute the Voronoi neighbors
-    one->ComputeVoro(mins, weighted);
+    one->ComputeVoro(mins);
 
     // make the first selection
     one->selection(isel);

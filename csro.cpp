@@ -34,9 +34,7 @@ void Driver::csro()
 
   // refinement info
   set_cutoffs(0);
-
-  // Show relevant info if Weighted Voronoi is used
-  one = all[istr]; ShowRadius4Voro();
+  one = all[istr];
 
   // output file name for per atom CSRO
   FILE *fp; fp = NULL;
@@ -74,7 +72,7 @@ void Driver::csro()
     }
 
     // Compute Vorornoi info, so as to get the neighbor list
-    one->ComputeVoro(mins, weighted);
+    one->ComputeVoro(mins);
 
     // set local variables
     int *attyp = one->attyp;
