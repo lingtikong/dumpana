@@ -16,9 +16,9 @@ void Driver::OutputVoroCells( )
   printf("   Output  Voronoi  Clusters    ");
   for (int i = 0; i < 6; ++i) printf("====");
   printf("\nPlease select your desired job:\n");
-  printf("  1. Output each cluster as a seperate file;\n");
-  printf("  2. Output selected atoms for each frame;\n");
-  printf("  3. Output selected clusters for each frame;\n");
+  printf("  1. Output selected Voronoi cluster and vertices;\n");
+  printf("  2. Output selected atoms in selected frames;\n");
+  printf("  3. Output selected clusters in selected frames;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
@@ -66,7 +66,7 @@ void Driver::OutputVoroCells( )
   strcpy(fname, ptr);
   FILE *fp = fopen(fname, "w");
   
-  if (job == 1){
+  if (job == 1){ // output selected cluster and the Voronoi vertices
     voro::voronoicell_neighbor cell;
     double lmax = MAX(one->lx, MAX(one->ly, one->lz));
    
@@ -80,7 +80,7 @@ void Driver::OutputVoroCells( )
       one->ComputeVoro(mins, weighted);
       one->selection(selcmd);
    
-      if (one->nsel < 1) continue;
+      if (one->nsel < 1){if (min_mem) one->FreeVoro(); continue;}
       one->dir2car();
    
       for (int id = 1; id <= one->natom; ++id){
@@ -152,7 +152,7 @@ void Driver::OutputVoroCells( )
     // now to do the real job
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
-      if (job == 3) one->ComputeVoro(mins, weighted);
+      one->ComputeVoro(mins, weighted);
       one->selection(selcmd);
 
       // get the selected list
