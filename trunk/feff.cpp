@@ -18,10 +18,7 @@ void Driver::FEFF_main()
 
   // voro refinement info
   set_cutoffs(1);
-
-  // Show relevant info if Weighted Voronoi is used
-  ShowRadius4Voro();
-  one->ComputeVoro(mins,weighted);
+  one->ComputeVoro(mins);
 
   int AbsorberType = 0;
   // selection of atoms for each frame
@@ -116,7 +113,7 @@ void Driver::FEFF_main()
     one = all[img];
 
     // compute the Voronoi info, so as to get all related info
-    one->ComputeVoro(mins, weighted);
+    one->ComputeVoro(mins);
 
     // make selection
     one->selection(selcmd);

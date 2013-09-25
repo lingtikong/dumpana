@@ -12,9 +12,9 @@ Driver::Driver(int narg, char** arg)
   one = NULL; all.clear();
   dump = NULL;
   nframe = 0;
-  type2atnum = NULL; type2radius = weighted = NULL;
+  type2atnum = NULL; type2radius = NULL;
   element = NULL;
-  spk = min_mem = 0;
+  spk = min_mem = weighted = 0;
 
   memory = new Memory();
 
@@ -72,6 +72,7 @@ Driver::Driver(int narg, char** arg)
   readdump(narg, iarg, arg);
 
   if (nframe < 1) return;
+  ShowRadius4Voro();
 
   // main menu
   char str[MAXLINE];
@@ -193,7 +194,6 @@ return;
  *------------------------------------------------------------------------------ */
 Driver::~Driver()
 {
-  weighted = NULL;
   if (dump) delete []dump;
   if (element) delete element;
   if (type2atnum)  memory->destroy(type2atnum);
@@ -886,7 +886,7 @@ return;
  *------------------------------------------------------------------------------ */
 void Driver::ShowRadius4Voro()
 {
-  weighted = NULL;
+  weighted = 0;
   if ((flag_out&WtdVoro)==0 || one==NULL || type2radius==NULL) return;
 
   printf("\nWeighted Voronoi tesselation will be performed, with atomic radii:\n");
@@ -897,7 +897,12 @@ void Driver::ShowRadius4Voro()
     printf("  R(%s) = %g A;", ename, type2radius[ip]);
   } printf("\n");
 
-  weighted = type2radius;
+  weighted = 1;
+
+  for (int i = 0; i < nframe; ++i){
+    one = all[i];
+    one->type2radius = type2radius;
+  }
 
 return;
 }

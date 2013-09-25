@@ -36,8 +36,8 @@ private:
 
   // map atomic type to elements
   ChemElements *element;
-  int *type2atnum;
-  double *type2radius, *weighted;
+  int *type2atnum, weighted;
+  double *type2radius;
   void MapType2Elem(const int, const int);
   void ShowRadius4Voro();
 

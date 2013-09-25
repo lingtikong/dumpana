@@ -35,7 +35,7 @@ void Driver::Compute_CNACNP()
   set_cutoffs(0);
 
   // Show relevant info if Weighted Voronoi is used
-  one = all[istr]; ShowRadius4Voro();
+  one = all[istr];
 
   char *fname = new char[8];
   if (job == 1){
@@ -86,7 +86,7 @@ void Driver::Compute_CNACNP()
     one = all[img];
 
     // Compute the Voronoi info
-    one->ComputeVoro(mins, weighted);
+    one->ComputeVoro(mins);
     one->dir2car();
 
     fprintf(fp,"# frame number: %d\n", img);

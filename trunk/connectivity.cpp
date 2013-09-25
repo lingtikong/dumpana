@@ -24,9 +24,7 @@ void Driver::ClusterConnectivity()
 
   // voro refinement info
   set_cutoffs(1);
-
-  // Show relevant info if Weighted Voronoi is used
-  one = all[istr]; ShowRadius4Voro();
+  one = all[istr];
 
   // selection of atoms for each frame
   char selcmd[MAXLINE];
@@ -40,7 +38,7 @@ void Driver::ClusterConnectivity()
     } else strcpy(selcmd,"all\n");
 
     // check the selection command on the first frame
-    one = all[istr]; one->ComputeVoro(mins,weighted);
+    one = all[istr]; one->ComputeVoro(mins);
     one->selection(selcmd); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
@@ -156,7 +154,7 @@ void Driver::ClusterConnectivity()
     one = all[img];
 
     // compute the neighbor list and voro info
-    one->ComputeVoro(mins, weighted);
+    one->ComputeVoro(mins);
 
     one->selection(selcmd);
 

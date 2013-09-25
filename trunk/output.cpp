@@ -32,9 +32,7 @@ void Driver::OutputVoroCells( )
   
   // thresholds for surface and edges
   set_cutoffs(1);
-
-  // show relevant info if weighted Voronoi is used
-  one = all[istr]; ShowRadius4Voro();
+  one = all[istr];
 
   // selection of atoms for each frame
   char selcmd[MAXLINE];
@@ -77,7 +75,7 @@ void Driver::OutputVoroCells( )
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
    
-      one->ComputeVoro(mins, weighted);
+      one->ComputeVoro(mins);
       one->selection(selcmd);
    
       if (one->nsel < 1){if (min_mem) one->FreeVoro(); continue;}
@@ -106,7 +104,7 @@ void Driver::OutputVoroCells( )
           dx[jj] = xij; dy[jj] = yij; dz[jj] = zij;
    
           if (weighted){
-            double scale = weighted[one->attyp[id]]/(weighted[one->attyp[id]] + weighted[one->attyp[jd]]);
+            double scale = type2radius[one->attyp[id]]/(type2radius[one->attyp[id]] + type2radius[one->attyp[jd]]);
             scale += scale;
             xij *= scale;
             yij *= scale;
@@ -152,7 +150,7 @@ void Driver::OutputVoroCells( )
     // now to do the real job
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
-      one->ComputeVoro(mins, weighted);
+      one->ComputeVoro(mins);
       one->selection(selcmd);
 
       // get the selected list

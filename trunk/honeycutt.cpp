@@ -20,9 +20,7 @@ void Driver::honeycutt_andersen()
 
   // voronoi refinement
   set_cutoffs(0);
-
-  // Show relevant info if Weighted Voronoi is used
-  one = all[istr]; ShowRadius4Voro();
+  one = all[istr];
 
   int unbond = 0;
   printf("\nWould you like to analyse un-bonded pairs? (y/n)[n]: ");
@@ -52,7 +50,7 @@ void Driver::honeycutt_andersen()
     one = all[img];
 
     // Compute Voronoi neighbor info
-    one->ComputeVoro(mins, weighted);
+    one->ComputeVoro(mins);
 
     fprintf(fp,"# frame number: %d\n", img);
     // now to analyse the Honeycutt-Andersen bond type info

@@ -13,9 +13,7 @@ void Driver::voro()
 
   // thresholds for surface and edges
   set_cutoffs(1);
-
-  // show relevant info if weighted Voronoi is used
-  one = all[istr]; ShowRadius4Voro();
+  one = all[istr];
 
   printf("\nPlease input the prefix for output files [voro]: ");
   fgets(str,MAXLINE, stdin);
@@ -43,7 +41,7 @@ void Driver::voro()
     fprintf(fp,"# id type x  y  z  vol voroindex n5 NNei NeiList surfaceareas\n");
 
     // ask for Voronoi info
-    one->ComputeVoro(mins, fp, fpsurf, fpedge, weighted);
+    one->ComputeVoro(mins, fp, fpsurf, fpedge);
 
     fclose(fp);
     if (min_mem) one->FreeVoro();
