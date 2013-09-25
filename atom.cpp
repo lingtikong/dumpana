@@ -673,7 +673,7 @@ void DumpAtom::SelHelp()
   printf("random number generator, if a non-positive number is provided, it will be\n");
   printf("set automatically based on current time. The logical operation before `ran`\n");
   printf("is always assumed to be AND, no matter what is defined;\n");
-  printf("or `voro MinSurf MinEdge%% NMinNei NVoroIndex VoroIndices', which will\n");
+  printf("or `voro MinSurf MinEdge NMinNei NVoroIndex VoroIndices', which will\n");
   printf("select atoms with certain Voronoi indices. `MinSurf' and `MinEdge%%' defines\n");
   printf("the thresholds for surface and edge, respectively; they can be zero; `NMinNei'\n");
   printf("defines the Minimum # of neighbors wanted, zero means no limitations; `NVoroIndex'\n");
@@ -740,7 +740,8 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 
   double diff = 0.;
   for (int i = 0; i < 3; ++i) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
-  if (diff <= ZERO && voro.size()==natom && weighted==0) return;
+  if (diff <= ZERO && voro.size()==natom) return;
+  //if (diff <= ZERO && voro.size()==natom && weighted==0) return;
 
   weighted = 0;
   for (int i = 0; i < 3; ++i) vmins[i] = fabs(mins[i]);

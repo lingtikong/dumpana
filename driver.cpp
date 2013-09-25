@@ -182,7 +182,7 @@ void Driver::MainMenu()
   printf("  4. Common Neighbor/Centro-symmetry;  |  14. Static structure factor;\n");
   printf("  5. Prepare for FEFF9;                |  15. Bond length/angles;\n");
   printf("  6. Voronoi cluster connectivity;     |  16. Spatial distribution of atoms;\n");
-  printf("  7. Output selected Voronoi clusters; |  17. RMSD between frames;\n");
+  printf("  7. Output selected atoms/clusters;   |  17. RMSD between frames;\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;
