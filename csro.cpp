@@ -65,7 +65,7 @@ void Driver::csro()
     if (one->ntype != ntype) continue;
 
     if (job == 2){
-      fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[1], int(mins[2]));
+      fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
       fprintf(fp,"# Per atom CSRO info for frame %d; istep = %d\n# id type", img+1, one->tstep);
       for (int jp = 1; jp <= ntype; ++jp) fprintf(fp," csro-%d", jp);
       fprintf(fp,"\n");

@@ -166,6 +166,7 @@ DumpAtom::~DumpAtom()
   memory->destroy(volume);
 
   voro.clear();
+  type2radius = NULL;
 
   delete memory;
 }
@@ -560,7 +561,6 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         vindex.assign(ptr); voroset.insert(vindex);
       }
-      int idum = mins[2]; mins[2] = mins[1]; mins[1] = idum;
       ComputeVoro(mins);
 
       // make the selection
@@ -727,7 +727,7 @@ int DumpAtom::count_words(const char *line)
 
 /*------------------------------------------------------------------------------
  * Private method to compute the direct Voronoi index, Voronoi neighbor list info
- * mins     (in)  : surf_min  edge_min Min#Nei; if negative, default/previous
+ * mins     (in)  : surf_min  Min#Nei edge_min; if negative, default/previous
  *                : values will be taken.
  * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
  * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing
@@ -745,8 +745,8 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
   for (int i = 0; i < 3; ++i) vmins[i] = fabs(mins[i]);
 
   double surf_min = vmins[0];
-  double edge_min = vmins[1];
-  int nminnei = int(vmins[2]);
+  int nminnei = int(vmins[1]);
+  double edge_min = vmins[2];
 
   voro.clear();
   if (neilist) memory->destroy(neilist);
@@ -1002,7 +1002,7 @@ return 0;
 
 /*------------------------------------------------------------------------------
  * Public method to compute the Voronoi index, Voronoi neighbor list info
- * mins     (in)  : surf_min edge_min Min#Nei; if negative, default/previous
+ * mins     (in)  : surf_min Min#Nei edge_min ; if negative, default/previous
  *                : values will be taken.
  * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
  * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing
@@ -1019,7 +1019,7 @@ return;
 
 /*------------------------------------------------------------------------------
  * Private method to compute the Radical Voronoi index, Voronoi neighbor list info
- * mins     (in)  : surf_min edge_min Min#Nei; if negative, default/previous
+ * mins     (in)  : surf_min Min#Nei edge_min ; if negative, default/previous
  *                : values will be taken.
  * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
  * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing
@@ -1037,8 +1037,8 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
   for (int i = 0; i < 3; ++i) vmins[i] = fabs(mins[i]);
 
   double surf_min = vmins[0];
-  double edge_min = vmins[1];
-  int nminnei = int(vmins[2]);
+  int nminnei = int(vmins[1]);
+  double edge_min = vmins[2];
 
   voro.clear();
   if (neilist) memory->destroy(neilist);
