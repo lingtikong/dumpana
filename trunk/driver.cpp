@@ -72,7 +72,6 @@ Driver::Driver(int narg, char** arg)
   readdump(narg, iarg, arg);
 
   if (nframe < 1) return;
-  ShowRadius4Voro();
 
   // main menu
   char str[MAXLINE];
@@ -878,6 +877,9 @@ void Driver::MapType2Elem(const int flag, const int ntype)
     } printf("\n");
   }
 
+  // Show radius info
+  if (flag == 0) ShowRadius4Voro();
+
 return;
 }
 
@@ -925,22 +927,21 @@ void Driver::set_cutoffs(int flag)
 
   printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
   printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
-  printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", int(mins[2]));
+  printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", int(mins[1]));
   if (count_words(fgets(str,MAXLINE, stdin)) > 0){
-    mins[2] = atof(strtok(str, " \n\t\r\f"));
-    if (mins[2] < 1.) mins[2] = 0.;
-    else printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", int(mins[2]));
+    mins[1] = atof(strtok(str, " \n\t\r\f"));
+    if (mins[1] < 1.) mins[1] = 0.;
+    else printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", int(mins[1]));
   }
 
   if (flag){
-    printf("Please input your criterion for ultra short edges, 0 to keep all [%g]: ", mins[1]);
+    printf("Please input your criterion for ultra short edges, 0 to keep all [%g]: ", mins[2]);
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
-    if (ptr) mins[1] = atof(ptr);
-    printf("Edges whose lengths are less than %lg will be skipped!\n", mins[1]);
-  } else mins[1] = -1.;
+    if (ptr) mins[2] = atof(ptr);
+    printf("Edges whose lengths are less than %lg will be skipped!\n", mins[2]);
+  } else mins[2] = -1.;
 
 return;
 }
-
 /*----------------------------------------------------------------------------*/
