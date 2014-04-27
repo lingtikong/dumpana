@@ -2,7 +2,7 @@
 
 /*------------------------------------------------------------------------------
  * Method to do voronoi diagram analysis for the selected frames
- * Resultant voro index info will be written to files: voro%{tstep}
+ * Resultant voro index info will be written to files: voro%{iframe}
  *----------------------------------------------------------------------------*/
 void Driver::voro()
 {
@@ -31,7 +31,7 @@ void Driver::voro()
     one = all[img];
 
     // open file for output
-    sprintf(str,"%s_%d.dat ", prefix, one->tstep);
+    sprintf(str,"%s_%d.dat ", prefix, one->iframe);
     ptr = strtok(str," \n\t\r\f");
     FILE *fp = fopen(ptr, "w");
     fprintf(fp,"#Box info: %lg %lg %lg %lg %lg %lg %d %lg %lg %lg\n",

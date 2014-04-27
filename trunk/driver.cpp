@@ -524,7 +524,7 @@ void Driver::writesel()
         fprintf(fp,"%lg %lg\n", one->ylo, one->yhi);
         fprintf(fp,"%lg %lg\n", one->zlo, one->zhi);
       }
-      fprintf(fp,"ITEM: ATOMS\n");
+      fprintf(fp,"ITEM: ATOMS id type xs ys zs\n");
 
       for (int id = 1; id <= one->natom; ++id) fprintf(fp,"%d %d %lg %lg %lg\n", id, one->attyp[id],
       one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
@@ -642,7 +642,7 @@ void Driver::writesel()
         fprintf(fp,"%lg %lg\n", one->ylo, one->yhi);
         fprintf(fp,"%lg %lg\n", one->zlo, one->zhi);
       }
-      fprintf(fp,"ITEM: ATOMS\n");
+      fprintf(fp,"ITEM: ATOMS id type xs ys zs\n");
 
       if (mjob == 1){
         for (int id = 1; id <= one->natom; ++id){
@@ -917,7 +917,7 @@ return;
 void Driver::set_cutoffs(int flag)
 {
   char str[MAXLINE];
-  mins[0] = 5.e-1; mins[1] = 1.e-2; mins[2] = 0.;
+  mins[0] = 0.5; mins[1] = 0.; mins[2] = 0.01;
 
   printf("\nPlease input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
   fgets(str,MAXLINE, stdin);

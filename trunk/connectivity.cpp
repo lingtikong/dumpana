@@ -291,7 +291,7 @@ void Driver::ClusterConnectivity()
     fprintf(fp,"#  Penetrate%% : for linked clusters, the percentage of shared via volume,\n");
     fprintf(fp,"#                i.e., nearby cluster centers are bonded to each other;\n#");
     for (int i = 0; i < 20; ++i) fprintf(fp,"----");
-    fprintf(fp,"\n#NClus NSuper Niso NLinked Vertex%% Edge%% Face%% Penetrate%%\n");
+    fprintf(fp,"\n#NClus NSuper Niso NLinked Vertex%% Edge%%   Face%%   Penetrate%%\n");
     fprintf(fp,"%d %d  %d %d", nclus, nsuper, niso, nsuper-niso); counts[0] = MAX(1,counts[0]);
     for (int ii = 1; ii < 5; ++ii) fprintf(fp," %g", double(counts[ii])/double(counts[0])*100.); fprintf(fp,"\n");
   }

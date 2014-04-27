@@ -238,8 +238,8 @@ void Driver::FEFF_main()
   }
   fclose(fpx);
 
-  // script to run feff
   if (flag_out & OutFeff){
+    // script to run feff
     sprintf(fname,"%s/run_feff", workdir);
     FILE *fp = fopen(fname, "w");
     fprintf(fp,"#!/bin/bash\nfor dir in `ls|grep F`\n");
@@ -248,6 +248,22 @@ void Driver::FEFF_main()
     fprintf(fp,"    cd ..\n  fi\ndone\n\nexit 0\n\n");
     fclose(fp);
     sprintf(fname,"chmod +x %s/run_feff", workdir);
+    system(fname);
+
+    // Script to collect xmu
+    sprintf(fname,"%s/collect_xmu", workdir);
+    fp = fopen(fname, "w");
+    fprintf(fp, "#!/bin/bash\n# Script to collect and average xmu\n");
+    fprintf(fp, "files=%c%c\n", char(34),char(34));
+    fprintf(fp, "for dir in `ls|grep F`\ndo\n");
+    fprintf(fp, "if [ -d %c$dir%c ]; then\n", char(34),char(34));
+    fprintf(fp, "files=%c$files $dir/xmu.dat%c\nfi\ndone\n", char(34),char(34));
+
+    fprintf(fp, "histjoin -o ttt.dat -k 3 -v 6 -n -s $files\n");
+    fprintf(fp, "sort -g -k 2 ttt.dat > xmu-ave.dat\nrm -rf ttt.dat\n");
+    fprintf(fp, "exit 0\n");
+    fclose(fp);
+    sprintf(fname,"chmod +x %s/collect_xmu", workdir);
     system(fname);
   }
   printf("\nJob done, %d directorys are created and listed in `%s/DirList`.\n", ndir, workdir);
