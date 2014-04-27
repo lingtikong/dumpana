@@ -34,7 +34,7 @@ EXE    = ${BASE}
 SRC = $(wildcard *.cpp)
 OBJ = $(SRC:.cpp=.o)
 #====================================================================
-all:  ver ${EXE}
+all: ${EXE}
 
 ${EXE}:  $(OBJ)
 	$(LINK) $(OFLAGS) $(OBJ) $(LIB) -o $@
