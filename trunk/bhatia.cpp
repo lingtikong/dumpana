@@ -3,9 +3,6 @@
 #include <set>
 #include <cmath>
 
-#ifdef OMP
-#include "omp.h"
-#endif
 /*------------------------------------------------------------------------------
  * Method to compute the Bhatia-Thornton structure factor for a binary system.
  * Ref:
@@ -139,28 +136,23 @@ void Driver::bhatia_thornton()
 
   // Now to initialize the necessary data
   double ***SNN, ***SNC, ***SCC;
-  std::complex<double> ***N1, ***N2, ***C, ***N;
-  memory->create(N1,  2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "N1");
-  memory->create(N2,  2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "N2");
-  memory->create(C,   2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "C");
   memory->create(SNN, 2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "SNN");
   memory->create(SNC, 2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "SNC");
   memory->create(SCC, 2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "SCC");
 
-  N = N1;
-  
   for (int ix = 0; ix < 2*nq[0]+1; ++ix)
   for (int iy = 0; iy < 2*nq[1]+1; ++iy)
   for (int iz = 0; iz <   nq[2]+1; ++iz) SNN[ix][iy][iz] = SNC[ix][iy][iz] = SCC[ix][iy][iz] = 0.;
 
-  const double tpi = 8.*atan(1.);
-  const std::complex<double> itpi = std::complex<double>(0.,1.)*tpi;
   int nused = 0;
   
+  std::complex<double> ***N1, ***N2, ***C, ***N;
+  memory->create(N1,  2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "N1");
+  memory->create(N2,  2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "N2");
+  memory->create(C,   2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "C");
+  N = N1;
+
   // now to compute the Fourie transformation
-#ifdef OMP
-#pragma omp parallel for default(shared) private(N1, N2, N) schedule(dynamic,1) 
-#endif
   for (int img = istr; img <= iend; img += inc){ // loop over frames
     one = all[img];
     one->selection(srcsel);
@@ -174,7 +166,7 @@ void Driver::bhatia_thornton()
     int na = 0, nb = 0;
 
     // loop over atoms
-    for (int i = 1; i < one->natom; ++i){
+    for (int i = 1; i <= one->natom; ++i){
       if (one->atsel[i] == 0) continue;
 
       int it = one->attyp[i];
@@ -217,9 +209,6 @@ void Driver::bhatia_thornton()
         }
       }
     } // end of loop over atoms
-#ifdef OMP
-#pragma omp atomic
-#endif
     ++nused;
 
     double nt = double(na+nb);
@@ -240,36 +229,23 @@ void Driver::bhatia_thornton()
 
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
-    for (int iz = 0; iz <   nq[2]+1; ++iz){
-#ifdef OMP
-#pragma omp atomic
-#endif
-      SNN[ix][iy][iz] += real(conj(N[ix][iy][iz])*N[ix][iy][iz]) * inv_n;
-    }
+    for (int iz = 0; iz <   nq[2]+1; ++iz) SNN[ix][iy][iz] += real(conj(N[ix][iy][iz])*N[ix][iy][iz]) * inv_n;
 
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
-    for (int iz = 0; iz <   nq[2]+1; ++iz){
-#ifdef OMP
-#pragma omp atomic
-#endif
-      SCC[ix][iy][iz] += real(conj(C[ix][iy][iz])*C[ix][iy][iz]) * nt;
-}
+    for (int iz = 0; iz <   nq[2]+1; ++iz) SCC[ix][iy][iz] += real(conj(C[ix][iy][iz])*C[ix][iy][iz]) * nt;
 
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
-    for (int iz = 0; iz <   nq[2]+1; ++iz){
-#ifdef OMP
-#pragma omp atomic
-#endif
-      SNC[ix][iy][iz] += real(conj(N[ix][iy][iz])*C[ix][iy][iz]);
-    }
+    for (int iz = 0; iz <   nq[2]+1; ++iz) SNC[ix][iy][iz] += real(conj(N[ix][iy][iz])*C[ix][iy][iz]);
+
   } // end loop over frames
-  A.clear(); B.clear();
   N = NULL;
   memory->destroy(N1);
   memory->destroy(N2);
   memory->destroy(C);
+
+  A.clear(); B.clear();
 
   // get the average Bhatia-Thornton structure factor info
   double inv_n = 1./double(nused);
@@ -296,9 +272,9 @@ void Driver::bhatia_thornton()
     char fname[3][MAXLINE];
     FILE *fp[3];
 
-    sprintf(fname[0], "%s_SNN.dat\n", ptr);
-    sprintf(fname[1], "%s_SNC.dat\n", ptr);
-    sprintf(fname[2], "%s_SCC.dat\n", ptr);
+    sprintf(fname[0], "%s_SNN.dat", ptr);
+    sprintf(fname[1], "%s_SNC.dat", ptr);
+    sprintf(fname[2], "%s_SCC.dat", ptr);
     for (int i = 0; i < 3; ++i){
       fp[i] = fopen(fname[i], "w");
       fprintf(fp[i], "%s", header);
@@ -394,7 +370,7 @@ void Driver::bhatia_thornton()
   }
   for (int j = 0; j < nbin; ++j){
     if (Sq[0][j] > 0.){
-      for (int i = 1; i < 3; ++i) Sq[i][j] /= Sq[0][j];
+      for (int i = 1; i < 4; ++i) Sq[i][j] /= Sq[0][j];
     }
   }
 

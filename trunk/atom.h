@@ -61,6 +61,7 @@ public:
 
   void ApplyPBC(double &, double &, double &);
 
+  double *prop;          // Property, can by anything
 private:
   // private method to compute the Voronoi tessellation; the real engine
   int wted;

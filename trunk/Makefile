@@ -1,6 +1,7 @@
 .SUFFIXES : .o .cpp
 # compiler and flags
-CC     = g++ -Wno-unused-result
+CC     = /opt/intel/bin/icc
+#CC     = g++ -Wno-unused-result
 LINK   = $(CC) ${MPILIB}
 CFLAGS = -O3 $(UFLAG) $(DEBUG)
 #
@@ -21,8 +22,8 @@ VoroINC = -I/opt/libs/voro_svn/src
 VoroLIB = -L/opt/libs/voro_svn/src -lvoro++
 
 # Parallization
-MPIINC = -DOMP
-MPILIB = -openmp
+#MPIINC = -DOMP -fopenmp
+#MPILIB = -fopenmp
 # User flag
 #UFLAG =
 # Debug flags
