@@ -14,7 +14,7 @@ Driver::Driver(int narg, char** arg)
   nframe = 0;
   type2atnum = NULL; type2radius = NULL;
   element = NULL;
-  spk = min_mem = weighted = 0;
+  min_mem = weighted = 0;
 
   memory = new Memory();
 
@@ -51,9 +51,6 @@ Driver::Driver(int narg, char** arg)
 
     } else if (strcmp(arg[iarg], "-x") == 0){ // no weighted Voronoi tessellation even when possible
       flag_out &= ~WtdVoro;
-
-    } else if (strcmp(arg[iarg], "-spk") == 0){ // SPPARKS trajectory
-      spk = 1;
 
     } else if (strcmp(arg[iarg], "-mm") == 0){  // Flag indicate to minimize memory usage
       min_mem = 1;
@@ -251,8 +248,7 @@ void Driver::readdump(const int narg, int inow, char **arg)
 
   // read dump flags
   int rflag = 0;
-  if (spk) rflag |= 1;
-  if (min_mem) rflag |= 2;
+  if (min_mem) rflag |= 1;
 
   // read dump file one by one
   while (! df_list.empty()){
@@ -305,8 +301,9 @@ void Driver::readdump(const int narg, int inow, char **arg)
     printf("  Number of atoms for each  type: ");
     for (int i = 1; i <= one->ntype; ++i) printf("%d, %d; ", i, one->numtype[i]);
     printf("\n");
+
+    MapType2Elem(0, one->ntype);
   }
-  MapType2Elem(0, one->ntype);
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;
@@ -812,7 +809,6 @@ void Driver::help()
   printf("             clusters; instead, output the CN info only.\n");
   printf("    -w/-x    To or not to perform weighted Voronoi tessellation, if possible;\n");
   printf("             by default, weigthed will be done if element mapping has been done;\n");
-  printf("    -spk     To indicate the dump file is of SPPARKS format;\n");
   printf("    -mm      To indicate to minimize memory usage;\n");
   printf("    file     Must be lammps atom style or spparks dump files, by default: dump.lammpstrj.\n");
   printf("\n\n");

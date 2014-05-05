@@ -83,8 +83,7 @@ void Driver::writebgf()
     printf(" 1. Based on Voronoi cluster;\n");
     printf(" 2. Within defined radius;\n");
     printf("Your choice [%d]: ", ijob);
-    fgets(str,MAXLINE, stdin);
-    ijob = atoi(strtok(str, " \n\t\r\f"));
+    if (count_words(fgets(str,MAXLINE, stdin)) > 0) ijob = atoi(strtok(str, " \n\t\r\f"));
     if (ijob == 2){
       printf("Please input the radius to count neighbors, please note that\n");
       printf("the radius should exceed the 3rd Voronoi shell: ");
@@ -116,7 +115,11 @@ void Driver::writebgf()
   printf("\nPlease input the output file name [atomcfg.bgf]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
-  if (ptr == NULL) {strcpy(str,"atomcfg.bgf"); ptr = strtok(str, " \n\t\r\f");}
+  if (ptr == NULL) {
+    strcpy(str,"atomcfg.bgf");
+    ptr = strtok(str, " \n\t\r\f");
+  }
+
   char *fname = new char[strlen(ptr)+1];
   strcpy(fname, ptr);
   FILE *fp = fopen(fname, "w");
@@ -127,6 +130,7 @@ void Driver::writebgf()
     MapType2Elem(1, one->ntype); printf("\n");
   }
 
+  int nused = 0;
   // now to do the real job
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
@@ -141,7 +145,7 @@ void Driver::writebgf()
 
     // Fraction of N-edge surface as properties
     if (job == 2){
-      memory->destroy(f5);
+      if (f5) memory->destroy(f5);
       memory->create(f5, one->natom+1, "f5");
       one->prop = f5;
 
@@ -160,14 +164,15 @@ void Driver::writebgf()
 
     // Local chemcial concentration as properties
     if (job == 3){
-      memory->destroy(chem);
+      if (chem) memory->destroy(chem);
       memory->create(chem, one->natom+1, "chem");
       one->prop = chem;
 
       // based on Voronoi cluster
-      if (rcut < 0.){
+      if (rcut <= 0.){
         for (int id = 1; id <= one->natom; ++id){
           if (one->atsel[id] == 0) continue;
+
           int nhit = 0;
           int ip = one->attyp[id];
           if (solute.find(ip) != solute.end()) ++nhit;
@@ -175,7 +180,7 @@ void Driver::writebgf()
           for (int jj = 1; jj <= one->neilist[0][id]; ++jj){
             int jd = one->neilist[jj][id];
             int jp = one->attyp[jd];
-            if (solute.find(jd) != solute.end()) ++nhit;
+            if (solute.find(jp) != solute.end()) ++nhit;
           }
           chem[id] = double(nhit)/double(one->neilist[0][id] + 1);
         }
@@ -255,14 +260,16 @@ void Driver::writebgf()
     }
     fprintf(fp,"END\n");
 
+    ++nused;
   } // end of loop over frames
     
   memory->destroy(f5);
   memory->destroy(chem);
   fclose(fp);
-  delete []fname;
 
+  printf("\n%d images were converted into BGF format, which are written to %s\n", nused, fname);
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
+  delete []fname;
 return;
 }
 

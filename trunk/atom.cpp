@@ -9,7 +9,7 @@
  * Parameters:
  *  fp       : (in) File pointer, of dump file
  *  dumpfile : (in) dump file
- *  flag     : (in) 1st bit, lammps or spk dump; 2nd bit, least memory or not
+ *  flag     : (in) 1st bit, least memory or not
  *----------------------------------------------------------------------------*/
 DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
 {
@@ -19,9 +19,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   least_memory = cartesian = 0;
   type2radius = NULL;
 
-  int spk = 0;
-  if (flag & 1) spk = 1;
-  if (flag & 2) least_memory = 1;
+  if (flag & 1) least_memory = 1;
 
   realcmd = NULL;
   attyp = atsel = numtype = NULL; atpos = x = s = NULL;
@@ -71,7 +69,27 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   if (xy*xy+xz*xz+yz*yz > ZERO) triclinic = 1;
 
   // fields info
+  int dcols[6], fcord = 7;
+  for (int i = 0; i < 6; ++i) dcols[i] = i;
   fgets(str,MAXLINE, fp);
+  char *ptr = strtok(str, " \n\t\r\f");
+  for (int i = 0; i < 2; ++i) ptr = strtok(NULL," \n\t\r\f");
+  int ic = 1;
+  while (ptr){
+    if (strcmp(ptr, "id") == 0)   dcols[1] = ic;
+    if (strcmp(ptr, "type") == 0) dcols[2] = ic;
+    if (strcmp(ptr, "x") == 0){   dcols[3] = ic; fcord |= 1;}
+    if (strcmp(ptr, "y") == 0){   dcols[4] = ic; fcord |= 2;}
+    if (strcmp(ptr, "z") == 0){   dcols[5] = ic; fcord |= 4;}
+    if (strcmp(ptr, "xs") == 0){  dcols[3] = ic; fcord &= 6;}
+    if (strcmp(ptr, "ys") == 0){  dcols[4] = ic; fcord &= 5;}
+    if (strcmp(ptr, "zs") == 0){  dcols[5] = ic; fcord &= 3;}
+
+    ++ic;
+    ptr = strtok(NULL," \n\t\r\f");
+  }
+  fcord &= 7;
+  if (fcord != 7 && fcord != 0) return;
 
   memory = new Memory();
   memory->create(attyp, natom+1, "attyp");
@@ -81,17 +99,33 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   realcmd = new char [MAXLINE]; strcpy(realcmd, "all\n");
   nsel = natom;
 
+  // always assumes fractional coordinate
   memory->create(s, natom+1, 3, "s");
   atpos = s;
 
+  // read coordinate
+  int id, ip;
+  double xp, yp, zp;
   for (int i = 0; i < natom; ++i){
     fgets(str,MAXLINE, fp);
-    int id = atoi(strtok(str, " \n\t\r\f"));
-    int ip = atoi(strtok(NULL," \n\t\r\f"));
-    attyp[id] = ip; ntype = MAX(ip,ntype);
-    s[id][0] = atof(strtok(NULL," \n\t\r\f"));
-    s[id][1] = atof(strtok(NULL," \n\t\r\f"));
-    s[id][2] = atof(strtok(NULL," \n\t\r\f"));
+
+    int ic = 1, frd = 0;
+    ptr = strtok(str, " \n\t\r\f");
+    while (ptr){
+      if (ic == dcols[1]){ id = atoi(ptr); frd |=  1; }
+      if (ic == dcols[2]){ ip = atoi(ptr); frd |=  2; }
+      if (ic == dcols[3]){ xp = atof(ptr); frd |=  4; }
+      if (ic == dcols[4]){ yp = atof(ptr); frd |=  8; }
+      if (ic == dcols[5]){ zp = atof(ptr); frd |= 16; }
+
+      ptr = strtok(NULL," \n\t\r\f"); ++ic;
+    }
+    if (frd == 31){
+      attyp[id] = ip; ntype = MAX(ip, ntype);
+      atpos[id][0] = xp;
+      atpos[id][1] = yp;
+      atpos[id][2] = zp;
+    } else { return; } // insufficient info, return
   }
 
   lx = box[0] = axis[0][0] = xhi - xlo;
@@ -113,7 +147,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   h_inv[4] = (box[3]*box[5] - box[1]*box[4]) / (box[0]*box[1]*box[2]);
   h_inv[5] = -box[5] / (box[0]*box[1]);
 
-  if (spk){
+  if ((fcord&7) == 0){ // in case cartesian coordinate read, convert to fractional
     if (least_memory){
       double x0[3];
       for (int id = 1; id <= natom; ++id){

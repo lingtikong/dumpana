@@ -79,7 +79,7 @@ void Driver::strfac()
   for (int iz = 0; iz <   nq[2]+1; ++iz) sqall[ix][iy][iz] = 0.;
 
   // prepare for loop
-  int nused = 0, nnorm = 0;
+  int nused = 0;
   const std::complex<double> I0 = std::complex<double>(0,-1.);
 
   // timer
