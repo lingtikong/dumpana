@@ -1,7 +1,7 @@
 .SUFFIXES : .o .cpp
 # compiler and flags
 CC     = g++ -Wno-unused-result
-LINK   = $(CC)
+LINK   = $(CC) ${MPILIB}
 CFLAGS = -O3 $(UFLAG) $(DEBUG)
 #
 OFLAGS = -O3 $(DEBUG)
@@ -20,6 +20,9 @@ LIB    = $(FFTLIB) $(LPKLIB) $(USRLIB) $(VoroLIB)
 VoroINC = -I/opt/libs/voro_svn/src
 VoroLIB = -L/opt/libs/voro_svn/src -lvoro++
 
+# Parallization
+MPIINC = -DOMP
+MPILIB = -openmp
 # User flag
 #UFLAG =
 # Debug flags
@@ -49,10 +52,10 @@ ver:
 	@echo "#define VERSION `svn info|grep '^Revision'|cut -d: -f2`" > version.h; cat version.h
 
 .f.o:
-	$(FC) $(FFLAGS) $(FREE) $(MPI) ${INC} -c $<
+	$(FC) $(FFLAGS) $(FREE) $(MPIINC) ${INC} -c $<
 .f90.o:
-	$(FC) $(FFLAGS) $(FREE) $(MPI) ${INC} -c $<
+	$(FC) $(FFLAGS) $(FREE) $(MPIINC) ${INC} -c $<
 .c.o:
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) $(MPIINC) -c $<
 .cpp.o:
-	$(CC) $(CFLAGS) $(INC) -c $<
+	$(CC) $(CFLAGS) $(MPIINC) $(INC) -c $<
