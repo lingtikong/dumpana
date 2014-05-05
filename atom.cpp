@@ -29,7 +29,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   wted = 0;
   voro.clear();
   neilist = NULL;
-  volume = NULL;
+  prop = volume = NULL;
   MaxNei = 20;
   vmins[0] = vmins[1] = vmins[2] = 0.;
 

@@ -4,61 +4,49 @@
 
 /*------------------------------------------------------------------------------
  * Method to compute the static structure factor of the system
- *
- * Currently it works for orthogonal box only.
  *----------------------------------------------------------------------------*/
 void Driver::strfac()
 {
   char str[MAXLINE], *ptr;
-  double kmax[3], dk[3], qmax, rdq;
-  int nk[3], nbin = 101;
+  double dq[3], qmax, rdq;
+  int nq[3], nbin = 101;
 
   printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
   printf("    Static  Structure  Factor   ");
   for (int i = 0; i < 6; ++i) printf("====");
 
   // ask for the max value of k's
-  kmax[0] = kmax[1] = kmax[2] = 10.;
-  printf("\nPlease input the upper bound of the k-vectors [%g %g %g]: ", kmax[0], kmax[1], kmax[2]);
-  if (count_words(fgets(str,MAXLINE, stdin)) >= 3){
+  qmax = 10.;
+  printf("\nPlease input the upper bound of the q-vectors [%g]: ", qmax);
+  if (count_words(fgets(str,MAXLINE, stdin)) >= 1){
     ptr = strtok(str, " \n\t\r\f");
-    for (int i = 0; i < 2; ++i){
-      kmax[i] = atof(ptr);
-      ptr = strtok(NULL, " \n\t\r\f");
-    }
-    kmax[2] = atof(ptr);
+    qmax = atof(ptr);
   }
   
-  // ask for the # of bins of k along each direction
-  nk[0] = nk[1] = nk[2] = 20;
-  for (int i = 0; i < 3; ++i) if (abs(kmax[i]) < ZERO) nk[i] = 1;
+  // ask for the # of q-points along each direction
+  nq[0] = nq[1] = nq[2] = 31;
 
-  printf("\nThe computation for 3D is rather expensive, be patient if you use a large k-mesh.\n");
-  printf("Please input the # of k-points along each direction [%d %d %d]: ", nk[0], nk[1], nk[2]);
+  printf("\nThe computation for 3D is rather expensive, be patient if you use a large q-mesh.\n");
+  printf("Please input the # of q-points along each direction [%d %d %d]: ", nq[0], nq[1], nq[2]);
   if (count_words(fgets(str,MAXLINE, stdin)) >= 3){
     ptr = strtok(str, " \n\t\r\f");
     for (int i = 0; i < 2; ++i){
-      nk[i] = atoi(ptr);
+      nq[i] = abs(atoi(ptr));
       ptr = strtok(NULL, " \n\t\r\f");
     }
-    nk[2] = atoi(ptr);
-  }
-  for (int i = 0; i < 3; ++i){
-    if (abs(kmax[i]) < ZERO) nk[i] = 1;
-    nk[i] = MAX(1,nk[i]);
+    nq[2] = abs(atoi(ptr));
   }
 
   // ask for the # of bins for S(q)
-  printf("Please input the # of bins for S(k) [%d]: ", nbin);
+  printf("Please input the # of bins for S(q) [%d]: ", nbin);
   if (count_words(fgets(str,MAXLINE, stdin)) > 0){
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) nbin = atoi(ptr);
     nbin = MAX(2,nbin);
   }
-  qmax = MAX(kmax[0], MAX(kmax[1], kmax[2]));
   rdq = double(nbin-1)/qmax;
   
-  for (int i = 0; i < 3; ++i) dk[i] = kmax[i]/MAX(1.,double(nk[i]-1));
+  for (int i = 0; i < 3; ++i) dq[i] = qmax/MAX(1.,double(nq[i]-1));
 
   // selection commands for atoms
   one = all[istr];
@@ -84,36 +72,24 @@ void Driver::strfac()
   }
 
   // S(kx,ky,kz) accumulator
-  double ***skall;
-  memory->create(skall, nk[0], nk[1], nk[2], "skall");
-  for (int i = 0; i < nk[0]; ++i)
-  for (int j = 0; j < nk[1]; ++j)
-  for (int k = 0; k < nk[2]; ++k) skall[i][j][k] = 0.;
-
-  // space for exp(-i*K_a*r_a)
-  complex<double> **kxrx, **kyry, **kzrz;
-  memory->create(kxrx, nk[0], one->nsel+1, "kxrx");
-  memory->create(kyry, nk[1], one->nsel+1, "kyry");
-  memory->create(kzrz, nk[2], one->nsel+1, "kzrz");
-  int nprev = one->nsel;
-
-  // S(k) is only valid for k > pi/L_min; here we use LMax instead for practical reason
-  double LMax = 0.;
+  double ***sqall;
+  memory->create(sqall, 2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "sqall");
+  for (int ix = 0; ix < 2*nq[0]+1; ++ix)
+  for (int iy = 0; iy < 2*nq[1]+1; ++iy)
+  for (int iz = 0; iz <   nq[2]+1; ++iz) sqall[ix][iy][iz] = 0.;
 
   // prepare for loop
   int nused = 0, nnorm = 0;
-  const complex<double> I0 = complex<double>(0,1.);
+  const std::complex<double> I0 = std::complex<double>(0,-1.);
 
   // timer
   Timer * timer = new Timer();
-  printf("\nStructure factor calculation takes time, please be patient.\n");
+  printf("\nComputing, takes some time, please be patient...\n");
 
+  double q[3];
   // loop over all frames
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
-
-    // does not work for non-orthogonal box
-    if (one->triclinic) continue;
 
     // select atoms as source
     one->selection(selcmd);
@@ -122,121 +98,134 @@ void Driver::strfac()
 
     printf("  Now to process frame %d... ", img+1); fflush(stdout);
 
-    // factional coordinate needed
-    one->car2dir();
-    LMax += MAX(one->box[0], MAX(one->box[1], one->box[2]));
+    // cartesian coordinate needed
+    one->dir2car();
 
-    if (one->nsel != nprev){
-      memory->destroy(kxrx);
-      memory->destroy(kyry);
-      memory->destroy(kzrz);
+    double inv_n = 1./double(one->nsel);
+    // loop over q-point
+    for (int qx = -nq[0]; qx <= nq[0]; ++qx)
+    for (int qy = -nq[1]; qy <= nq[1]; ++qy)
+    for (int qz =      0; qz <= nq[2]; ++qz){
+      int ix = qx + nq[0];
+      int iy = qy + nq[1];
+      int iz = qz;
+      q[0] = qx*dq[0];
+      q[1] = qy*dq[1];
+      q[2] = qz*dq[2];
+ 
+      std::complex<double> qrnow = std::complex<double>(0.,0.);
+      // loop over all atoms
+      for (int id = 1; id <= one->natom; ++id){
+        if (one->atsel[id] == 0) continue;
 
-      memory->create(kxrx, nk[0], one->nsel, "kxrx");
-      memory->create(kyry, nk[1], one->nsel, "kyry");
-      memory->create(kzrz, nk[2], one->nsel, "kzrz");
-      nprev = one->nsel;
+        double qr = q[0]*one->atpos[id][0] + q[1]*one->atpos[id][1] + q[2]*one->atpos[id][2];
+        qrnow += exp(I0*qr);
+      }
+      sqall[ix][iy][iz] += real(conj(qrnow)*qrnow) * inv_n;
     }
 
-    // loops over k
-    complex<double> dq[3];
-    for (int idim = 0; idim < 3; ++idim) dq[idim] = dk[idim]*one->box[idim]*I0;
-
-    int inext = 0;
-    for (int ii = 1; ii <= one->natom; ++ii){
-      if (one->atsel[ii] == 0) continue;
-
-      for (int i = 0; i < nk[0]; ++i){
-        complex<double> kx = double(i) * dq[0];
-
-        kxrx[i][inext] = exp(kx*one->atpos[ii][0]);
-      }
-
-      for (int j = 0; j < nk[1]; ++j){
-        complex<double> ky = double(j) * dq[1];
-
-        kyry[j][inext] = exp(ky*one->atpos[ii][1]);
-      }
-
-      for (int k = 0; k < nk[2]; ++k){
-        complex<double> kz = double(k) * dq[2];
-
-        kzrz[k][inext] = exp(kz*one->atpos[ii][2]);
-      }
-
-      ++inext;
-    }
-
-    for (int i = 0; i < nk[0]; ++i)
-    for (int j = 0; j < nk[1]; ++j)
-    for (int k = 0; k < nk[2]; ++k){
-      complex<double> skone = complex<double>(0.,0.);
-      for (int ii = 0; ii < one->nsel; ++ii) skone += kxrx[i][ii]*kyry[j][ii]*kzrz[k][ii];
-
-      skall[i][j][k] += real(skone*conj(skone));
-    }
-
-    ++nused; nnorm += one->nsel;
+    ++nused;
     printf("Done! Time used: %g seconds.\n", timer->sincelast());
   }
-  memory->destroy(kxrx);
-  memory->destroy(kyry);
-  memory->destroy(kzrz);
   timer->stop();
   printf("Total CPU time used: %g seconds.\n", timer->cpu_time());
   delete timer;
 
   if (nused < 1) return;
 
-  double fac = 1./double(nnorm);
-  // output the result, and compute S(k)
-  int *hit; double *Sk;
-  memory->create(Sk,  nbin, "Sk");
-  memory->create(hit, nbin, "hit");
-  for (int i = 0; i < nbin; ++i) Sk[i]  = 0.;
-  for (int i = 0; i < nbin; ++i) hit[i] = 0;
+  double inv_n = 1./double(nused);
+  for (int ix = 0; ix < 2*nq[0]+1; ++ix)
+  for (int iy = 0; iy < 2*nq[1]+1; ++iy)
+  for (int iz = 0; iz <   nq[2]+1; ++iz) sqall[ix][iy][iz] *= inv_n;
 
-  printf("\nPlease input the file name to output S(kx,ky,kz) [skv.dat]: ");
+  // output the result, and compute S(q)
+  double **sq;
+  memory->create(sq,  nbin, 2, "sq");
+  for (int i = 0; i < nbin; ++i) sq[i][0] = sq[i][1]  = 0.;
+
+  printf("\nIf you want to output S(kx,ky,kz), input a file name, enter to skip: ");
+  if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+    ptr = strtok(str, " \n\t\r\f");
+    FILE *fp = fopen(ptr,"w");
+    fprintf(fp,"# kx ky kz  S(k)\n");
+
+    for (int qx = -nq[0]; qx <= nq[0]; ++qx)
+    for (int qy = -nq[1]; qy <= nq[1]; ++qy){
+      for (int qz = -nq[2]; qz < 0; ++qz){
+        int ix = -qx + nq[0];
+        int iy = -qy + nq[1];
+        int iz = -qz;
+        q[0] = qx*dq[0];
+        q[1] = qy*dq[1];
+        q[2] = qz*dq[2];
+
+        fprintf(fp,"%lg %lg %lg %lg\n", q[0], q[1], q[2], sqall[ix][iy][iz]);
+      }
+      for (int qz = 0; qz <= nq[2]; ++qz){
+        int ix = qx + nq[0];
+        int iy = qy + nq[1];
+        int iz = qz;
+        q[0] = qx*dq[0];
+        q[1] = qy*dq[1];
+        q[2] = qz*dq[2];
+
+        fprintf(fp,"%lg %lg %lg %lg\n", q[0], q[1], q[2], sqall[ix][iy][iz]);
+      }
+    }
+    fclose(fp);
+  }
+
+  // now to compute s(q)
+  for (int qx = -nq[0]; qx <= nq[0]; ++qx)
+  for (int qy = -nq[1]; qy <= nq[1]; ++qy){
+    for (int qz = -nq[2]; qz < 0; ++qz){
+      int ix = -qx + nq[0];
+      int iy = -qy + nq[1];
+      int iz = -qz;
+      q[0] = qx*dq[0];
+      q[1] = qy*dq[1];
+      q[2] = qz*dq[2];
+  
+      int ibin = int(sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])*rdq + 0.5);
+      if (ibin < nbin){
+        sq[ibin][0] += sqall[ix][iy][iz];
+        sq[ibin][1] += 1.;
+      }
+    }
+    for (int qz = 0; qz <= nq[2]; ++qz){
+      int ix = qx + nq[0];
+      int iy = qy + nq[1];
+      int iz = qz;
+      q[0] = qx*dq[0];
+      q[1] = qy*dq[1];
+      q[2] = qz*dq[2];
+  
+      int ibin = int(sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])*rdq + 0.5);
+      if (ibin < nbin){
+        sq[ibin][0] += sqall[ix][iy][iz];
+        sq[ibin][1] += 1.;
+      }
+    }
+  }
+
+  printf("Please input the file name to output S(q) [sq.dat]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
-  if (ptr == NULL) strcpy(str, "skv.dat");
+  if (ptr == NULL) strcpy(str, "sq.dat");
   ptr = strtok(str, " \n\t\r\f");
   FILE *fp = fopen(ptr,"w");
-  fprintf(fp,"# kx ky kz  S(k)\n");
-  double q[3];
-  for (int i = 0; i < nk[0]; ++i){ q[0] = double(i)*dk[0];
-  for (int j = 0; j < nk[1]; ++j){ q[1] = double(j)*dk[1];
-  for (int k = 0; k < nk[2]; ++k){ q[2] = double(k)*dk[2];
+  fprintf(fp,"# q S(q)\n");
 
-    double sknow = skall[i][j][k]*fac;
-    fprintf(fp,"%g %g %g %lg\n", q[0], q[1], q[2], sknow);
-
-    int ibin = int(sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])*rdq + 0.5);
-    if (ibin < nbin){
-      Sk[ibin]  += sknow;
-      ++hit[ibin];
-    }
-  } fprintf(fp,"\n"); }}
-  fclose(fp);
-
-  printf("Please input the file name to output S(k) [sk.dat]: ");
-  fgets(str,MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
-  if (ptr == NULL) strcpy(str, "sk.dat");
-  ptr = strtok(str, " \n\t\r\f");
-  fp = fopen(ptr,"w");
-  fprintf(fp,"# k S(k)\n");
-
-  int nmin = int(double(nused)*4.*atan(1.)/LMax*rdq + 0.5);
-  double dq = 1./rdq, qr = double(nmin)*dq;
-  for (int i = nmin; i < nbin; ++i){
-    if (hit[i] > 0) fprintf(fp,"%lg %lg\n", qr, Sk[i]/double(hit[i]));
-    qr += dq;
+  dq[0] = 1./rdq;
+  q[0]  = dq[0];
+  for (int i = 1; i < nbin; ++i){
+    fprintf(fp,"%lg %lg\n", q[0], sq[i][0]/MAX(1.,sq[i][1]));
+    q[0] += dq[0];
   }
   fclose(fp);
   
-  memory->destroy(skall);
-  memory->destroy(hit);
-  memory->destroy(Sk);
+  memory->destroy(sqall);
+  memory->destroy(sq);
   printf("\n%d images were used in the evaluation of S(k), which is written to %s\n", nused, ptr);
 
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
