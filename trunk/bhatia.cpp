@@ -100,7 +100,7 @@ void Driver::bhatia_thornton()
   Both.clear();
 
   // bound for q
-  double qmax = 20.;
+  double qmax = 6.;
   printf("\nNow please input your desired maximum q [%lg]: ", qmax);
   if (count_words(fgets(str,MAXLINE,stdin)) >= 1){
     char *ptr = strtok(str," \n\t\r\f");
@@ -116,7 +116,7 @@ void Driver::bhatia_thornton()
 
   int nq[3];
   // ask for the q-mesh size
-  nq[0] = nq[1] = nq[2] = 25;
+  nq[0] = nq[1] = nq[2] = 41;
 
   printf("Now please input the # of q-points along each direction [%d %d %d]: ", nq[0], nq[1], nq[2]);
   if (count_words(fgets(str,MAXLINE,stdin)) >= 3){
@@ -132,7 +132,7 @@ void Driver::bhatia_thornton()
 
   // timer
   Timer * timer = new Timer();
-  printf("\nComputing, takes time ..."); fflush(stdout);
+  printf("\nComputing, takes time, please be patient\n"); fflush(stdout);
 
   // Now to initialize the necessary data
   double ***SNN, ***SNC, ***SCC;
@@ -145,6 +145,7 @@ void Driver::bhatia_thornton()
   for (int iz = 0; iz <   nq[2]+1; ++iz) SNN[ix][iy][iz] = SNC[ix][iy][iz] = SCC[ix][iy][iz] = 0.;
 
   int nused = 0;
+  const std::complex<double> I0 = std::complex<double>(0.,1.);
   
   std::complex<double> ***N1, ***N2, ***C, ***N;
   memory->create(N1,  2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "N1");
@@ -156,59 +157,65 @@ void Driver::bhatia_thornton()
   for (int img = istr; img <= iend; img += inc){ // loop over frames
     one = all[img];
     one->selection(srcsel);
+    if (min_mem) one->FreeVoro();
+    if (one->nsel < 1) continue;
   
+    printf("  Now to process frame %d... ", img+1); fflush(stdout);
+
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) N1[ix][iy][iz] = N2[ix][iy][iz] = std::complex<double>(0.,0.);
+
     // need cartesian coordinates
     one->dir2car();
     
     int na = 0, nb = 0;
 
-    // loop over atoms
-    for (int i = 1; i <= one->natom; ++i){
-      if (one->atsel[i] == 0) continue;
+      // loop over atoms
+    for (int id = 1; id <= one->natom; ++id){
+      if (one->atsel[id] == 0) continue;
+      int it = one->attyp[id];
 
-      int it = one->attyp[i];
       if (A.find(it) != A.end()){
         ++na;
 
+        // loop over q-mesh
         for (int qx = -nq[0]; qx <= nq[0]; ++qx)
         for (int qy = -nq[1]; qy <= nq[1]; ++qy)
         for (int qz =      0; qz <= nq[2]; ++qz){
           int ix = qx + nq[0];
           int iy = qy + nq[1];
           int iz = qz;
-          q[1] = qy*dq[1];
           q[0] = qx*dq[0];
+          q[1] = qy*dq[1];
           q[2] = qz*dq[2];
 
-          double qr = q[0]*one->atpos[i][0] + q[1]*one->atpos[i][1] + q[2]*one->atpos[i][2];
-          std::complex<double> iqr = std::complex<double>(0.,1.)*qr;
+          double qr = q[0]*one->atpos[id][0] + q[1]*one->atpos[id][1] + q[2]*one->atpos[id][2];
 
-          N1[ix][iy][iz] += exp(iqr);
+          N1[ix][iy][iz] += exp(I0*qr);
         }
       }
+
       if (B.find(it) != B.end()){
         ++nb;
 
+        // loop over q-mesh
         for (int qx = -nq[0]; qx <= nq[0]; ++qx)
         for (int qy = -nq[1]; qy <= nq[1]; ++qy)
         for (int qz =      0; qz <= nq[2]; ++qz){
           int ix = qx + nq[0];
           int iy = qy + nq[1];
           int iz = qz;
-          q[1] = qy*dq[1];
           q[0] = qx*dq[0];
+          q[1] = qy*dq[1];
           q[2] = qz*dq[2];
 
-          double qr = q[0]*one->atpos[i][0] + q[1]*one->atpos[i][1] + q[2]*one->atpos[i][2];
-          std::complex<double> iqr = std::complex<double>(0.,1.)*qr;
+          double qr = q[0]*one->atpos[id][0] + q[1]*one->atpos[id][1] + q[2]*one->atpos[id][2];
 
-          N2[ix][iy][iz] += exp(iqr);
+          N2[ix][iy][iz] += exp(I0*qr);
         }
       }
-    } // end of loop over atoms
+    }   // end of loop over q-mesh
     ++nused;
 
     double nt = double(na+nb);
@@ -239,6 +246,7 @@ void Driver::bhatia_thornton()
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) SNC[ix][iy][iz] += real(conj(N[ix][iy][iz])*C[ix][iy][iz]);
 
+    printf(" Done! Time used: %g seconds.\n", timer->sincelast());
   } // end loop over frames
   N = NULL;
   memory->destroy(N1);
@@ -259,7 +267,7 @@ void Driver::bhatia_thornton()
   
   // time info
   timer->stop();
-  printf("Done! Total CPU time used: %g seconds.\n", timer->cpu_time());
+  printf("%d frames were used. Total CPU time cost: %g seconds.\n", nused, timer->cpu_time());
   delete timer;
   
   // output the Bhatia-Thornton structure factor for each q-point
@@ -383,8 +391,8 @@ void Driver::bhatia_thornton()
   fprintf(fp,"%s", header);
   fprintf(fp,"# q SNN SNC SCC counts\n");
   dq[0] = 1./inv_dq;
-  q[0]  = 0.;
-  for (int i = 0; i < nbin; ++i){
+  q[0]  = dq[0];
+  for (int i = 1; i < nbin; ++i){
     fprintf(fp,"%lg %lg %g %lg %d\n", q[0], Sq[1][i], Sq[2][i], Sq[3][i], int(Sq[0][i]));
 
     q[0] += dq[0];
