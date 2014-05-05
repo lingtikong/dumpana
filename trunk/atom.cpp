@@ -36,16 +36,19 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   fname = new char [strlen(dumpfile)+1];
   strcpy(fname, dumpfile);
 
+  // time step info
   char str[MAXLINE];
   if (fgets(str,MAXLINE, fp) == NULL) return;
   fgets(str,MAXLINE, fp);
   tstep = atoi(strtok(str, " \n\t\r\f"));
 
+  // # of atoms info
   fgets(str,MAXLINE, fp);
   fgets(str,MAXLINE, fp);
   natom = atoi(strtok(str, " \n\t\r\f"));
   if (natom < 1) return;
 
+  // box bounds info
   fgets(str,MAXLINE, fp);
   fgets(str,MAXLINE, fp);
   int n = count_words(str);
@@ -67,6 +70,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   
   if (xy*xy+xz*xz+yz*yz > ZERO) triclinic = 1;
 
+  // fields info
   fgets(str,MAXLINE, fp);
 
   memory = new Memory();

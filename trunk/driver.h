@@ -88,6 +88,9 @@ private:
   // compare the rmsd between frames
   void compare_rmsd();
 
+  // To compute the Bhatia-Thornton structure factor
+  void bhatia_thornton();
+
   // help info
   void help();
   void ShowVersion();
