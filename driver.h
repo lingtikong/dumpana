@@ -48,6 +48,9 @@ private:
   // to output selected frames
   void writesel();
 
+  // to output selected frames in bgf format with properties
+  void writebgf();
+
   // to do voronoi diagram analysis
   int flag_out;
   void voro();

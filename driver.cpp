@@ -125,6 +125,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) OutputVoroCells();
       break;
        
+    case 8:
+      setrange();
+      if (nsel > 0) writebgf();
+      break;
+
     case 11:
       setrange();
       if (nsel > 0) writesel();
@@ -188,7 +193,7 @@ void Driver::MainMenu()
   printf("  5. Prepare for FEFF9;                |  15. Bond length/angles;\n");
   printf("  6. Voronoi cluster connectivity;     |  16. Spatial distribution of atoms;\n");
   printf("  7. Output selected atoms/clusters;   |  17. RMSD between frames;\n");
-  printf("                                       |  18. Bhatia-Thornton structure factor;\n");
+  printf("  8. Output bgf format with property;  |  18. Bhatia-Thornton structure factor;\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;
