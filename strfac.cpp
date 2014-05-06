@@ -103,6 +103,7 @@ void Driver::strfac()
 
     double inv_n = 1./double(one->nsel);
     // loop over q-point
+#pragma omp parallel for default(shared)  private(q)
     for (int qx = -nq[0]; qx <= nq[0]; ++qx)
     for (int qy = -nq[1]; qy <= nq[1]; ++qy)
     for (int qz =      0; qz <= nq[2]; ++qz){

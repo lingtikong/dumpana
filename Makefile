@@ -22,8 +22,8 @@ VoroINC = -I/opt/libs/voro_svn/src
 VoroLIB = -L/opt/libs/voro_svn/src -lvoro++
 
 # Parallization
-#MPIINC = -DOMP -fopenmp
-#MPILIB = -fopenmp
+MPIINC = -DOMP -fopenmp
+MPILIB = -fopenmp
 # User flag
 #UFLAG =
 # Debug flags
