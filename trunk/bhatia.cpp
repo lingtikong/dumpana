@@ -140,6 +140,7 @@ void Driver::bhatia_thornton()
   memory->create(SNC, 2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "SNC");
   memory->create(SCC, 2*nq[0]+1, 2*nq[1]+1, nq[2]+1, "SCC");
 
+#pragma omp parallel for default(shared)
   for (int ix = 0; ix < 2*nq[0]+1; ++ix)
   for (int iy = 0; iy < 2*nq[1]+1; ++iy)
   for (int iz = 0; iz <   nq[2]+1; ++iz) SNN[ix][iy][iz] = SNC[ix][iy][iz] = SCC[ix][iy][iz] = 0.;
@@ -161,65 +162,47 @@ void Driver::bhatia_thornton()
     if (one->nsel < 1) continue;
   
     printf("  Now to process frame %d... ", img+1); fflush(stdout);
+    // need cartesian coordinates
+    one->dir2car();
 
+#pragma omp parallel for default(shared)
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) N1[ix][iy][iz] = N2[ix][iy][iz] = std::complex<double>(0.,0.);
 
-    // need cartesian coordinates
-    one->dir2car();
-    
-    int na = 0, nb = 0;
+    // loop over q-mesh
+#pragma omp parallel for default(shared)  private(q)
+    for (int qx = -nq[0]; qx <= nq[0]; ++qx)
+    for (int qy = -nq[1]; qy <= nq[1]; ++qy)
+    for (int qz =      0; qz <= nq[2]; ++qz){
+      int ix = qx + nq[0];
+      int iy = qy + nq[1];
+      int iz = qz;
+      q[0] = qx*dq[0];
+      q[1] = qy*dq[1];
+      q[2] = qz*dq[2];
 
-    // loop over atoms
+      for (int id = 1; id <= one->natom; ++id){
+        if (one->atsel[id] == 0) continue;
+        int ip = one->attyp[id];
+        double qr = q[0]*one->atpos[id][0] + q[1]*one->atpos[id][1] + q[2]*one->atpos[id][2];
+
+        if (A.find(ip) != A.end()) N1[ix][iy][iz] += exp(I0*qr);
+        if (B.find(ip) != B.end()) N2[ix][iy][iz] += exp(I0*qr);
+      }
+    } // end of loop over q-mesh
+    ++nused;
+
+    // count # of atoms for each type
+    int na = 0, nb = 0;
+#pragma omp parallel for default(shared) reduction(+:na) reduction(+:nb)
     for (int id = 1; id <= one->natom; ++id){
       if (one->atsel[id] == 0) continue;
       int ip = one->attyp[id];
 
-      if (A.find(ip) != A.end()){
-        ++na;
-
-        // loop over q-mesh
-#pragma omp parallel for default(shared)  private(q)
-        for (int qx = -nq[0]; qx <= nq[0]; ++qx)
-        for (int qy = -nq[1]; qy <= nq[1]; ++qy)
-        for (int qz =      0; qz <= nq[2]; ++qz){
-          int ix = qx + nq[0];
-          int iy = qy + nq[1];
-          int iz = qz;
-          q[0] = qx*dq[0];
-          q[1] = qy*dq[1];
-          q[2] = qz*dq[2];
-
-          double qr = q[0]*one->atpos[id][0] + q[1]*one->atpos[id][1] + q[2]*one->atpos[id][2];
-
-          N1[ix][iy][iz] += exp(I0*qr);
-        }
-      }
-
-      if (B.find(ip) != B.end()){
-        ++nb;
-
-        // loop over q-mesh
-#pragma omp parallel for default(shared)  private(q)
-        for (int qx = -nq[0]; qx <= nq[0]; ++qx)
-        for (int qy = -nq[1]; qy <= nq[1]; ++qy)
-        for (int qz =      0; qz <= nq[2]; ++qz){
-          int ix = qx + nq[0];
-          int iy = qy + nq[1];
-          int iz = qz;
-          q[0] = qx*dq[0];
-          q[1] = qy*dq[1];
-          q[2] = qz*dq[2];
-
-          double qr = q[0]*one->atpos[id][0] + q[1]*one->atpos[id][1] + q[2]*one->atpos[id][2];
-
-          N2[ix][iy][iz] += exp(I0*qr);
-        }
-      }
-    }   // end of loop over q-mesh
-    ++nused;
-
+      if (A.find(ip) != A.end()) ++na;
+      if (B.find(ip) != B.end()) ++nb;
+    }
     double nt = double(na+nb);
     double inv_n = 1. / nt;
     double c = double(na) * inv_n;

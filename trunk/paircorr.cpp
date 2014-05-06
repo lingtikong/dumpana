@@ -109,11 +109,10 @@ void Driver::paircorr()
     double rdr = 1./delr;
     
     // working space
-    double *gr, *hit;
-    memory->create(gr,nbin,"gr");
-    memory->create(hit,nbin,"gr");
-    for (int i = 0; i < nbin; ++i) gr[i] = 0.;
-    for (int i = 0; i < nbin; ++i) hit[i] = 0.;
+    double **gr;
+    memory->create(gr, nbin, 2, "gr");
+#pragma omp parallel for default(shared)
+    for (int i = 0; i < nbin; ++i) gr[i][0] = gr[i][1] = 0.;
     
     const double tpi = 8.*atan(1.);
     int nused = 0;
@@ -134,6 +133,7 @@ void Driver::paircorr()
         one->car2dir();
     
         // set local variables
+#pragma omp parallel for default(shared)
         for (int i = 1; i < one->natom; ++i){
           if (one->atsel[i] == 0) continue;
   
@@ -150,7 +150,13 @@ void Driver::paircorr()
             dx[2] = dx[2]*one->lz;
             double r = sqrt(dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2]);
             int ibin = (r-rmin)*rdr;
-            if (ibin >= 0 && ibin<nbin){ gr[ibin] += dg; hit[ibin] += dh; }
+
+            if (ibin >= 0 && ibin < nbin){
+#pragma omp atomic
+              gr[ibin][0] += dg;
+#pragma omp atomic
+              gr[ibin][1] += dh;
+            }
           }
         }
         ++nused;
@@ -181,6 +187,7 @@ void Driver::paircorr()
         one->car2dir();
   
         // set local variables
+#pragma omp parallel for default(shared)
         for (int i = 1; i <= one->natom; ++i){
           if (insrc[i] == 0) continue;
   
@@ -197,7 +204,13 @@ void Driver::paircorr()
             dx[2] = dx[2]*one->lz;
             double r = sqrt(dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2]);
             int ibin = (r-rmin)*rdr;
-            if (ibin >= 0 && ibin<nbin){ gr[ibin] += dg; hit[ibin] += dh; }
+
+            if (ibin >= 0 && ibin < nbin){
+#pragma omp atomic
+              gr[ibin][0] += dg;
+#pragma omp atomic
+              gr[ibin][1] += dh;
+            }
           }
         }
   
@@ -210,8 +223,8 @@ void Driver::paircorr()
     double r = rmin - 0.5*delr;
     for (int i = 0; i < nbin; ++i){
       r += delr;
-      gr[i] /= r*r*MAX(1,nused);
-      hit[i] /= MAX(1,nused);
+      gr[i][0] /= r*r*MAX(1,nused);
+      gr[i][1] /= MAX(1,nused);
     }
     
     timer->stop();
@@ -230,13 +243,12 @@ void Driver::paircorr()
     r = rmin - 0.5*delr;
     double nsum = 0.;
     for (int i = 0; i < nbin; ++i){
-      r += delr; nsum += hit[i];
-      fprintf(fp,"%lg %lg %g\n", r, gr[i], nsum);
+      r += delr; nsum += gr[i][1];
+      fprintf(fp,"%lg %lg %g\n", r, gr[i][0], nsum);
     }
     fclose(fp);
   
     memory->destroy(gr);
-    memory->destroy(hit);
     printf("\n%d images were used in the evaluation of g(r), which is written to %s\n", nused, ptr);
   
     for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
