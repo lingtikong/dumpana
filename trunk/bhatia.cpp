@@ -171,15 +171,16 @@ void Driver::bhatia_thornton()
     
     int na = 0, nb = 0;
 
-      // loop over atoms
+    // loop over atoms
     for (int id = 1; id <= one->natom; ++id){
       if (one->atsel[id] == 0) continue;
-      int it = one->attyp[id];
+      int ip = one->attyp[id];
 
-      if (A.find(it) != A.end()){
+      if (A.find(ip) != A.end()){
         ++na;
 
         // loop over q-mesh
+#pragma omp parallel for default(shared)  private(q)
         for (int qx = -nq[0]; qx <= nq[0]; ++qx)
         for (int qy = -nq[1]; qy <= nq[1]; ++qy)
         for (int qz =      0; qz <= nq[2]; ++qz){
@@ -196,10 +197,11 @@ void Driver::bhatia_thornton()
         }
       }
 
-      if (B.find(it) != B.end()){
+      if (B.find(ip) != B.end()){
         ++nb;
 
         // loop over q-mesh
+#pragma omp parallel for default(shared)  private(q)
         for (int qx = -nq[0]; qx <= nq[0]; ++qx)
         for (int qy = -nq[1]; qy <= nq[1]; ++qy)
         for (int qz =      0; qz <= nq[2]; ++qz){
@@ -225,23 +227,27 @@ void Driver::bhatia_thornton()
     N1[nq[0]][nq[1]][0] -= double(na);
     N2[nq[0]][nq[1]][0] -= double(nb);
 
-
+#pragma omp parallel for default(shared)
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) C[ix][iy][iz] = ( (1.-c)*N1[ix][iy][iz] - c*N2[ix][iy][iz] )* inv_n;
 
+#pragma omp parallel for default(shared)
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) N[ix][iy][iz] += N2[ix][iy][iz];
 
+#pragma omp parallel for default(shared)
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) SNN[ix][iy][iz] += real(conj(N[ix][iy][iz])*N[ix][iy][iz]) * inv_n;
 
+#pragma omp parallel for default(shared)
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) SCC[ix][iy][iz] += real(conj(C[ix][iy][iz])*C[ix][iy][iz]) * nt;
 
+#pragma omp parallel for default(shared)
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) SNC[ix][iy][iz] += real(conj(N[ix][iy][iz])*C[ix][iy][iz]);
@@ -257,6 +263,7 @@ void Driver::bhatia_thornton()
 
   // get the average Bhatia-Thornton structure factor info
   double inv_n = 1./double(nused);
+#pragma omp parallel for default(shared)
   for (int ix = 0; ix < 2*nq[0]+1; ++ix)
   for (int iy = 0; iy < 2*nq[1]+1; ++iy)
   for (int iz = 0; iz <   nq[2]+1; ++iz){
