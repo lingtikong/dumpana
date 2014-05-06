@@ -165,13 +165,18 @@ void Driver::bhatia_thornton()
     // need cartesian coordinates
     one->dir2car();
 
-#pragma omp parallel for default(shared)
+    int na = 0, nb = 0;
+#ifdef OMP
+#pragma omp parallel default(shared) private(q) reduction(+:na) reduction(+:nb)
+    {
+#pragma omp for
+#endif
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) N1[ix][iy][iz] = N2[ix][iy][iz] = std::complex<double>(0.,0.);
 
     // loop over q-mesh
-#pragma omp parallel for default(shared)  private(q)
+#pragma omp for nowait
     for (int qx = -nq[0]; qx <= nq[0]; ++qx)
     for (int qy = -nq[1]; qy <= nq[1]; ++qy)
     for (int qz =      0; qz <= nq[2]; ++qz){
@@ -191,11 +196,9 @@ void Driver::bhatia_thornton()
         if (B.find(ip) != B.end()) N2[ix][iy][iz] += exp(I0*qr);
       }
     } // end of loop over q-mesh
-    ++nused;
 
     // count # of atoms for each type
-    int na = 0, nb = 0;
-#pragma omp parallel for default(shared) reduction(+:na) reduction(+:nb)
+#pragma omp for
     for (int id = 1; id <= one->natom; ++id){
       if (one->atsel[id] == 0) continue;
       int ip = one->attyp[id];
@@ -203,6 +206,9 @@ void Driver::bhatia_thornton()
       if (A.find(ip) != A.end()) ++na;
       if (B.find(ip) != B.end()) ++nb;
     }
+#ifdef OMP
+    }
+#endif
     double nt = double(na+nb);
     double inv_n = 1. / nt;
     double c = double(na) * inv_n;
@@ -210,32 +216,40 @@ void Driver::bhatia_thornton()
     N1[nq[0]][nq[1]][0] -= double(na);
     N2[nq[0]][nq[1]][0] -= double(nb);
 
-#pragma omp parallel for default(shared)
+#ifdef OMP
+#pragma omp parallel default(shared)
+{
+#pragma omp for nowait
+#endif
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) C[ix][iy][iz] = ( (1.-c)*N1[ix][iy][iz] - c*N2[ix][iy][iz] )* inv_n;
 
-#pragma omp parallel for default(shared)
+#pragma omp for
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) N[ix][iy][iz] += N2[ix][iy][iz];
 
-#pragma omp parallel for default(shared)
+#pragma omp for nowait
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) SNN[ix][iy][iz] += real(conj(N[ix][iy][iz])*N[ix][iy][iz]) * inv_n;
 
-#pragma omp parallel for default(shared)
+#pragma omp for nowait
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) SCC[ix][iy][iz] += real(conj(C[ix][iy][iz])*C[ix][iy][iz]) * nt;
 
-#pragma omp parallel for default(shared)
+#pragma omp for
     for (int ix = 0; ix < 2*nq[0]+1; ++ix)
     for (int iy = 0; iy < 2*nq[1]+1; ++iy)
     for (int iz = 0; iz <   nq[2]+1; ++iz) SNC[ix][iy][iz] += real(conj(N[ix][iy][iz])*C[ix][iy][iz]);
+#ifdef OMP
+    }
+#endif
 
     printf(" Done! Time used: %g seconds.\n", timer->sincelast());
+    ++nused;
   } // end loop over frames
   N = NULL;
   memory->destroy(N1);
