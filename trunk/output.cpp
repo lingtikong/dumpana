@@ -2,6 +2,7 @@
 #include "voro++.hh"
 #include <vector>
 #include <list>
+#include <set>
 
 /*------------------------------------------------------------------------------
  * Method to output selected Voronoi clusters as an xyz file
@@ -50,12 +51,24 @@ void Driver::OutputVoroCells( )
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
       if (count_words(fgets(str,MAXLINE,stdin)) > 0){
         char *ptr = strtok(str," \n\t\r\f");
-        if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
+        if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y") != 0) continue;
       }
     }
     break;
   }
 
+  int flabel = 0;
+  // ask whether to label the central atom or not
+  if (job == 3){
+    printf("\nWould you like to label the central atoms by adding an extra column\n");
+    printf("to the output file? (y/n)[n]: ");
+    if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+      ptr = strtok(str, " \n\t\r\f");
+      if (strcmp(ptr, "y")==0 || strcmp(ptr, "Y")==0 ) flabel = 1;
+    }
+  }
+
+  // ask for output filename
   printf("\nPlease input the output file name [vorocell.xyz]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
@@ -147,6 +160,7 @@ void Driver::OutputVoroCells( )
 
   } else { // selected atoms or selected clusters
     std::list<int> outlist;
+    std::set<int> center;
     // now to do the real job
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
@@ -154,10 +168,10 @@ void Driver::OutputVoroCells( )
       one->selection(selcmd);
 
       // get the selected list
-      outlist.clear();
+      outlist.clear(); center.clear();
       for (int id = 1; id <= one->natom; ++id){
         if (one->atsel[id]){
-          outlist.push_back(id);
+          outlist.push_back(id); center.insert(id);
           if (job == 3){
             for (int jj = 1; jj <= one->neilist[0][id]; ++jj) outlist.push_back(one->neilist[jj][id]);
           }
@@ -175,30 +189,34 @@ void Driver::OutputVoroCells( )
       int idx = 0;
       while (! outlist.empty() ){
         int id = outlist.front(); outlist.pop_front();
+        int ic = 0;
+        if (center.find(id) != center.end()) ic = 1;
 
         if (type2atnum == NULL){ // no elements assigned, print atomic type num as element
           fprintf(fp,"%d %lg %lg %lg", one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
+          if (flabel) fprintf(fp," %d", ic);
           if (idx < 3) fprintf(fp," crystal_vector %d %lg %lg %lg\n", idx+1, one->axis[idx][0], one->axis[idx][1], one->axis[idx][2]);
           else fprintf(fp,"\n");
 
         } else { // in case elements are assigned, print true element names
           char ename[3];
           element->Num2Name(type2atnum[one->attyp[id]], ename);
+          fprintf(fp,"%2s %lg %lg %lg", ename, one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
+          if (flabel) fprintf(fp," %d", ic);
           if (idx < 3){
-            fprintf(fp,"%2s %lg %lg %lg crystal_vector %d %lg %lg %lg\n", ename,
-            one->atpos[id][0], one->atpos[id][1], one->atpos[id][2], idx+1,
-            one->axis[idx][0], one->axis[idx][1], one->axis[idx][2]);
+            fprintf(fp," crystal_vector %d %lg %lg %lg\n", idx+1, one->axis[idx][0], one->axis[idx][1], one->axis[idx][2]);
           } else {
-            fprintf(fp,"%2s %lg %lg %lg\n", ename, one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
+            fprintf(fp,"\n");
           }
         }
         ++idx;
       }
     }
 
-    outlist.clear();
+    outlist.clear(); center.clear();
   }
 
+  printf("\nJob done, the results were written to file: %s\n", fname);
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
   fclose(fp);
