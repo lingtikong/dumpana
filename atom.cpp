@@ -78,12 +78,12 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   while (ptr){
     if (strcmp(ptr, "id") == 0)   dcols[1] = ic;
     if (strcmp(ptr, "type") == 0) dcols[2] = ic;
-    if (strcmp(ptr, "x") == 0){   dcols[3] = ic; fcord |= 1;}
-    if (strcmp(ptr, "y") == 0){   dcols[4] = ic; fcord |= 2;}
-    if (strcmp(ptr, "z") == 0){   dcols[5] = ic; fcord |= 4;}
-    if (strcmp(ptr, "xs") == 0){  dcols[3] = ic; fcord &= 6;}
-    if (strcmp(ptr, "ys") == 0){  dcols[4] = ic; fcord &= 5;}
-    if (strcmp(ptr, "zs") == 0){  dcols[5] = ic; fcord &= 3;}
+    if (strcmp(ptr, "xs") == 0){  dcols[3] = ic; fcord |= 1;}
+    if (strcmp(ptr, "ys") == 0){  dcols[4] = ic; fcord |= 2;}
+    if (strcmp(ptr, "zs") == 0){  dcols[5] = ic; fcord |= 4;}
+    if (strcmp(ptr, "x") == 0){   dcols[3] = ic; fcord &= 6;}
+    if (strcmp(ptr, "y") == 0){   dcols[4] = ic; fcord &= 5;}
+    if (strcmp(ptr, "z") == 0){   dcols[5] = ic; fcord &= 3;}
 
     ++ic;
     ptr = strtok(NULL," \n\t\r\f");

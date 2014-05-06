@@ -267,7 +267,7 @@ void Driver::writebgf()
   memory->destroy(chem);
   fclose(fp);
 
-  printf("\n%d images were converted into BGF format, which are written to %s\n", nused, fname);
+  printf("\n%d image(s) were converted into BGF format and written to %s\n", nused, fname);
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
   delete []fname;
 return;

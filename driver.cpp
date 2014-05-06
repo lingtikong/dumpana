@@ -810,7 +810,7 @@ void Driver::help()
   printf("    -w/-x    To or not to perform weighted Voronoi tessellation, if possible;\n");
   printf("             by default, weigthed will be done if element mapping has been done;\n");
   printf("    -mm      To indicate to minimize memory usage;\n");
-  printf("    file     Must be lammps atom style or spparks dump files, by default: dump.lammpstrj.\n");
+  printf("    file     Must be lammps dump files containing id, type, x/xs, y/ys, and z/zs info.\n");
   printf("\n\n");
   exit(0);
 return;
