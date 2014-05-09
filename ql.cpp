@@ -80,7 +80,8 @@ void Driver::compute_sh()
       double norm = sqrt(norm2);
 
       qw[0][id] = norm*facql;
-      if (norm2 == 0.) norm2 = norm = 1.;
+      if (norm == 0.) norm = 1.;
+      for (int i = 0; i <= L+L; ++i) qlm[id][i] /= norm;
 
       qw[1][id] = 0.;
       for (int m1 = -L; m1 <= L; ++m1)
@@ -88,12 +89,9 @@ void Driver::compute_sh()
         int m3 = -(m1+m2);
         if (m3 > L || m3 < -L) continue;
 
-        double w3j = sh->w3j(L, m1, m2, m3); //gsl_sf_coupling_3j(L, L, L, m1, m2, m3);
+        double w3j = sh->w3j(L, m1, m2, m3);
         qw[1][id] += w3j * qlm[id][m1+L] * qlm[id][m2+L] * qlm[id][m3+L];
       }
-      qw[1][id] /= norm2 * norm;
-
-      for (int i = 0; i <= L+L; ++i) qlm[id][i] /= norm;
     }
 
     // Now to evaluate qlql and output the results

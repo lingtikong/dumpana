@@ -1365,7 +1365,7 @@ return;
 }
 
 /* -----------------------------------------------------------------------------
- * Private method to apply PBC on an vector
+ * Private method to apply PBC on a cartesian vector
  * -----------------------------------------------------------------------------
  * xij (inout) : x
  * yij (inout) : y
