@@ -1,10 +1,13 @@
 #include <cmath>
 #include "spherical.h"
+#include "global.h"
 
 SphericalHarmonics::SphericalHarmonics()
 {
   sign[0] =  1.;
   sign[1] = -1.;
+
+return;
 }
 /*------------------------------------------------------------------------------
  * Function to get the double Factorial of a positive number; for any non-positive
@@ -79,6 +82,7 @@ return res;
  *----------------------------------------------------------------------------*/
 double SphericalHarmonics::w3j(int l, int m1, int m2, int m3)
 {
-  return gsl_sf_coupling_3j(l, l, l, m1, m2, m3);
+  return gsl_sf_coupling_3j(l+l, l+l, l+l, m1+m1, m2+m2, m3+m3);
 }
+
 /*----------------------------------------------------------------------------*/
