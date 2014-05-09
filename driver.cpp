@@ -127,6 +127,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) writebgf();
       break;
 
+    case 9:
+      setrange();
+      if (nsel > 0) compute_sh();
+      break;
+
     case 11:
       setrange();
       if (nsel > 0) writesel();
@@ -191,6 +196,7 @@ void Driver::MainMenu()
   printf("  6. Voronoi cluster connectivity;     |  16. Spatial distribution of atoms;\n");
   printf("  7. Output selected atoms/clusters;   |  17. RMSD between frames;\n");
   printf("  8. Output bgf format with property;  |  18. Bhatia-Thornton structure factor;\n");
+  printf("  9. Local order parameter QlQl;       |\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;
