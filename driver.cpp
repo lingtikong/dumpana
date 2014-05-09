@@ -163,10 +163,15 @@ Driver::Driver(int narg, char** arg)
       break;
 
     case 17:
-      compare_rmsd();
+      setrange();
+      if (nsel > 0) radial();
       break;
 
     case 18:
+      compare_rmsd();
+      break;
+
+    case 19:
       setrange();
       if (nsel > 0) bhatia_thornton();
       break;
@@ -194,9 +199,9 @@ void Driver::MainMenu()
   printf("  4. Common Neighbor/Centro-symmetry;  |  14. Static structure factor;\n");
   printf("  5. Prepare for FEFF9;                |  15. Bond length/angles;\n");
   printf("  6. Voronoi cluster connectivity;     |  16. Spatial distribution of atoms;\n");
-  printf("  7. Output selected atoms/clusters;   |  17. RMSD between frames;\n");
-  printf("  8. Output bgf format with property;  |  18. Bhatia-Thornton structure factor;\n");
-  printf("  9. Local order parameter Ql, qlql;   |\n");
+  printf("  7. Output selected atoms/clusters;   |  17. Radial distribution of atoms;\n");
+  printf("  8. Output bgf format with property;  |  18. RMSD between frames;\n");
+  printf("  9. Local order parameter Ql, qlql;   |  19. Bhatia-Thornton structure factor;\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;

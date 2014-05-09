@@ -90,6 +90,9 @@ private:
   // spatial distribution of atoms
   void spatial();
 
+  // radial distribution of atoms
+  void radial();
+
   // compare the rmsd between frames
   void compare_rmsd();
 
