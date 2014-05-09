@@ -196,7 +196,7 @@ void Driver::MainMenu()
   printf("  6. Voronoi cluster connectivity;     |  16. Spatial distribution of atoms;\n");
   printf("  7. Output selected atoms/clusters;   |  17. RMSD between frames;\n");
   printf("  8. Output bgf format with property;  |  18. Bhatia-Thornton structure factor;\n");
-  printf("  9. Local order parameter QlQl;       |\n");
+  printf("  9. Local order parameter Ql, qlql;   |\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;
