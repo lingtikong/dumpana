@@ -1,5 +1,4 @@
 #include "spherical.h"
-#include "gsl/gsl_sf_coupling.h"
 #include "driver.h"
 
 /*------------------------------------------------------------------------------
@@ -89,7 +88,7 @@ void Driver::compute_sh()
         int m3 = -(m1+m2);
         if (m3 > L || m3 < -L) continue;
 
-        double w3j = gsl_sf_coupling_3j(L, L, L, m1, m2, m3);
+        double w3j = sh->w3j(L, m1, m2, m3); //gsl_sf_coupling_3j(L, L, L, m1, m2, m3);
         qw[1][id] += w3j * qlm[id][m1+L] * qlm[id][m2+L] * qlm[id][m3+L];
       }
       qw[1][id] /= norm2 * norm;
