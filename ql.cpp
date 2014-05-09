@@ -59,6 +59,7 @@ void Driver::compute_sh()
     memory->grow(qw, 2, one->natom+1, "qw");
     memory->grow(qlm, one->natom+1, L+L+1, "qlm");
     // Loop over all atoms
+#pragma omp parallel for default(shared)
     for (int id = 1; id <= one->natom; ++id){
       double norm2 = 0.;
       
@@ -96,7 +97,7 @@ void Driver::compute_sh()
       for (int i = 0; i <= L+L; ++i) qlm[id][i] /= norm;
     }
 
-    // Now to evaluate QlQl and output the results
+    // Now to evaluate qlql and output the results
     sprintf(str, "%s_%d.dat", prefix, one->iframe);
     ptr = strtok(str, " \n\t\r\f");
     FILE *fp = fopen(ptr, "w");

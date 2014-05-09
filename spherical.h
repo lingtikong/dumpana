@@ -9,6 +9,7 @@
 #include "memory.h"
 #include "stdio.h"
 #include "stdlib.h"
+#include "gsl/gsl_sf_coupling.h"
 
 using namespace std;
 
@@ -16,6 +17,7 @@ class SphericalHarmonics {
 public:
   SphericalHarmonics();
   double Y(int, int, double*);
+  double w3j(int,int,int,int);
 
 private:
   double K(int, int);
