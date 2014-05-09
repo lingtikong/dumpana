@@ -23,7 +23,7 @@ VoroLIB = -L/opt/libs/voro_svn/src -lvoro++
 
 # GSL, needed
 GslINC  = -I/opt/libs/gsl/include
-GslLIB  = -L/opt/libs/gsl/lib -lgslcblas -lgsl
+GslLIB  = -L/opt/libs/gsl/lib -lgsl -lgslcblas
 
 # Parallization related, can be switch off
 PARAINC = -DOMP -fopenmp
