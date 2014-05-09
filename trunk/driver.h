@@ -70,6 +70,9 @@ private:
   // Common neighber analysis or common neighbor parameter
   void Compute_CNACNP();
 
+  // Bond order parameter based on Spherical Harmonics
+  void compute_sh();
+
   // Pair Correlation and static structure factor
   void paircorr();
   void strfac();

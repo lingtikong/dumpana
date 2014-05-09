@@ -2,12 +2,12 @@
 # compiler and flags
 CC     = /opt/intel/bin/icc
 #CC     = g++ -Wno-unused-result
-LINK   = $(CC) ${MPILIB}
+LINK   = $(CC) ${PARALIB}
 CFLAGS = -O3 $(UFLAG) $(DEBUG)
 #
 OFLAGS = -O3 $(DEBUG)
-INC    = $(FFTINC) $(LPKINC) $(USRINC) $(VoroINC)
-LIB    = $(FFTLIB) $(LPKLIB) $(USRLIB) $(VoroLIB)
+INC    = $(FFTINC) $(LPKINC) $(USRINC) $(VoroINC) $(GslINC)
+LIB    = $(FFTLIB) $(LPKLIB) $(USRLIB) $(VoroLIB) $(GslLIB)
 #
 # fftw 3 library; not needed by this code
 #FFTINC    = -I/opt/fftw/fftw3/include
@@ -17,13 +17,18 @@ LIB    = $(FFTLIB) $(LPKLIB) $(USRLIB) $(VoroLIB)
 #LPKINC = -I/opt/clapack/3.2.1/include
 #LPKLIB = -L/opt/clapack/3.2.1/lib -lclapack -lblas -lf2c -lm
 
-# Voro++
+# Voro++, Needed.
 VoroINC = -I/opt/libs/voro_svn/src
 VoroLIB = -L/opt/libs/voro_svn/src -lvoro++
 
-# Parallization
-MPIINC = -DOMP -fopenmp
-MPILIB = -fopenmp
+# GSL, needed
+GslINC  = -I/opt/libs/gsl/include
+GslLIB  = -L/opt/libs/gsl/lib -lgslcblas -lgsl
+
+# Parallization related, can be switch off
+PARAINC = -DOMP -fopenmp
+PARALIB = -fopenmp
+
 # User flag
 #UFLAG =
 # Debug flags
@@ -53,10 +58,10 @@ ver:
 	@echo "#define VERSION `svn info|grep '^Revision'|cut -d: -f2`" > version.h; cat version.h
 
 .f.o:
-	$(FC) $(FFLAGS) $(FREE) $(MPIINC) ${INC} -c $<
+	$(FC) $(FFLAGS) $(FREE) $(PARAINC) ${INC} -c $<
 .f90.o:
-	$(FC) $(FFLAGS) $(FREE) $(MPIINC) ${INC} -c $<
+	$(FC) $(FFLAGS) $(FREE) $(PARAINC) ${INC} -c $<
 .c.o:
-	$(CC) $(CFLAGS) $(MPIINC) -c $<
+	$(CC) $(CFLAGS) $(PARAINC) -c $<
 .cpp.o:
-	$(CC) $(CFLAGS) $(MPIINC) $(INC) -c $<
+	$(CC) $(CFLAGS) $(PARAINC) $(INC) -c $<
