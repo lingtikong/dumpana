@@ -1,6 +1,11 @@
 #include <cmath>
 #include "spherical.h"
 
+SphericalHarmonics::SphericalHarmonics()
+{
+  sign[0] =  1.;
+  sign[1] = -1.;
+}
 /*------------------------------------------------------------------------------
  * Function to get the double Factorial of a positive number; for any non-positive
  * number, 1 is returned
@@ -49,7 +54,7 @@ return res;
  *----------------------------------------------------------------------------*/
 double SphericalHarmonics::Y(int l, int m, double *r)
 {
-  const double PI = 4.*atan(1.);
+  const double PI = M_PI;
   const double rq2 = sqrt(2.);
   double r0   = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
   double cosT = r[2]/r0;
@@ -63,8 +68,8 @@ double SphericalHarmonics::Y(int l, int m, double *r)
 
   double res = P(l, m, cosT);
   if (m == 0)     res *= K(l, m);
-  else if (m > 0) res *= rq2 * K(l, m) * cos( double(m)*phi);
-  else            res *= rq2 * K(l, m) * sin(-double(m)*phi) *pow(-1., double(m));
+  else if (m > 0) res *= K(l, m) * rq2 * cos( double(m)*phi);
+  else            res *= K(l, m) * rq2 * sin(-double(m)*phi) *sign[m%2];
 
 return res;
 }

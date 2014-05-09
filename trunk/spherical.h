@@ -14,11 +14,14 @@ using namespace std;
 
 class SphericalHarmonics {
 public:
+  SphericalHarmonics();
   double Y(int, int, double*);
 
 private:
   double K(int, int);
   double P(int, int, double);
   double dfact(int);
+
+  double sign[2];
 };
 #endif
