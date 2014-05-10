@@ -80,7 +80,7 @@ void Driver::compute_sh()
       double norm = sqrt(norm2);
 
       qw[0][id] = norm*facql;
-      if (norm == 0.) norm = 1.;
+      if (norm < ZERO) norm = 1.;
       for (int i = 0; i <= L+L; ++i) qlm[id][i] /= norm;
 
       qw[1][id] = 0.;
