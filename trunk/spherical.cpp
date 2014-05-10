@@ -2,7 +2,6 @@
 #include "spherical.h"
 #include "global.h"
 #include "gsl/gsl_sf_coupling.h"
-#include "gsl/gsl_sf_legendre.h"
 
 /*------------------------------------------------------------------------------
  * Constructor, initialize some global variables
@@ -66,10 +65,11 @@ double SphericalHarmonics::Y(int l, int m, double *r)
   const double PI = M_PI;
   const double rq2 = sqrt(2.);
   double r0   = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
+  if (r0 < ZERO) r0 = 1.;
   double cosT = r[2]/r0;
   double phi;
 
-  if (r[0] == 0.) phi = PI*0.5;
+  if (fabs(r[0]) < ZERO) phi = PI*0.5;
   else phi = atan(r[1]/r[0]);
 
   if (r[0] < 0.) phi += PI;
