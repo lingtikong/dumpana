@@ -1,7 +1,12 @@
 #include <cmath>
 #include "spherical.h"
 #include "global.h"
+#include "gsl/gsl_sf_coupling.h"
+#include "gsl/gsl_sf_legendre.h"
 
+/*------------------------------------------------------------------------------
+ * Constructor, initialize some global variables
+ *----------------------------------------------------------------------------*/
 SphericalHarmonics::SphericalHarmonics()
 {
   sign[0] =  1.;
@@ -9,6 +14,7 @@ SphericalHarmonics::SphericalHarmonics()
 
 return;
 }
+
 /*------------------------------------------------------------------------------
  * Function to get the double Factorial of a positive number; for any non-positive
  * number, 1 is returned

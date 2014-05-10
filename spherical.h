@@ -6,10 +6,8 @@
  * Instead of "theta" and "phi", the code is fed with the vector r.
  * -------------------------------------------------------------------------- */
 
-#include "memory.h"
 #include "stdio.h"
 #include "stdlib.h"
-#include "gsl/gsl_sf_coupling.h"
 
 using namespace std;
 
