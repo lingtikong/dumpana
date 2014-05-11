@@ -44,7 +44,6 @@ void Driver::compute_sh()
 
   const double facql = sqrt(16.*atan(1.)/double(L+L+1));
   double **qlm, **qw; qlm = qw = NULL;
-  double rij[3];
   SphericalHarmonics *sh = new SphericalHarmonics();
 
   // now to loop over all asked images
@@ -68,6 +67,7 @@ void Driver::compute_sh()
         int ni = one->neilist[0][id];
         for (int jj = 1; jj <= ni; ++jj){
           int jd = one->neilist[jj][id];
+          double rij[3];
           for (int idim = 0; idim < 3; ++idim) rij[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
 
           one->ApplyPBC(rij[0], rij[1], rij[2]);
@@ -85,9 +85,9 @@ void Driver::compute_sh()
 
       qw[1][id] = 0.;
       for (int m1 = -L; m1 <= L; ++m1)
-      for (int m2 = -L; m2 <= L; ++m2){
-        int m3 = -(m1+m2);
-        if (m3 > L || m3 < -L) continue;
+      for (int m2 = -L; m2 <= L; ++m2)
+      for (int m3 = -L; m3 <= L; ++m3){
+        if ((m1+m2+m3) != 0) continue;
 
         double w3j = sh->w3j(L, m1, m2, m3);
         qw[1][id] += w3j * qlm[id][m1+L] * qlm[id][m2+L] * qlm[id][m3+L];
