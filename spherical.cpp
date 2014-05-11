@@ -65,7 +65,6 @@ double SphericalHarmonics::Y(int l, int m, double *r)
   const double PI = M_PI;
   const double rq2 = sqrt(2.);
   double r0   = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
-  if (r0 < ZERO) r0 = 1.;
   double cosT = r[2]/r0;
   double phi;
 
