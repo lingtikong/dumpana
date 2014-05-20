@@ -68,7 +68,10 @@ Driver::Driver(int narg, char** arg)
   // read dump files
   readdump(narg, iarg, arg);
 
-  if (nframe < 1) return;
+  if (nframe < 1){
+    help();
+    return;
+  }
 
   // main menu
   char str[MAXLINE];
@@ -534,8 +537,12 @@ void Driver::writesel()
       fprintf(fp,"ITEM: NUMBER OF ATOMS\n%d\n", one->natom);
       if (one->triclinic){
         fprintf(fp,"ITEM: BOX BOUNDS pp pp pp xy xz yz\n");
-        fprintf(fp,"%lg %lg %lg\n", one->xlo, one->xhi, one->xy);
-        fprintf(fp,"%lg %lg %lg\n", one->ylo, one->yhi, one->xz);
+        double xl = one->xlo + MIN(MIN(0., one->xy), MIN(one->xz, one->xy+one->xz));
+        double xh = one->xlo + MAX(MAX(0., one->xy), MAX(one->xz, one->xy+one->xz));
+        double yl = one->ylo + MIN(0., one->yz);
+        double yh = one->ylo + MAX(0., one->yz);
+        fprintf(fp,"%lg %lg %lg\n", xl, xh, one->xy);
+        fprintf(fp,"%lg %lg %lg\n", yl, yh, one->xz);
         fprintf(fp,"%lg %lg %lg\n", one->zlo, one->zhi, one->yz);
       } else {
         fprintf(fp,"ITEM: BOX BOUNDS pp pp pp\n");
@@ -652,8 +659,12 @@ void Driver::writesel()
       fprintf(fp,"ITEM: NUMBER OF ATOMS\n%d\n", one->natom);
       if (one->triclinic){
         fprintf(fp,"ITEM: BOX BOUNDS pp pp pp xy xz yz\n");
-        fprintf(fp,"%lg %lg %lg\n", one->xlo, one->xhi, one->xy);
-        fprintf(fp,"%lg %lg %lg\n", one->ylo, one->yhi, one->xz);
+        double xl = one->xlo + MIN(MIN(0., one->xy), MIN(one->xz, one->xy+one->xz));
+        double xh = one->xlo + MAX(MAX(0., one->xy), MAX(one->xz, one->xy+one->xz));
+        double yl = one->ylo + MIN(0., one->yz);
+        double yh = one->ylo + MAX(0., one->yz);
+        fprintf(fp,"%lg %lg %lg\n", xl, xh, one->xy);
+        fprintf(fp,"%lg %lg %lg\n", yl, yh, one->xz);
         fprintf(fp,"%lg %lg %lg\n", one->zlo, one->zhi, one->yz);
       } else {
         fprintf(fp,"ITEM: BOX BOUNDS pp pp pp\n");
@@ -822,6 +833,7 @@ void Driver::help()
   printf("             by default, weigthed will be done if element mapping has been done;\n");
   printf("    -mm      To indicate to minimize memory usage;\n");
   printf("    file     Must be lammps dump files containing id, type, x/xs, y/ys, and z/zs info.\n");
+  printf("             Default: dump.lammpstrj.\n");
   printf("\n\n");
   exit(0);
 return;

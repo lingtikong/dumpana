@@ -66,7 +66,14 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   zhi = atof(strtok(NULL," \n\t\r\f"));
   if (n == 3) yz = atof(strtok(NULL," \n\t\r\f"));
   
-  if (xy*xy+xz*xz+yz*yz > ZERO) triclinic = 1;
+  if (xy*xy+xz*xz+yz*yz > ZERO){
+    triclinic = 1;
+
+    xlo -= MIN(MIN(0., xy), MIN(xz, xy+xz));
+    xhi -= MAX(MAX(0., xy), MAX(xz, xy+xz));
+    ylo -= MIN(0., yz);
+    yhi -= MAX(0., yz);
+  }
 
   // fields info
   int dcols[6], fcord = 7;
@@ -140,9 +147,9 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   axis[0][1] = axis[0][2] = axis[1][2] = 0.;
   for (int idim = 0; idim < 3; ++idim) hbox[idim] = 0.5*box[idim];
 
-  h_inv[0] = 1.0/box[0];
-  h_inv[1] = 1.0/box[1];
-  h_inv[2] = 1.0/box[2];
+  h_inv[0] = 1./box[0];
+  h_inv[1] = 1./box[1];
+  h_inv[2] = 1./box[2];
   h_inv[3] = -box[3] / (box[1]*box[2]);
   h_inv[4] = (box[3]*box[5] - box[1]*box[4]) / (box[0]*box[1]*box[2]);
   h_inv[5] = -box[5] / (box[0]*box[1]);
