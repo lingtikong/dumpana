@@ -60,13 +60,22 @@ void Driver::Compute_CNACNP()
 
   FILE *fp = fopen(fname, "w");
   fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
-  if (job == 1) fprintf(fp,"# CNA: 1, FCC; 2, HCP; 3, BCC; 4, ICOS; 4, OTHER; 5, UNKNOWN.\n# id x y z cna\n");
-  else fprintf(fp, "# id x y z %s\n", jobstr);
+  if (job == 1) fprintf(fp,"# CNA: 1, FCC; 2, HCP; 3, BCC; 4, ICOS; 4, OTHER; 5, UNKNOWN.\n# id type x y z cna\n");
+  else fprintf(fp, "# id type x y z %s\n", jobstr);
   fflush(fp);
+
+  double thr = 0.;
+  if (job == 2 || job == 3){
+    printf("\nIf you want to identify the local environment as well, please input the\n");
+    printf("threshold value now: ");
+    fgets(str, MAXLINE, stdin);
+    ptr = strtok(str, " \n\t\r\f");
+    if (ptr) thr = atof(ptr);
+  }
 
   if (job == 3){ // job will carry the # of nearest neighbor info now
     while ( 1 ){
-      printf("\nPlease input the # of nearest neighbors for your reference lattice [8]: ");
+      printf("\nPlease input the # of nearest neighbors for your reference lattice [14]: ");
       fgets(str, MAXLINE, stdin);
       ptr = strtok(str, " \n\t\r\f");
       if (ptr){
@@ -75,8 +84,7 @@ void Driver::Compute_CNACNP()
           printf("The # of nearest neighbors must be an even number!\n");
           continue;
         }
-      } else job = -8;
-
+      } else job = -14;
       break;
     }
   }
@@ -91,7 +99,7 @@ void Driver::Compute_CNACNP()
 
     fprintf(fp,"# frame number: %d\n", img);
     // now to compute the CNA/CNP info
-    ComputeCNAAtom *cna = new ComputeCNAAtom(job, one->natom, one->neilist, one->atpos, one->box, fp);
+    ComputeCNAAtom *cna = new ComputeCNAAtom(job, one, fp, thr);
     delete cna;
 
     if (min_mem) one->FreeVoro();

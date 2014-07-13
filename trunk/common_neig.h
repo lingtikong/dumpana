@@ -5,10 +5,11 @@
 #include "stdlib.h"
 #include "string.h"
 #include "memory.h"
+#include "atom.h"
 
 class ComputeCNAAtom {
 public:
-  ComputeCNAAtom(const int, const int, int **, double **, double *, FILE *);
+  ComputeCNAAtom(const int, DumpAtom *, FILE *, double);
   ~ComputeCNAAtom();
 
 private:
@@ -24,7 +25,7 @@ private:
   Memory *memory;
 
   int natom;
-  int **nearest;
+  int **nearest, *typ;
   int non_ortho_box;
   double **x, L[3], hL[3];
   double xy, xz, yz;
@@ -32,6 +33,11 @@ private:
 
   int bonded(int,int);
 
+  // determine local environment
+  int *env;
+  double thr_env;
+  void identify_env();
+  
   // copied from LAMMPS compute_centro_atom
   void select(int, int, double *);
   void select2(int, int, double *, int *);

@@ -15,6 +15,7 @@ void Driver::compute_sh()
   for (int i = 0; i < 4; ++i) printf("====");
 
   printf("\nReference: Phys. Rev. B 28:784, 1983.\n");
+  printf("             J. Chem. Phys. 122:214722, 2005.\n");
   for (int i = 0; i < 20; ++i) printf("----");
 
   int L = 6;
@@ -100,8 +101,8 @@ void Driver::compute_sh()
     FILE *fp = fopen(ptr, "w");
     fprintf(fp, "#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
     fprintf(fp, "#%s local order parameter for frame %d of %s\n", prefix, one->iframe, one->fname);
-    fprintf(fp, "# 1  2 3 4 5  6  7\n");
-    fprintf(fp, "# id x y z q%d w%d q%dq%d\n", L, L, L, L);
+    fprintf(fp, "# 1  2    3 4 5 6   7   8\n");
+    fprintf(fp, "# id type x y z q%d w%d q%dq%d\n", L, L, L, L);
     for (int id = 1; id <= one->natom; ++id){
       double q = 0.;
 
@@ -113,7 +114,7 @@ void Driver::compute_sh()
       }
       if (ni > 0) q /= double(ni);
 
-      fprintf(fp, "%d %lg %lg %lg %lg %lg %lg\n", id, one->atpos[id][0], one->atpos[id][1], one->atpos[id][2], qw[0][id], qw[1][id], q);
+      fprintf(fp, "%d %d %lg %lg %lg %lg %lg %lg\n", id, one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2], qw[0][id], qw[1][id], q);
     }
     fclose(fp);
 
