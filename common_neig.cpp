@@ -21,21 +21,19 @@ enum{NCOMMON,NBOND,MAXBOND,MINBOND};
  * ---------------------------------------------------------------------- */
 ComputeCNAAtom::ComputeCNAAtom(const int job, DumpAtom *dump, FILE *fp, double thr)
 {
-  x   = dump->atpos;
-  typ = dump->attyp;
-  natom   = dump->natom;
-  nearest = dump->neilist;
+  one = dump;
+  x = one->atpos;
+  attyp = one->attyp;
+  neilist = one->neilist;
+
   thr_env = thr;
-  L[0] = dump->box[0]; L[1] = dump->box[1]; L[2] = dump->box[2];
-  xy = dump->box[3];   xz = dump->box[4];   yz = dump->box[5];
-  for (int i = 0; i < 3; ++i) hL[i] = 0.5*L[i];
 
-  non_ortho_box = dump->triclinic;
+  flag_env = 0;
+  if (thr > 0.) flag_env = 1;
 
-  memory = dump->memory;
-  memory->create(pattern, natom+1, "pattern");
-
-  env = NULL;
+  memory = one->memory;
+  if (one->prop == NULL) memory->create(one->prop, one->natom+1, "prop");
+  pattern = one->prop;
 
   // to the real job
   if (job == 1) compute_cna();
@@ -52,13 +50,13 @@ return;
  * ---------------------------------------------------------------------- */
 ComputeCNAAtom::~ComputeCNAAtom()
 {
-  memory->destroy(pattern);
-  nearest = NULL;
-  typ = NULL;
   x = NULL;
+  attyp = NULL;
+  neilist = NULL;
+  pattern = NULL;
 
-  if (env) memory->destroy(env);
   memory = NULL;
+  one = NULL;
 }
 
 /* ----------------------------------------------------------------------
@@ -80,8 +78,8 @@ void ComputeCNAAtom::compute_cna()
   // compute CNA for each atom in group
   // only performed if # of nearest neighbors = 12 or 14 (fcc,hcp)
 
-  for (i = 1; i <= natom; ++i) {
-    if (nearest[0][i] != 12 && nearest[0][i] != 14) {
+  for (i = 1; i <= one->natom; ++i) {
+    if (neilist[0][i] != 12 && neilist[0][i] != 14) {
       pattern[i] = OTHER;
       continue;
     }
@@ -92,8 +90,8 @@ void ComputeCNAAtom::compute_cna()
     // cna[k][MAXBOND] = max # of bonds of any common neighbor
     // cna[k][MINBOND] = min # of bonds of any common neighbor
 
-    for (m = 1; m <= nearest[0][i]; ++m) {
-      j = nearest[m][i];
+    for (m = 1; m <= neilist[0][i]; ++m) {
+      j = neilist[m][i];
 
       // common = list of neighbors common to atom I and atom J
       // if J is an owned atom, use its near neighbor list to find them
@@ -101,15 +99,15 @@ void ComputeCNAAtom::compute_cna()
       // in latter case, must exclude J from I's neighbor list
 
 	   ncommon = 0;
-	   for (inear = 1; inear <= nearest[0][i]; ++inear)
-	   for (jnear = 1; jnear <= nearest[0][j]; ++jnear){
-	     if (nearest[inear][i] == nearest[jnear][j]) {
+	   for (inear = 1; inear <= neilist[0][i]; ++inear)
+	   for (jnear = 1; jnear <= neilist[0][j]; ++jnear){
+	     if (neilist[inear][i] == neilist[jnear][j]) {
           if (ncommon >= MaxComm){
             MaxComm = ncommon + 5;
             memory->grow(bonds,MaxComm,"bonds");
             memory->grow(common,MaxComm,"common");
           }
-	       common[ncommon++] = nearest[inear][i];
+	       common[ncommon++] = neilist[inear][i];
         }
 	   }
 
@@ -150,7 +148,7 @@ void ComputeCNAAtom::compute_cna()
     nfcc = nhcp = nbcc4 = nbcc6 = nico = 0;
     pattern[i] = OTHER;
 
-    if (nearest[0][i] == 12) {
+    if (neilist[0][i] == 12) {
       for (inear = 0; inear < 12; ++inear) {
         cj = cna[inear+1][NCOMMON];
         ck = cna[inear+1][NBOND];
@@ -164,7 +162,7 @@ void ComputeCNAAtom::compute_cna()
       else if (nfcc == 6 && nhcp == 6) pattern[i] = HCP;
       else if (nico == 12) pattern[i] = ICOS;
       
-    } else if (nearest[0][i] == 14) {
+    } else if (neilist[0][i] == 14) {
       for (inear = 0; inear < 14; ++inear) {
         cj = cna[inear+1][NCOMMON];
         ck = cna[inear+1][NBOND];
@@ -187,20 +185,20 @@ void ComputeCNAAtom::compute_cna()
  * ---------------------------------------------------------------------- */
 void ComputeCNAAtom::compute_cnp()
 {
-  for (int i = 1; i <= natom; ++i) {
+  for (int i = 1; i <= one->natom; ++i) {
     pattern[i] = 0.;
-    int ni = nearest[0][i];
+    int ni = neilist[0][i];
     for (int m = 1; m <= ni; ++m) {
-      int j = nearest[m][i];
+      int j = neilist[m][i];
 
       // common = list of neighbors common to atom I and atom J
       double Rij[3], xik[3], xjk[3];
       Rij[0] = Rij[1] = Rij[2] = 0.;
 
-	   for (int inear = 1; inear <= nearest[0][i]; ++inear)
-	   for (int jnear = 1; jnear <= nearest[0][j]; ++jnear){
-	     if (nearest[inear][i] == nearest[jnear][j]) {
-          int k = nearest[inear][i];
+	   for (int inear = 1; inear <= neilist[0][i]; ++inear)
+	   for (int jnear = 1; jnear <= neilist[0][j]; ++jnear){
+	     if (neilist[inear][i] == neilist[jnear][j]) {
+          int k = neilist[inear][i];
           double xik[3], xjk[3];
           
           for (int idim = 0; idim < 3; ++idim){
@@ -208,18 +206,18 @@ void ComputeCNAAtom::compute_cnp()
             xjk[idim] = x[k][idim] - x[j][idim];
           }
           // apply pbc
-          apply_pbc(xik[0], xik[1], xik[2]);
-          apply_pbc(xjk[0], xjk[1], xjk[2]);
+          one->ApplyPBC(xik[0], xik[1], xik[2]);
+          one->ApplyPBC(xjk[0], xjk[1], xjk[2]);
             
           for (int idim = 0; idim < 3; ++idim) Rij[idim] += xik[idim] + xjk[idim];
         }
 	   }
       pattern[i] += Rij[0]*Rij[0] + Rij[1]*Rij[1] + Rij[2]*Rij[2];
     }
-    if (nearest[0][i] > 0) pattern[i] /= double(nearest[0][i]);
+    if (neilist[0][i] > 0) pattern[i] /= double(neilist[0][i]);
   }
   
-  if (thr_env > 0.) identify_env();
+  if (flag_env) one->identify_env(thr_env);
 
 return;
 }
@@ -229,11 +227,15 @@ return;
  * ---------------------------------------------------------------------- */
 void ComputeCNAAtom::output(FILE *fp)
 {
-  fprintf(fp,"# box info: %lg %lg %lg %lg %lg %lg\n", L[0], L[1], L[2], xy, xz, yz);
-  if (env)
-    for (int i = 1; i <= natom; ++i) fprintf(fp,"%d %d %lg %lg %lg %lg %d\n", i, typ[i], x[i][0], x[i][1], x[i][2], pattern[i], env[i]);
-  else
-    for (int i = 1; i <= natom; ++i) fprintf(fp,"%d %d %lg %lg %lg %lg\n", i, typ[i], x[i][0], x[i][1], x[i][2], pattern[i]);
+  fprintf(fp,"# box info: %lg %lg %lg %lg %lg %lg\n", one->lx, one->ly, one->lz, one->xy, one->xz, one->yz);
+  if (flag_env){
+    for (int id = 1; id <= one->natom; ++id)
+      fprintf(fp,"%d %d %lg %lg %lg %lg %d\n", id, attyp[id], x[id][0], x[id][1], x[id][2], pattern[id], one->env[id]);
+
+  } else {
+    for (int id = 1; id <= one->natom; ++id)
+      fprintf(fp,"%d %d %lg %lg %lg %lg\n", id, attyp[id], x[id][0], x[id][1], x[id][2], pattern[id]);
+  }
 return;
 }
 
@@ -242,9 +244,9 @@ return;
  * ---------------------------------------------------------------------- */
 int ComputeCNAAtom::bonded(int id, int jd)
 {
-  int ni = nearest[0][id];
+  int ni = neilist[0][id];
   for (int jj = 1; jj <= ni; ++jj){
-    if (nearest[jj][id] == jd) return 1;
+    if (neilist[jj][id] == jd) return 1;
   }
 
 return 0;
@@ -373,11 +375,11 @@ void ComputeCNAAtom::centro_atom(const int nnn)
 
   // compute centro-symmetry parameter for each atom in group, use full neighbor list
 
-  for (int i = 1; i <= natom; ++i) {
+  for (int i = 1; i <= one->natom; ++i) {
     pattern[i] = 0.;
-    int jnum = nearest[0][i];
+    int jnum = neilist[0][i];
 
-    // insure distsq and nearest arrays are long enough
+    // insure distsq and neilist arrays are long enough
     if (jnum > maxneigh) {
       maxneigh = jnum;
       memory->grow(distsq,maxneigh,"centro/atom:distsq");
@@ -386,16 +388,16 @@ void ComputeCNAAtom::centro_atom(const int nnn)
 
     // loop over list of all neighbors within force cutoff
     // distsq[] = distance sq to each
-    // nearest[] = atom indices of neighbors
+    // neilist[] = atom indices of neighbors
 
     int n = 0;
     for (int jj = 1; jj <= jnum; ++jj) {
-      int j = nearest[jj][i];
+      int j = neilist[jj][i];
 
       double delx = x[i][0] - x[j][0];
       double dely = x[i][1] - x[j][1];
       double delz = x[i][2] - x[j][2];
-      apply_pbc(delx, dely, delz);
+      one->ApplyPBC(delx, dely, delz);
 
       double rsq = delx*delx + dely*dely + delz*delz;
 
@@ -427,14 +429,13 @@ void ComputeCNAAtom::centro_atom(const int nnn)
         double delx = xij[0] + xik[0];
         double dely = xij[1] + xik[1];
         double delz = xij[2] + xik[2];
-        apply_pbc(delx, dely, delz);
+        one->ApplyPBC(delx, dely, delz);
 
         pairs[n++] = delx*delx + dely*dely + delz*delz;
       }
     }
 
     // store nhalf smallest pair distances in 1st nhalf locations of pairs
-
     select(nhalf,npairs,pairs);
 
     // centrosymmetry = sum of nhalf smallest squared values
@@ -448,160 +449,8 @@ void ComputeCNAAtom::centro_atom(const int nnn)
   memory->destroy(distsq);
   memory->destroy(neighb);
 
-  if (thr_env > 0.) identify_env();
+  if (flag_env) one->identify_env(thr_env);
 return;
 }
 
-/* ----------------------------------------------------------------------
- * To apply PBC
- * ---------------------------------------------------------------------- */
-void ComputeCNAAtom::apply_pbc(double &xtmp, double &ytmp, double &ztmp)
-{
-  if (non_ortho_box){
-    while (ztmp > hL[2]){
-      xtmp -= xz;
-      ytmp -= yz;
-      ztmp -= L[2];
-    }
-    while (ztmp <-hL[2]){
-      xtmp += xz;
-      ytmp += yz;
-      ztmp += L[2];
-    }
-  
-    while (ytmp > hL[1]){
-      xtmp -= xy;
-      ytmp -= L[1];
-    }
-    while (ytmp <-hL[1]){
-      xtmp += xy;
-      ytmp += L[1];
-    }
-  
-    while (xtmp > hL[0]) xtmp -= L[0];
-    while (xtmp <-hL[0]) xtmp += L[0];
-  
-  } else {
-
-    while (xtmp > hL[0]) xtmp -= L[0];
-    while (ytmp > hL[1]) ytmp -= L[1];
-    while (ztmp > hL[2]) ztmp -= L[2];
-    while (xtmp <-hL[0]) xtmp += L[0];
-    while (ytmp <-hL[1]) ytmp += L[1];
-    while (ztmp <-hL[2]) ztmp += L[2];
-  
-  }
-
-return;
-}
-
-/* ------------------------------------------------------------------
- * Private method to identify the local env based on the CSP
- * parameter computed and the threshold given.
- * ------------------------------------------------------------------ */
-void ComputeCNAAtom::identify_env()
-{
-  const int NMaxIt = 2000;
-  int *swap, *otyp;
-  memory->create(otyp, natom+1, "identify_env:otyp");
-  memory->create(env,  natom+1, "identify_env:env");
-
-  for (int i = 1; i <= natom; ++i){
-    if (pattern[i] <= thr_env) env[i] = 0; // crystal
-    else env[i] = 2;                       // liquid or amorphous
-  }
-
-  // if nearly all neighbors of a crystal are liquid/amorphous, set it to be liquid/amorphous; and vice versa
-  int nit = 0;
-  while (nit < NMaxIt){
-    nit++;
-    swap = otyp; otyp = env; env = swap; swap = NULL;
-
-    int nreset = 0;
-    for (int id = 1; id <= natom; ++id){
-      int neisum = 0;
-      int ni = nearest[0][id];
-      for (int in = 1; in <= ni; ++in){
-        int jd = nearest[in][id];
-        neisum += otyp[jd];
-      }
-
-      env[id] = otyp[id];
-      if ( (otyp[id] == 2) && (neisum <= 2      ) ){ env[id] = 0; nreset++; }
-      if ( (otyp[id] == 0) && (neisum >= ni+ni-2) ){ env[id] = 2; nreset++; }
-    }
-    if (nreset == 0) break;
-  }
-  if (nit >= NMaxIt) printf("\nWarning from identify_env: your cutoff might be improper!\n\n");
-
-  swap = otyp; otyp = env; env = swap; swap = NULL;
-  // assign type: 0, crystal; 1, crystal at interface; 2, liquid/amorphous; 3, liquid/amorhpous at interface
-  for (int id = 1; id <= natom; ++id){
-    int it = otyp[id];
-    int ni = nearest[0][id];
-    int neisum = 0;
-    for (int in = 1; in <= ni; in++){
-      int jd = nearest[in][id];
-      neisum += otyp[jd];
-    }
-    if (neisum > 4 && neisum < ni+ni-4) ++it;
-    else it = (neisum+4)/ni;
-
-    env[id] = it;
-  }
-
-  nit = 0;
-  while (nit < NMaxIt){
-    ++nit;
-    swap = otyp; otyp = env; env = swap; swap = NULL;
-
-    int nreset = 0;
-    for (int id = 1; id <= natom; ++id){
-      int has[4];
-      has[0] = has[1] = has[2] = has[3] = 0;
-      int ni = nearest[0][id];
-      for (int in = 1; in <= ni; ++in){
-        int jd = nearest[in][id];
-        int jt = otyp[jd];
-        has[jt] = 1;
-      }
-
-      int it = otyp[id];
-      env[id] = it;
-
-      if (it == 0 && has[2] == 1) { env[id] = 1; nreset++; }
-      if (it == 2 && has[0] == 1) { env[id] = 3; nreset++; }
-      if (it == 1){
-        if(has[0] == 0){
-          nreset++;
-          if (has[3]) env[id] = 3;
-          else env[id] = 2;
-        }
-        if (has[2] == 0 && has[3] == 0){
-          nreset++;
-          env[id] = 0;
-        }
-      }
-      if (it == 3){
-        if (has[2] == 0){
-          nreset++;
-          if (has[1]) env[id] = 1;
-          else env[id] = 0;
-        }
-        if (has[0] == 0 && has[1] == 0){
-          nreset++;
-          env[id] = 2;
-        }
-      }
-
-    }
-
-    if (nreset == 0) break;
-  }
-  if (nit >= NMaxIt) printf("\nWarning from identify_env: your cutoff might be inappropriate!\n\n");
-
-  memory->destroy(otyp);
-
-return;
-}
 /*------------------------------------------------------------------------------ */

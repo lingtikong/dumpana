@@ -39,6 +39,26 @@ void Driver::compute_sh()
     strcpy(prefix, ptr);
   }
 
+  // identify local environment based on a threshold value
+  int flag_env;
+  printf("\nWould you like to discriminate the local environment based on the measured\n");
+  printf("  1.  q%d;\n  2.  w%d;\n  3.  q%dq%d;\n  0.  None.\nYour choice [0]: ", L, L, L, L);
+  if (count_words(fgets(str, MAXLINE, stdin)) > 0){
+    ptr = strtok(str, " \n\t\r\f");
+
+    flag_env = atoi(ptr);
+  }
+  double thr = 0.;
+  if (flag_env >= 1 && flag_env <= 3){
+    printf("Please input the threshold value for that: ");
+    if (count_words(fgets(str, MAXLINE, stdin)) > 0){
+      ptr = strtok(str, " \n\t\r\f");
+
+      thr = atof(ptr);
+    }
+    if (thr <= 0.) flag_env = 0;
+  } else flag_env = 0;
+
   // thresholds for surface and edges
   set_cutoffs(0);
   one = all[istr];
@@ -55,7 +75,7 @@ void Driver::compute_sh()
     one->ComputeVoro(mins);
     one->dir2car();
 
-    memory->grow(qw, 2, one->natom+1, "qw");
+    memory->grow(qw, 3, one->natom+1, "qw");
     memory->grow(qlm, one->natom+1, L+L+1, "qlm");
     // Loop over all atoms
 #pragma omp parallel for default(shared)
@@ -95,26 +115,48 @@ void Driver::compute_sh()
       }
     }
 
-    // Now to evaluate qlql and output the results
-    sprintf(str, "%s_%d.dat", prefix, one->iframe);
-    ptr = strtok(str, " \n\t\r\f");
-    FILE *fp = fopen(ptr, "w");
-    fprintf(fp, "#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
-    fprintf(fp, "#%s local order parameter for frame %d of %s\n", prefix, one->iframe, one->fname);
-    fprintf(fp, "# 1  2    3 4 5 6   7   8\n");
-    fprintf(fp, "# id type x y z q%d w%d q%dq%d\n", L, L, L, L);
+    // Now to evaluate qlql
     for (int id = 1; id <= one->natom; ++id){
-      double q = 0.;
+      qw[2][id] = 0.;
 
       int ni = one->neilist[0][id];
       for (int jj = 1; jj <= ni; ++jj){
         int jd = one->neilist[jj][id];
 
-        for (int i = 0; i <= L+L; ++i) q += qlm[id][i]*qlm[jd][i];
+        for (int i = 0; i <= L+L; ++i) qw[2][id] += qlm[id][i]*qlm[jd][i];
       }
-      if (ni > 0) q /= double(ni);
+      if (ni > 0) qw[2][id] /= double(ni);
+    }
 
-      fprintf(fp, "%d %d %lg %lg %lg %lg %lg %lg\n", id, one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2], qw[0][id], qw[1][id], q);
+    // identify local environment
+    if (flag_env){
+      if (one->prop) memory->destroy(one->prop);
+      one->prop = qw[flag_env-1];
+
+      one->identify_env(thr);
+    }
+    // Now to output the results
+    sprintf(str, "%s_%d.dat", prefix, one->iframe);
+    ptr = strtok(str, " \n\t\r\f");
+    FILE *fp = fopen(ptr, "w");
+    fprintf(fp, "#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
+    fprintf(fp, "#%s local order parameter for frame %d of %s\n", prefix, one->iframe, one->fname);
+    if (flag_env){
+      fprintf(fp, "# 1  2    3 4 5 6   7   8   9\n");
+      fprintf(fp, "# id type x y z q%d w%d q%dq%d env\n", L, L, L, L);
+      for (int id = 1; id <= one->natom; ++id){
+        fprintf(fp, "%d %d %lg %lg %lg %lg %lg %lg %d\n", id, one->attyp[id], one->atpos[id][0], one->atpos[id][1],
+        one->atpos[id][2], qw[0][id], qw[1][id], qw[2][id], one->env[id]);
+      }
+      one->prop = NULL;
+
+    } else {
+      fprintf(fp, "# 1  2    3 4 5 6   7   8\n");
+      fprintf(fp, "# id type x y z q%d w%d q%dq%d\n", L, L, L, L);
+      for (int id = 1; id <= one->natom; ++id){
+        fprintf(fp, "%d %d %lg %lg %lg %lg %lg %lg\n", id, one->attyp[id], one->atpos[id][0], one->atpos[id][1],
+        one->atpos[id][2], qw[0][id], qw[1][id], qw[2][id]);
+      }
     }
     fclose(fp);
 

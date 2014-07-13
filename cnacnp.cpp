@@ -58,12 +58,6 @@ void Driver::Compute_CNACNP()
     strcpy(fname, ptr);
   }
 
-  FILE *fp = fopen(fname, "w");
-  fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
-  if (job == 1) fprintf(fp,"# CNA: 1, FCC; 2, HCP; 3, BCC; 4, ICOS; 4, OTHER; 5, UNKNOWN.\n# id type x y z cna\n");
-  else fprintf(fp, "# id type x y z %s\n", jobstr);
-  fflush(fp);
-
   double thr = 0.;
   if (job == 2 || job == 3){
     printf("\nIf you want to identify the local environment as well, please input the\n");
@@ -72,6 +66,13 @@ void Driver::Compute_CNACNP()
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) thr = atof(ptr);
   }
+
+  FILE *fp = fopen(fname, "w");
+  fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
+  if (job == 1) fprintf(fp,"# CNA: 1, FCC; 2, HCP; 3, BCC; 4, ICOS; 4, OTHER; 5, UNKNOWN.\n# id type x y z cna\n");
+  else if (thr > 0.) fprintf(fp, "# id type x y z %s env\n", jobstr);
+  else fprintf(fp, "# id type x y z %s\n", jobstr);
+  fflush(fp);
 
   if (job == 3){ // job will carry the # of nearest neighbor info now
     while ( 1 ){
