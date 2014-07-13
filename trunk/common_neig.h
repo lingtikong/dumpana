@@ -18,25 +18,19 @@ private:
   void compute_cnp();
   void centro_atom(const int);
 
-  void apply_pbc(double &, double &, double &);
-
   void output(FILE *);
 
   Memory *memory;
 
-  int natom;
-  int **nearest, *typ;
-  int non_ortho_box;
-  double **x, L[3], hL[3];
-  double xy, xz, yz;
-  double *pattern;
+  DumpAtom *one;
+  int *attyp, **neilist;
+  double *pattern, **x;
 
   int bonded(int,int);
 
   // determine local environment
-  int *env;
+  int flag_env;
   double thr_env;
-  void identify_env();
   
   // copied from LAMMPS compute_centro_atom
   void select(int, int, double *);
