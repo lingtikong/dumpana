@@ -27,7 +27,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
 
   wted = 0;
   voro.clear();
-  neilist = NULL;
+  neilist = image = NULL;
   prop = volume = NULL;
   MaxNei = 20;
   vmins[0] = vmins[1] = vmins[2] = 0.;
@@ -77,8 +77,10 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   }
 
   // fields info
-  int dcols[6], fcord = 7;
-  for (int i = 0; i < 6; ++i) dcols[i] = i;
+  int dcols[9], fcord = 7;
+  for (int i = 0; i <= 5; ++i) dcols[i] = i;
+  dcols[6] = dcols[7] = dcols[8] = 0;
+
   fgets(str,MAXLINE, fp);
   char *ptr = strtok(str, " \n\t\r\f");
   for (int i = 0; i < 2; ++i) ptr = strtok(NULL," \n\t\r\f");
@@ -86,18 +88,29 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   while (ptr){
     if (strcmp(ptr, "id") == 0)   dcols[1] = ic;
     if (strcmp(ptr, "type") == 0) dcols[2] = ic;
+
     if (strcmp(ptr, "xs") == 0){  dcols[3] = ic; fcord |= 1;}
     if (strcmp(ptr, "ys") == 0){  dcols[4] = ic; fcord |= 2;}
     if (strcmp(ptr, "zs") == 0){  dcols[5] = ic; fcord |= 4;}
+
     if (strcmp(ptr, "x") == 0){   dcols[3] = ic; fcord &= 6;}
     if (strcmp(ptr, "y") == 0){   dcols[4] = ic; fcord &= 5;}
     if (strcmp(ptr, "z") == 0){   dcols[5] = ic; fcord &= 3;}
+
+    if (strcmp(ptr, "ix") == 0){  dcols[6] = ic; }
+    if (strcmp(ptr, "iy") == 0){  dcols[7] = ic; }
+    if (strcmp(ptr, "iz") == 0){  dcols[8] = ic; }
 
     ++ic;
     ptr = strtok(NULL," \n\t\r\f");
   }
   fcord &= 7;
   if (fcord != 7 && fcord != 0) return;
+  int flag_img = 0;
+  if (dcols[6] > 0 && dcols[7] > 0 && dcols[8] > 0){
+    memory->create(image, natom+1, 3, "image");
+    flag_img = 1;
+  }
 
   memory = new Memory();
   memory->create(attyp, natom+1, "attyp");
@@ -112,12 +125,12 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   atpos = s;
 
   // read coordinate
-  int id, ip;
+  int id, ip, ix, iy, iz;
   double xp, yp, zp;
   for (int i = 0; i < natom; ++i){
     fgets(str,MAXLINE, fp);
 
-    int ic = 1, frd = 0;
+    int ic = 1, frd = 0, fimg = 0;
     ptr = strtok(str, " \n\t\r\f");
     while (ptr){
       if (ic == dcols[1]){ id = atoi(ptr); frd |=  1; }
@@ -125,6 +138,11 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
       if (ic == dcols[3]){ xp = atof(ptr); frd |=  4; }
       if (ic == dcols[4]){ yp = atof(ptr); frd |=  8; }
       if (ic == dcols[5]){ zp = atof(ptr); frd |= 16; }
+      if (flag_img){
+        if (ic == dcols[6]){ ix = atoi(ptr); fimg |= 1; }
+        if (ic == dcols[7]){ iy = atoi(ptr); fimg |= 2; }
+        if (ic == dcols[8]){ iz = atoi(ptr); fimg |= 4; }
+      }
 
       ptr = strtok(NULL," \n\t\r\f"); ++ic;
     }
@@ -133,6 +151,11 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
       atpos[id][0] = xp;
       atpos[id][1] = yp;
       atpos[id][2] = zp;
+      if (fimg == 7){
+        image[id][0] = ix;
+        image[id][1] = iy;
+        image[id][2] = iz;
+      }
     } else { return; } // insufficient info, return
   }
 
@@ -202,6 +225,7 @@ DumpAtom::~DumpAtom()
   if (realcmd) delete []realcmd;
   memory->destroy(attyp);
   memory->destroy(atsel);
+  memory->destroy(image);
   memory->destroy(numtype);
 
   atpos = NULL;
@@ -1429,6 +1453,8 @@ void DumpAtom::FreeVoro()
   voro.clear();
   if (neilist) memory->destroy(neilist); neilist = NULL;
   if (volume)  memory->destroy(volume);  volume  = NULL;
+  if (prop) memory->destroy(prop); prop = NULL;
+  if (env)  memory->destroy(env);  env = NULL;
 
 return;
 }

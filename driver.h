@@ -99,6 +99,10 @@ private:
   // To compute the Bhatia-Thornton structure factor
   void bhatia_thornton();
 
+  // Compute MSD for atoms in selection; image info from dump file is needed;
+  // besides, the selection will be intersected among all frames
+  void compute_msd();
+
   // help info
   void help();
   void ShowVersion();

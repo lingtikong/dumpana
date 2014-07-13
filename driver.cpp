@@ -179,6 +179,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) bhatia_thornton();
       break;
 
+    case 20:
+      setrange();
+      if (nsel > 0) compute_msd();
+      break;
+
     default:
       loop = 0;
       break;
@@ -205,6 +210,7 @@ void Driver::MainMenu()
   printf("  7. Output selected atoms/clusters;   |  17. Radial distribution of atoms;\n");
   printf("  8. Output bgf format with property;  |  18. RMSD between frames;\n");
   printf("  9. Local order parameter Ql, qlql;   |  19. Bhatia-Thornton structure factor;\n");
+  printf("                                       |  20. MSD for selected atoms;\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;
@@ -832,7 +838,8 @@ void Driver::help()
   printf("    -w/-x    To or not to perform weighted Voronoi tessellation, if possible;\n");
   printf("             by default, weigthed will be done if element mapping has been done;\n");
   printf("    -mm      To indicate to minimize memory usage;\n");
-  printf("    file     Must be lammps dump files containing id, type, x/xs, y/ys, and z/zs info.\n");
+  printf("    file     Must be lammps atomic style dump files, or custom style containing id,\n");
+  printf("             type, x/xs, y/ys, z/zs, and/or ix, iy, iz information.\n");
   printf("             Default: dump.lammpstrj.\n");
   printf("\n\n");
   exit(0);

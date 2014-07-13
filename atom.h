@@ -35,6 +35,7 @@ public:
   double lx, ly, lz, box[6], hbox[3], h_inv[6];
   double hx, hy, hz;
   int *attyp, *atsel;  // note: atom IDs go from 1 to natom; type ID from 1 to ntype
+  int **image;
   int *numtype;
   double **atpos;
   double axis[3][3];
