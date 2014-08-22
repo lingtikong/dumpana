@@ -135,6 +135,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) compute_sh();
       break;
 
+    case 10:
+      setrange();
+      if (nsel > 0) compute_smix();
+      break;
+
     case 11:
       setrange();
       if (nsel > 0) writesel();
@@ -210,7 +215,7 @@ void Driver::MainMenu()
   printf("  7. Output selected atoms/clusters;   |  17. Radial distribution of atoms;\n");
   printf("  8. Output bgf format with property;  |  18. RMSD between frames;\n");
   printf("  9. Local order parameter Ql, qlql;   |  19. Bhatia-Thornton structure factor;\n");
-  printf("                                       |  20. MSD for selected atoms;\n");
+  printf(" 10. Configuration mixing entropy;     |  20. MSD for selected atoms;\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;

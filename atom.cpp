@@ -18,6 +18,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   xy = xz = yz = 0.;
   least_memory = cartesian = 0;
   type2radius = NULL;
+  flag_smix = 0; smix = 0.;
 
   if (flag & 1) least_memory = 1;
 
