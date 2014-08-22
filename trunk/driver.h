@@ -103,6 +103,9 @@ private:
   // besides, the selection will be intersected among all frames
   void compute_msd();
 
+  // Compute the configurational mixing entropy
+  void compute_smix();
+
   // help info
   void help();
   void ShowVersion();

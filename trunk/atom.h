@@ -65,6 +65,9 @@ public:
   int *env;
   double *prop;          // Property, can by anything
   void identify_env(const double);
+
+  double smix;           // Mixing entropy
+  int flag_smix;         // 1, computed; 0, not yet
 private:
   // private method to compute the Voronoi tessellation; the real engine
   int wted;
