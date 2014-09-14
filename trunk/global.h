@@ -5,6 +5,7 @@
 #define OutEdge 2
 #define OutFeff 4
 #define WtdVoro 8
+#define WHereId 16
 
 #define ZERO 1.e-12
 #define MAXLINE 512

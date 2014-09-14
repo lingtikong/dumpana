@@ -108,7 +108,7 @@ private:
 
   // Evaluate the heredity of cluster between consecutive frames
   void heredity();
-  void check_neigh(const int, DumpAtom *, DumpAtom *, std::list<int> *, int *);
+  void check_neigh(std::set<int>, DumpAtom *, DumpAtom *, std::list<int> *, int *);
 
   // help info
   void help();
