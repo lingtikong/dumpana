@@ -52,6 +52,9 @@ Driver::Driver(int narg, char** arg)
     } else if (strcmp(arg[iarg], "-x") == 0){ // no weighted Voronoi tessellation even when possible
       flag_out &= ~WtdVoro;
 
+    } else if (strcmp(arg[iarg], "-i") == 0){ // to write out atom IDs in counting size of persisting clusters
+      flag_out |= WHereId;
+
     } else if (strcmp(arg[iarg], "-mm") == 0){  // Flag indicate to minimize memory usage
       min_mem = 1;
 
