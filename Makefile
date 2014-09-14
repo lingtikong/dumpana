@@ -32,7 +32,7 @@ PARALIB = -fopenmp
 # User flag
 #UFLAG =
 # Debug flags
-#DEBUG = -g -O1
+DEBUG = -g -O1
 #====================================================================
 # executable name
 BASE   = dumpana

@@ -78,10 +78,10 @@ void Driver::compute_smix()
       }
       one->smix /= nxi;
 
-      memory->destroy(nei_count);
-      memory->destroy(fij);
       delete []ni;
       delete []xi;
+      memory->destroy(fij);
+      memory->destroy(nei_count);
     }
 
     smix_tot += one->smix;
