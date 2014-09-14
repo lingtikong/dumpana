@@ -66,13 +66,16 @@ void Driver::csro()
 
     if (job == 2){
       fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
-      fprintf(fp,"# Per atom CSRO info for frame %d; istep = %d\n# id type", img+1, one->tstep);
+      fprintf(fp,"# Per atom CSRO info for frame %d; istep = %d\n# id type x y z", img+1, one->tstep);
       for (int jp = 1; jp <= ntype; ++jp) fprintf(fp," csro-%d", jp);
       fprintf(fp,"\n");
     }
 
     // Compute Vorornoi info, so as to get the neighbor list
     one->ComputeVoro(mins);
+
+    // Cartesian coordinate needed
+    one->dir2car();
 
     // set local variables
     int *attyp = one->attyp;
@@ -97,7 +100,7 @@ void Driver::csro()
 
       // output per atom info if needed
       if (job == 2){
-        fprintf(fp,"%d %d", id, ip);
+        fprintf(fp,"%d %d %lg %lg %lg", id, ip, one->atpos[id][0],  one->atpos[id][1],  one->atpos[id][2]);
         int nn = 0;
         for (int jp = 1; jp <= ntype; ++jp) nn += nnei[jp];
         for (int jp = 1; jp <= ntype; ++jp) fprintf(fp," %g", 1.-double(nnei[jp])/(double(nn)*cc[jp]));
