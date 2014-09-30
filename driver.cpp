@@ -225,7 +225,7 @@ void Driver::MainMenu()
   printf("  9. Local order parameter Ql, qlql;   |  19. Bhatia-Thornton structure factor;\n");
   printf(" 10. Configurational entropy of mixing;|  20. MSD for selected atoms;\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
-  printf(" 21. Heredicity of atomic clusters;    |\n");
+  printf(" 21. Heredity of atomic clusters;      |\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;

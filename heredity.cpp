@@ -16,7 +16,7 @@ void Driver::heredity()
   printf("\nPlease select your desired job:\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
   printf("  1. Heredity of selected cluster between consecutive frames;\n");
-  printf("  2. Sizes of persisting clusters between consecutive frames;\n");
+  //printf("  2. Sizes of persisting clusters between consecutive frames;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
