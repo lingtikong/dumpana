@@ -2,11 +2,6 @@
 #include "math.h"
 #include <vector>
 
-#define IMGMASK 1023
-#define IMGMAX 512
-#define IMGBITS 10
-#define IMG2BITS 20
-
 /*------------------------------------------------------------------------------
  * Method to compute the Mean square displacement of selected atoms.
  *
@@ -38,7 +33,20 @@ void Driver::compute_msd()
 
     } else strcpy(selcmd,"all\n");
     
-    // check the selection command on the first frame
+    if (strcmp(selcmd, "all") == 0) break;
+
+    // determine if selection is based on first frame or all frames
+    int flag_sel = 2;
+    printf("Should the selection be applied to:\n");
+    printf("  1. the first frame only;\n");
+    printf("  2. all frames and get the common selection.\n");
+    printf("Your choice [2]: ");
+    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      char *ptr = strtok(str," \n\t\r\f");
+      flag_sel = MIN(2, MAX(atoi(ptr),1));
+    }
+
+    // check the selection command
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
       if (one->natom != natom){
@@ -51,18 +59,23 @@ void Driver::compute_msd()
         for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
         return;
       }
-      one->selection(selcmd);
-      for (int id = 1; id <= natom; ++id) insel[id] &= one->atsel[id];
+      if (flag_sel == 2 || img == istr){
+        one->selection(selcmd);
+        for (int id = 1; id <= natom; ++id) insel[id] &= one->atsel[id];
+      }
+
+      // cartesian coordinate needed for MSD calculations
+      one->dir2car();
 
       ++nused;
     }
     int nsel = 0;
     for (int id = 1; id <= natom; ++id) nsel += insel[id];
     if (nsel < 1){
-      printf("It seems that no atom is selected, do you wish to make another selection? (y/n)[y]: ");
+      printf("It seems that no atom is selected, do you wish to make another selection? (y/n)[n]: ");
       if (count_words(fgets(str,MAXLINE,stdin)) > 0){
         char *ptr = strtok(str," \n\t\r\f");
-        if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
+        if (strcmp(ptr,"y")== 0 || strcmp(ptr,"Y")==0) continue;
       }
       for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
       return;
@@ -86,16 +99,16 @@ void Driver::compute_msd()
         for (int id = 1; id <= natom; ++id){
           if (insel[id] == 0) continue;
 
-          int xbox = (one->image[id][0] & IMGMASK) - IMGMAX;
-          int ybox = (one->image[id][1] >> IMGBITS & IMGMASK) - IMGMAX;
-          int zbox = (one->image[id][2] >> IMG2BITS) - IMGMAX;
+          int xbox = one->image[id][0];
+          int ybox = one->image[id][1];
+          int zbox = one->image[id][2];
           double x0 = one->atpos[id][0] + xbox*one->lx;
           double y0 = one->atpos[id][1] + ybox*one->ly;
           double z0 = one->atpos[id][2] + zbox*one->lz;
 
-          xbox = (now->image[id][0] & IMGMASK) - IMGMAX;
-          ybox = (now->image[id][1] >> IMGBITS & IMGMASK) - IMGMAX;
-          zbox = (now->image[id][2] >> IMG2BITS) - IMGMAX;
+          xbox = now->image[id][0];
+          ybox = now->image[id][1];
+          zbox = now->image[id][2];
           double dx = now->atpos[id][0] - x0 + xbox*now->lx;
           double dy = now->atpos[id][1] - y0 + ybox*now->ly;
           double dz = now->atpos[id][2] - z0 + zbox*now->lz;
@@ -111,19 +124,19 @@ void Driver::compute_msd()
         for (int id = 1; id <= natom; ++id){
           if (insel[id] == 0) continue;
 
-          int xbox = (one->image[id][0] & IMGMASK) - IMGMAX;
-          int ybox = (one->image[id][1] >> IMGBITS & IMGMASK) - IMGMAX;
-          int zbox = (one->image[id][2] >> IMG2BITS) - IMGMAX;
+          int xbox = one->image[id][0];
+          int ybox = one->image[id][1];
+          int zbox = one->image[id][2];
           double x0 = one->atpos[id][0] + xbox * one->lx + ybox * one->xy + zbox * one->xz;
           double y0 = one->atpos[id][1] + ybox * one->ly + zbox * one->yz;
           double z0 = one->atpos[id][2] + zbox * one->lz;
 
-          xbox = (now->image[id][0] & IMGMASK) - IMGMAX;
-          ybox = (now->image[id][1] >> IMGBITS & IMGMASK) - IMGMAX;
-          zbox = (now->image[id][2] >> IMG2BITS) - IMGMAX;
+          xbox = now->image[id][0];
+          ybox = now->image[id][1];
+          zbox = now->image[id][2];
           double dx = now->atpos[id][0] - x0 + xbox * now->lx + ybox * now->xy + zbox * now->xz;
-          double dy = now->atpos[id][0] - y0 + ybox * now->ly + zbox * now->yz;
-          double dz = now->atpos[id][0] - z0 + zbox * now->lz;
+          double dy = now->atpos[id][1] - y0 + ybox * now->ly + zbox * now->yz;
+          double dz = now->atpos[id][2] - z0 + zbox * now->lz;
 
           msd[istep][1] += dx*dx;
           msd[istep][2] += dy*dy;
@@ -151,7 +164,7 @@ void Driver::compute_msd()
   fprintf(fp,"# MSD for: %s", selcmd);
   fprintf(fp,"# d-step x y z r\n");
   for (int it = 0; it < nused; ++it){
-    fprintf(fp,"%d %lg %lg %lg %g\n", int(msd[it][0]), msd[it][1], msd[it][2], msd[it][3], msd[it][4]);
+    fprintf(fp,"%d %lg %lg %lg %lg\n", int(msd[it][0]), msd[it][1], msd[it][2], msd[it][3], msd[it][4]);
   }
   fclose(fp);
   
