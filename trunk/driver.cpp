@@ -197,6 +197,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) heredity();
       break;
 
+    case 31:
+      setrange();
+      if (nsel > 0) rings();
+      break;
+
     default:
       loop = 0;
       break;
@@ -224,8 +229,8 @@ void Driver::MainMenu()
   printf("  8. Output bgf format with property;  |  18. RMSD between frames;\n");
   printf("  9. Local order parameter Ql, qlql;   |  19. Bhatia-Thornton structure factor;\n");
   printf(" 10. Configurational entropy of mixing;|  20. MSD for selected atoms;\n");
-  for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
-  printf(" 21. Heredity of atomic clusters;      |\n");
+  printf("---------------------------------------+----------------------------------------\n");
+  printf(" 21. Heredity of atomic clusters;      |  31. Prepare for RINGS;\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;

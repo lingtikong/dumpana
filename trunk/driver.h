@@ -81,6 +81,9 @@ private:
   void FEFF_main();
   void FEFF_input(int, FILE *);
 
+  // prepare for RINGS
+  void rings();
+
   // Connectivity info for certain clusters
   void ClusterConnectivity();
 
