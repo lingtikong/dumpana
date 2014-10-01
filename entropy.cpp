@@ -15,7 +15,7 @@ void Driver::compute_smix()
   for (int i = 0; i < 4; ++i) printf("===="); printf("\n");
 
   // voro refinement info
-  set_cutoffs(1);
+  set_cutoffs(0);
 
   // output info
   printf("\nPlease input the file to output the entropy info [smix.dat]: ");
