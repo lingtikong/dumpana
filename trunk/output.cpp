@@ -190,7 +190,7 @@ void Driver::OutputVoroCells( )
       while (! outlist.empty() ){
         int id = outlist.front(); outlist.pop_front();
         int ic = 0;
-        if (center.find(id) != center.end()) ic = 1;
+        if (center.count(id) > 0) ic = 1;
 
         if (type2atnum == NULL){ // no elements assigned, print atomic type num as element
           fprintf(fp,"%d %lg %lg %lg", one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);

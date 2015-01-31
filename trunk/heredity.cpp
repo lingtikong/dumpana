@@ -96,10 +96,22 @@ void Driver::heredity()
           ptr = strtok(NULL," \n\t\r\f");
         }
         break;
+
+      } else {
+        printf("Atoms with any Voronoi index will be examined, procceed? (y/n)[y]: ");
+        if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+          char *ptr = strtok(str," \n\t\r\f");
+          if (strcmp(ptr, "y") == 0 || strcmp(ptr, "Y") == 0) break;
+        } else break;
       }
     }
 
     // write header of output file
+    fprintf(fp, "################################################################################\n");
+    fprintf(fp, "# Definitions\n#  1) perfect heredity: same Voronoi index and same neighbors as in previous frame;\n");
+    fprintf(fp, "#  2) Partial heredity: same Voronoi index but different neighbors as in previous frame;\n");
+    fprintf(fp, "#  3) New born: different Voronoi index to that in previous frame.\n");
+    fprintf(fp, "################################################################################\n");
     fprintf(fp, "# timestep  n-total  n-perfect  n-partial n-newborn\n");
 
     for (int img = istr+inc; img <= iend; img += inc){ // loop over frames
@@ -123,6 +135,7 @@ void Driver::heredity()
       int nperf, npart, nnewb;
       nperf = npart = nnewb = 0;
       // loop over all atoms
+#pragma omp parallel for default(shared)
       for (int id = 1; id <= now->natom; ++id){
         if (now->atsel[id] == 0) continue;
         if (voroset.size() > 0 && voroset.count(now->voro[id]) == 0) continue;
@@ -134,13 +147,22 @@ void Driver::heredity()
             int jd = now->neilist[jj][id];
             for (int kk = 1; kk <= ni; ++kk) if (jd == one->neilist[kk][id]) {++hit; break;}
           }
-          if (hit == ni) ++nperf;
-          else ++npart;
+          if (hit == ni){
+#pragma omp atomic
+            ++nperf;
+          } else {
+#pragma omp atomic
+            ++npart;
+          }
 
-        } else ++nnewb;
+        } else {
+#pragma omp atomic
+          ++nnewb;
+        }
          
       }
 
+      if (min_mem) one->FreeVoro();
       one = now;
       ++nused;
 

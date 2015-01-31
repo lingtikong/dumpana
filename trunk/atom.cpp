@@ -353,8 +353,7 @@ void DumpAtom::selection(const char *line)
   strcpy(realcmd," ");
 
   // by default, all are selected
-  for (int i = 1; i <= natom; ++i) atsel[i] = 1;
-
+  for (int id = 1; id <= natom; ++id) atsel[id] = 1;
   key = strtok(selcmd, " \n\t\r\f");
 
   while (key != NULL){
@@ -377,28 +376,28 @@ void DumpAtom::selection(const char *line)
       strcat(onecmd," "); strcat(onecmd,ptr);
 
       if (strcmp(oper, "=") == 0){
-        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i] != ilow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (attyp[i] == ilow) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (attyp[id] != ilow) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (attyp[id] == ilow) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,">") == 0){
-        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i] <= ilow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (attyp[i] > ilow) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (attyp[id] <= ilow) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (attyp[id] > ilow) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,">=") == 0){
-        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i] < ilow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (attyp[i] >= ilow) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (attyp[id] < ilow) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (attyp[id] >= ilow) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"<") == 0){
-        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i] >= ilow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (attyp[i] < ilow) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (attyp[id] >= ilow) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (attyp[id] < ilow) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"<=") == 0){
-        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i] > ilow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (attyp[i] <= ilow) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (attyp[id] > ilow) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (attyp[id] <= ilow) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"<>") == 0){
@@ -406,8 +405,8 @@ void DumpAtom::selection(const char *line)
         if (ptr == NULL) break;
         strcat(onecmd," "); strcat(onecmd,ptr);
         ihigh = atoi(ptr);
-        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i]<ilow || attyp[i]>ihigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (attyp[i]>=ilow && attyp[i]<=ihigh) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (attyp[id]<ilow || attyp[id]>ihigh) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (attyp[id]>=ilow && attyp[id]<=ihigh) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"><") == 0){
@@ -415,8 +414,8 @@ void DumpAtom::selection(const char *line)
         if (ptr == NULL) break;
         strcat(onecmd," "); strcat(onecmd,ptr);
         ihigh = atoi(ptr);
-        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i]>ilow && attyp[i]<ihigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (attyp[i]<=ilow || attyp[i]>=ihigh) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (attyp[id]>ilow && attyp[id]<ihigh) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (attyp[id]<=ilow || attyp[id]>=ihigh) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"%") == 0){
@@ -424,8 +423,8 @@ void DumpAtom::selection(const char *line)
         if (ptr == NULL) break;
         strcat(onecmd," "); strcat(onecmd,ptr);
         ihigh = atoi(ptr);
-        if (logand){ for (int i = 1; i <= natom; ++i) if (attyp[i]%ilow != ihigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (attyp[i]%ilow == ihigh) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (attyp[id]%ilow != ihigh) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (attyp[id]%ilow == ihigh) atsel[id] = 1;
         }
 
       } else break;
@@ -444,13 +443,13 @@ void DumpAtom::selection(const char *line)
       strcat(onecmd," "); strcat(onecmd,ptr);
 
       if (strcmp(oper,">")==0 || strcmp(oper,">=")==0){
-        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir] < rlow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir] >= rlow) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (atpos[id][dir] < rlow) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (atpos[id][dir] >= rlow) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"<")==0 || strcmp(oper,"<=")==0){
-        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir] > rlow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir] <= rlow) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (atpos[id][dir] > rlow) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (atpos[id][dir] <= rlow) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"<>") == 0){
@@ -459,8 +458,8 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         rhigh = atof(ptr);
 
-        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir]<rlow || atpos[i][dir]>rhigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir]>=rlow && atpos[i][dir]<=rhigh) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (atpos[id][dir]<rlow || atpos[id][dir]>rhigh) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (atpos[id][dir]>=rlow && atpos[id][dir]<=rhigh) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"><") == 0){
@@ -469,8 +468,8 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         rhigh = atof(ptr);
 
-        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir]>rlow && atpos[i][dir]<rhigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir]<=rlow || atpos[i][dir]>=rhigh) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (atpos[id][dir]>rlow && atpos[id][dir]<rhigh) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (atpos[id][dir]<=rlow || atpos[id][dir]>=rhigh) atsel[id] = 1;
         }
 
       } else break;
@@ -489,13 +488,13 @@ void DumpAtom::selection(const char *line)
       strcat(onecmd," "); strcat(onecmd,ptr);
 
       if (strcmp(oper,">")==0 || strcmp(oper,">=")==0){
-        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir] < rlow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir] >= rlow) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (atpos[id][dir] < rlow) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (atpos[id][dir] >= rlow) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"<")==0 || strcmp(oper,"<=")==0){
-        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir] > rlow) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir] <= rlow) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (atpos[id][dir] > rlow) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (atpos[id][dir] <= rlow) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"<>") == 0){
@@ -504,8 +503,8 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         rhigh = atof(ptr);
 
-        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir]<rlow || atpos[i][dir]>rhigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir]>=rlow && atpos[i][dir]<=rhigh) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (atpos[id][dir]<rlow || atpos[id][dir]>rhigh) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (atpos[id][dir]>=rlow && atpos[id][dir]<=rhigh) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"><") == 0){
@@ -514,8 +513,8 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         rhigh = atof(ptr);
 
-        if (logand){ for (int i = 1; i <= natom; ++i) if (atpos[i][dir]>rlow && atpos[i][dir]<rhigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (atpos[i][dir]<=rlow || atpos[i][dir]>=rhigh) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (atpos[id][dir]>rlow && atpos[id][dir]<rhigh) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (atpos[id][dir]<=rlow || atpos[id][dir]>=rhigh) atsel[id] = 1;
         }
 
       } else break;
@@ -531,24 +530,24 @@ void DumpAtom::selection(const char *line)
       strcat(onecmd," "); strcat(onecmd,ptr);
 
       if (strcmp(oper,"=") == 0){
-        if (logand){ for (int i = 1; i <= natom; ++i) if (i != ilow) atsel[i] = 0;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (id != ilow) atsel[id] = 0;
         } else atsel[ilow] = 1;
 
       } else if (strcmp(oper,">") == 0){
-        if (logand) for (int i = 1; i <= MIN(ilow,natom); ++i) atsel[i] = 0;
-        else for (int i = ilow+1; i <= natom; ++i) atsel[i] = 1;
+        if (logand) for (int id = 1; id <= MIN(ilow,natom); ++id) atsel[id] = 0;
+        else for (int id = ilow+1; id <= natom; ++id) atsel[id] = 1;
 
       } else if (strcmp(oper,">=") == 0){
-        if (logand) for (int i = 1; i < MIN(ilow,natom); ++i) atsel[i] = 0;
-        else for (int i = ilow; i <= natom; ++i) atsel[i] = 1;
+        if (logand) for (int id = 1; id < MIN(ilow,natom); ++id) atsel[id] = 0;
+        else for (int id = ilow; id <= natom; ++id) atsel[id] = 1;
 
       } else if (strcmp(oper,"<") == 0){
-        if (logand) for (int i = ilow; i <= natom; ++i) atsel[i] = 0;
-        else for (int i = 1; i < MIN(ilow,natom); ++i) atsel[i] = 1;
+        if (logand) for (int id = ilow; id <= natom; ++id) atsel[id] = 0;
+        else for (int id = 1; id < MIN(ilow,natom); ++id) atsel[id] = 1;
 
       } else if (strcmp(oper,"<=") == 0){
-        if (logand) for (int i = ilow+1; i <= natom; ++i) atsel[i] = 0;
-        else for (int i = 1; i <= MIN(ilow,natom); ++i) atsel[i] = 1;
+        if (logand) for (int id = ilow+1; id <= natom; ++id) atsel[id] = 0;
+        else for (int id = 1; id <= MIN(ilow,natom); ++id) atsel[id] = 1;
 
       } else if (strcmp(oper,"<>") == 0){
         ptr = strtok(NULL, " \n\t\r\f");
@@ -557,9 +556,9 @@ void DumpAtom::selection(const char *line)
         ihigh = atoi(ptr);
 
         if (logand){
-          for (int i = 1; i < MIN(ilow,natom); ++i) atsel[i] = 0;
-          for (int i = ihigh+1; i <= natom; ++i) atsel[i] = 0;
-        } else for (int i = ilow; i <= MIN(ihigh,natom); ++i) atsel[i] = 1;
+          for (int id = 1; id < MIN(ilow,natom); ++id) atsel[id] = 0;
+          for (int id = ihigh+1; id <= natom; ++id) atsel[id] = 0;
+        } else for (int id = ilow; id <= MIN(ihigh,natom); ++id) atsel[id] = 1;
 
       } else if (strcmp(oper,"><") == 0){
         ptr = strtok(NULL, " \n\t\r\f");
@@ -567,10 +566,10 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         ihigh = atoi(ptr);
 
-        if (logand) for (int i = ilow; i <= MIN(ihigh,natom); ++i) atsel[i] = 0;
+        if (logand) for (int id = ilow; id <= MIN(ihigh,natom); ++id) atsel[id] = 0;
         else {
-          for (int i = 1; i < MIN(ilow,natom); ++i) atsel[i] = 1;
-          for (int i = ihigh+1; i <= natom; ++i) atsel[i] = 1;
+          for (int id = 1; id < MIN(ilow,natom); ++id) atsel[id] = 1;
+          for (int id = ihigh+1; id <= natom; ++id) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"%") == 0){
@@ -579,8 +578,8 @@ void DumpAtom::selection(const char *line)
         strcat(onecmd," "); strcat(onecmd,ptr);
         ihigh = atoi(ptr);
 
-        if (logand){ for (int i = 1; i <= natom; ++i) if (i%ilow != ihigh) atsel[i] = 0;
-        } else { for (int i = 1; i <= natom; ++i) if (i%ilow == ihigh) atsel[i] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (id%ilow != ihigh) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (id%ilow == ihigh) atsel[id] = 1;
         }
 
       } else break;
@@ -603,7 +602,7 @@ void DumpAtom::selection(const char *line)
       RanPark * random = new RanPark(seed);
 
       nsel = 0;
-      for (int i = 1; i <= natom; ++i) nsel += atsel[i];
+      for (int id = 1; id <= natom; ++id) nsel += atsel[id];
       int ndel = nsel - ilow;
       while (ndel > 0){
         int id = MIN(random->uniform()*(natom+1), natom);
@@ -626,8 +625,14 @@ void DumpAtom::selection(const char *line)
       ptr = strtok(NULL, " \n\t\r\f");
       if (ptr == NULL) break;
       strcat(onecmd," "); strcat(onecmd,ptr);
+      int flag_ex = 0;
       int nv = atoi(ptr);
+      if (nv < 0){
+        flag_ex = 1;
+        nv = -nv;
+      }
 
+      voroset.clear();
       for (int i = 0; i < nv; ++i){
         ptr = strtok(NULL, " \n\t\r\f");
         if (ptr == NULL) break;
@@ -637,19 +642,90 @@ void DumpAtom::selection(const char *line)
       ComputeVoro(mins);
 
       // make the selection
+      std::set<int> vatset; vatset.clear();
       if (voroset.size() > 0){
-        if (logand){
-          for (int i = 1; i <= natom; ++i){
-            vindex = voro[i];
-            if (voroset.count(vindex) < 1) atsel[i] = 0;
-          }
-        } else {
-          for (int i = 1; i <= natom; ++i){
-            vindex = voro[i];
-            if (voroset.count(vindex) > 0) atsel[i] = 1;
+        for (int id = 1; id <= natom; ++id){
+          vindex = voro[id];
+          if (voroset.count(vindex) > 0 && flag_ex == 0) vatset.insert(id);
+          else if (voroset.count(vindex) < 1 && flag_ex == 1) vatset.insert(id);
+        }
+      }
+
+      if (logand){
+        for (int id = 1; id <= natom; ++id){
+          if (vatset.count(id) < 1) atsel[id] = 0;
+        }
+
+      } else {
+        for (int id = 1; id <= natom; ++id){
+          if (vatset.count(id) > 0) atsel[id] = 1;
+        }
+      }
+      vatset.clear();
+      voroset.clear();
+
+    } else if (strcmp(key,"VORO") == 0){ // selected by Voronoi indices and their neighbors
+      set<string> voroset; string vindex;
+      double mins[3];
+      for (int i = 0; i < 3; ++i){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        mins[i] = atof(ptr);
+      }
+      ptr = strtok(NULL, " \n\t\r\f");
+      if (ptr == NULL) break;
+      strcat(onecmd," "); strcat(onecmd,ptr);
+      int flag_ex = 0;
+      int nv = atoi(ptr);
+      if (nv < 0){
+        flag_ex = 1;
+        nv = -nv;
+      }
+
+      voroset.clear();
+      for (int i = 0; i < nv; ++i){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        vindex.assign(ptr); voroset.insert(vindex);
+      }
+      ComputeVoro(mins);
+
+      // make the selection
+      std::set<int> vatset; vatset.clear();
+      if (voroset.size() > 0){
+        for (int id = 1; id <= natom; ++id){
+          vindex = voro[id];
+          if (voroset.count(vindex) > 0 && flag_ex == 0){
+            vatset.insert(id);
+            for (int jj = 1; jj <= neilist[0][id]; ++jj){
+              int jd = neilist[jj][id];
+              vatset.insert(jd);
+            }
+
+          } else if (voroset.count(vindex) < 1 && flag_ex == 1){
+            vatset.insert(id);
+            for (int jj = 1; jj <= neilist[0][id]; ++jj){
+              int jd = neilist[jj][id];
+              vatset.insert(jd);
+            }
           }
         }
       }
+
+      if (logand){
+        for (int id = 1; id <= natom; ++id){
+          if (vatset.count(id) < 1) atsel[id] = 0;
+        }
+
+      } else {
+        for (int id = 1; id <= natom; ++id){
+          if (vatset.count(id) > 0) atsel[id] = 1;
+        }
+      }
+      vatset.clear();
+      voroset.clear();
 
     } else if (strcmp(key,"vol")==0){ // selection by Voronoi volume
 
@@ -664,15 +740,15 @@ void DumpAtom::selection(const char *line)
 
       if (strcmp(oper,">")==0 || strcmp(oper,">=")==0){
         if (volume){
-          if (logand){ for (int i = 1; i <= natom; ++i) if (volume[i] < rlow) atsel[i] = 0;
-          } else { for (int i = 1; i <= natom; ++i) if (volume[i] >= rlow) atsel[i] = 1;
+          if (logand){ for (int id = 1; id <= natom; ++id) if (volume[id] < rlow) atsel[id] = 0;
+          } else { for (int id = 1; id <= natom; ++id) if (volume[id] >= rlow) atsel[id] = 1;
           }
         }
 
       } else if (strcmp(oper,"<")==0 || strcmp(oper,"<=")==0){
         if (volume){
-          if (logand){ for (int i = 1; i <= natom; ++i) if (volume[i] > rlow) atsel[i] = 0;
-          } else { for (int i = 1; i <= natom; ++i) if (volume[i] <= rlow) atsel[i] = 1;
+          if (logand){ for (int id = 1; id <= natom; ++id) if (volume[id] > rlow) atsel[id] = 0;
+          } else { for (int id = 1; id <= natom; ++id) if (volume[id] <= rlow) atsel[id] = 1;
           }
         }
 
@@ -683,8 +759,8 @@ void DumpAtom::selection(const char *line)
         rhigh = atof(ptr);
 
         if (volume){
-          if (logand){ for (int i = 1; i <= natom; ++i) if (volume[i]<rlow || volume[i]>rhigh) atsel[i] = 0;
-          } else { for (int i = 1; i <= natom; ++i) if (volume[i]>=rlow && volume[i]<=rhigh) atsel[i] = 1;
+          if (logand){ for (int id = 1; id <= natom; ++id) if (volume[id]<rlow || volume[id]>rhigh) atsel[id] = 0;
+          } else { for (int id = 1; id <= natom; ++id) if (volume[id]>=rlow && volume[id]<=rhigh) atsel[id] = 1;
           }
         }
 
@@ -695,8 +771,8 @@ void DumpAtom::selection(const char *line)
         rhigh = atof(ptr);
 
         if (volume){
-          if (logand){ for (int i = 1; i <= natom; ++i) if (volume[i]>rlow && volume[i]<rhigh) atsel[i] = 0;
-          } else { for (int i = 1; i <= natom; ++i) if (volume[i]<=rlow || volume[i]>=rhigh) atsel[i] = 1;
+          if (logand){ for (int id = 1; id <= natom; ++id) if (volume[id]>rlow && volume[id]<rhigh) atsel[id] = 0;
+          } else { for (int id = 1; id <= natom; ++id) if (volume[id]<=rlow || volume[id]>=rhigh) atsel[id] = 1;
           }
         }
 
@@ -704,7 +780,11 @@ void DumpAtom::selection(const char *line)
 
     } else if (strcmp(key,"all") == 0){ // select all; it will discard all previous selections
       strcpy(realcmd,""); strcpy(onecmd,key);
-      for (int i = 1; i <= natom; ++i) atsel[i] = 1;
+      for (int id = 1; id <= natom; ++id) atsel[id] = 1;
+
+    } else if (strcmp(key,"!") == 0 || strcmp(key,"~") == 0){  // reverse the previous selection
+      strcpy(onecmd,key);
+      for (int id = 1; id <= natom; ++id) atsel[id] = (atsel[id] + 1)%2;
 
     } else break;
 
@@ -713,7 +793,7 @@ void DumpAtom::selection(const char *line)
   }
 
   nsel = 0;
-  for (int i = 1; i <= natom; ++i) nsel += atsel[i];
+  for (int id = 1; id <= natom; ++id) nsel += atsel[id];
   memory->destroy(selcmd);
 
 return;
@@ -741,6 +821,7 @@ void DumpAtom::SelHelp()
   printf("\nwhere `key` is either `type`, `x`,`X', `y`, 'Y', `z`, 'Z', 'vol',\n");
   printf("or `id`. Lower case indicates fractional while upper Cartesian.\n");
   printf("It can also be `all`, which takes no argument and selects all atoms;\n");
+  printf("or `!`, which takes no argument and reverses the previous selection;\n");
   printf("or `ran num seed`, which takes no other argument and selects `num` atoms\n");
   printf("from the current selection randomly; `seed` is the seed for the uniform\n");
   printf("random number generator, if a non-positive number is provided, it will be\n");
@@ -750,8 +831,12 @@ void DumpAtom::SelHelp()
   printf("select atoms with certain Voronoi indices. `MinSurf' and `MinEdge%%' defines\n");
   printf("the thresholds for surface and edge, respectively; they can be zero; `NMinNei'\n");
   printf("defines the Minimum # of neighbors wanted, zero means no limitations; `NVoroIndex'\n");
-  printf("defines the # of Voronoi indices that will follow, it can be zero; and the following\n");
-  printf("`NVoroIndex' arguments should be the Voronoi indices, for example: 0,6,0,8\n");
+  printf("defines the # of Voronoi indices that will follow, it can be zero; in case\n");
+  printf("`NVoroIndex` is negative, atoms whose Voronoi index are not in the following\n");
+  printf("will be selected instead. The following `NVoroIndex' arguments should be\n");
+  printf("be the Voronoi indices, for example: 0,6,0,8.\n");
+  printf("If the key is `VORO` instead, the central atom and its neighbors will also\n");
+  printf("be included or excluded, depending on if `NVoroIndex' is positive or negative.\n");
   printf("\n`op` is either `=`, `>`, `>=`, `<`, `<=`, `<>`, `><`, or `%%`,\n");
   printf("while neithor `=` nor `%%` is available for key=`x-z, X-Z`.\n");
   printf("\n`values` can be one or two numbers, depend on the type of `op`:\n");
