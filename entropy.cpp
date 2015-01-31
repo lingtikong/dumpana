@@ -40,6 +40,7 @@ void Driver::compute_smix()
       for (int ip = 0; ip <= one->ntype;   ++ip)
       for (int jp = 0; jp <= one->ntype+1; ++jp) nei_count[ip][jp] = 0;
 
+#pragma omp parallel for default(shared)
       for (int id = 1; id <= one->natom; ++id){
         int ip = one->attyp[id];
         int ni = one->neilist[0][id];
@@ -47,9 +48,12 @@ void Driver::compute_smix()
           int jd = one->neilist[jj][id];
           int jp = one->attyp[jd];
 
+#pragma omp atomic
           ++nei_count[ip][jp];
         }
+#pragma omp atomic
         ++nei_count[ip][0];
+#pragma omp atomic
         nei_count[ip][one->ntype+1] += ni;
       }
 
@@ -86,6 +90,7 @@ void Driver::compute_smix()
 
     smix_tot += one->smix;
     fprintf(fp, "%d %lg\n", one->tstep, one->smix);
+    if (min_mem) one->FreeVoro();
 
     ++nused;
   }

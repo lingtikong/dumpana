@@ -829,7 +829,7 @@ return;
  *------------------------------------------------------------------------------ */
 void Driver::ShowVersion()
 {
-  printf("\nDumpAna  version 1.%d, compiled on %s %s\n", VERSION, __DATE__, __TIME__);
+  printf("\nDumpAna revision %d, compiled on %s %s\n", VERSION, __DATE__, __TIME__);
 }
 
 /*------------------------------------------------------------------------------

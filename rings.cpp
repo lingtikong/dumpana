@@ -115,6 +115,8 @@ void Driver::rings()
       }
       cluster.clear(); shell.clear();
     }
+
+    if (min_mem) one->FreeVoro();
     printf("  Done!\n");
     ++nused;
   } // end of loop over frames

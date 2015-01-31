@@ -75,6 +75,7 @@ private:
 
   // Pair Correlation and static structure factor
   void paircorr();
+  void write_gr(double, double, int, double **, int, char *, char *);
   void strfac();
 
   // Prepare for FEFF9
