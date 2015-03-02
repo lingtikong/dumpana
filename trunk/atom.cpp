@@ -885,25 +885,28 @@ int DumpAtom::count_words(const char *line)
 
 /*------------------------------------------------------------------------------
  * Private method to compute the direct Voronoi index, Voronoi neighbor list info
- * mins     (in)  : surf_min  Min#Nei edge_min; if negative, default/previous
- *                : values will be taken.
+ * mins     (in)  : surf_min  Min#Nei edge_min; For either surf_min or edge_min,
+ *                : if a positive number is provided, it is the absolute surface
+ *                : area or edge length threshold; otherwise, it is the minimum
+ *                : ratio over total surface area or circumference.
  * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
  * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing
  * fpedge   (in)  : file pointer to write edge ratio info; if NULL, write nothing
  *----------------------------------------------------------------------------*/
 void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 {
-  for (int i = 0; i < 3; ++i) if (mins[i] < 0.) mins[i] = vmins[i];
-
   double diff = 0.;
   for (int i = 0; i < 3; ++i) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
   if (diff <= ZERO && voro.size() == natom && wted == 0) return;
 
   wted = 0;
-  for (int i = 0; i < 3; ++i) vmins[i] = fabs(mins[i]);
+  int flag_surf_ratio = 0;
+  if (mins[0] < 0.) flag_surf_ratio = 1;
 
-  double surf_min = vmins[0];
-  int nminnei = int(vmins[1]);
+  for (int i = 0; i < 3; ++i) vmins[i] = mins[i];
+
+  double surf_min = fabs(vmins[0]);
+  int nminnei = abs(int(vmins[1]));
   double edge_min = vmins[2];
 
   voro.clear();
@@ -954,6 +957,8 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       // refine the voronoi cell if asked by removing tiny surfaces
       if (surf_min > ZERO){
         c2.init(-lx,lx,-ly,ly,-lz,lz);
+        double fs_scale = 1.;
+        if (flag_surf_ratio) fs_scale = 1./cell->surface_area();
   
         int nf = fs.size();
         // sort neighbors by area if asked to keep a minimum # of neighbors
@@ -969,7 +974,7 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 
         // add condition on surface
         for (int i = 0; i < nf; ++i){
-          if (i < nminnei || fs[i] > surf_min){
+          if (i < nminnei || (fs[i]*fs_scale) > surf_min){
             int jd = neigh[i];
   
             // apply pbc
@@ -993,7 +998,7 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       for (int i = 3; i <= MIN(6,nn); ++i) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
-      if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
+      if (fabs(edge_min) > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
 
       // assign voronoi index and neighbor list info
       int nf = fs.size();
@@ -1047,6 +1052,8 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       // refine the voronoi cell if asked by removing tiny surfaces
       if (surf_min > ZERO){
         c2.init(-lx,lx,-ly,ly,-lz,lz);
+        double fs_scale = 1.;
+        if (flag_surf_ratio) fs_scale = 1./cell->surface_area();
   
         int nf = fs.size();
         // sort neighbors by area if asked to keep a minimum # of neighbors
@@ -1062,7 +1069,7 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 
         // add condition on surface
         for (int i = 0; i < nf; ++i){
-          if (i < nminnei || fs[i] > surf_min){
+          if (i < nminnei || (fs[i]*fs_scale) > surf_min){
             int jd = neigh[i];
   
             // apply pbc
@@ -1086,7 +1093,7 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       for (int i = 3; i <= MIN(6,nn); ++i) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
-      if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
+      if (fabs(edge_min) > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
 
       // assign voronoi index and neighbor list info
       int nf = fs.size();
@@ -1177,8 +1184,10 @@ return;
 
 /*------------------------------------------------------------------------------
  * Private method to compute the Radical Voronoi index, Voronoi neighbor list info
- * mins     (in)  : surf_min Min#Nei edge_min ; if negative, default/previous
- *                : values will be taken.
+ * mins     (in)  : surf_min  Min#Nei edge_min; For either surf_min or edge_min,
+ *                : if a positive number is provided, it is the absolute surface
+ *                : area or edge length threshold; otherwise, it is the minimum
+ *                : ratio over total surface area or circumference.
  * fp       (in)  : file pointer to write full voro info; if NULL, write nothing
  * fpsurf   (in)  : file pointer to write surf ratio info; if NULL, write nothing
  * fpedge   (in)  : file pointer to write edge ratio info; if NULL, write nothing
@@ -1186,16 +1195,18 @@ return;
 void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 {
   // now to compute weighted voronoi info
-  for (int i = 0; i < 3; ++i) if (mins[i] < 0.) mins[i] = vmins[i];
   double diff = 0.;
   for (int i = 0; i < 3; ++i) diff += (mins[i] - vmins[i])*(mins[i] - vmins[i]);
   if (diff <= ZERO && voro.size() == natom && wted) return;
 
   wted = 1;
-  for (int i = 0; i < 3; ++i) vmins[i] = fabs(mins[i]);
+  int flag_surf_ratio = 0;
+  if (mins[0] < 0.) flag_surf_ratio = 1;
 
-  double surf_min = vmins[0];
-  int nminnei = int(vmins[1]);
+  for (int i = 0; i < 3; ++i) vmins[i] = mins[i];
+
+  double surf_min = fabs(vmins[0]);
+  int nminnei = abs(int(vmins[1]));
   double edge_min = vmins[2];
 
   voro.clear();
@@ -1249,6 +1260,8 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       // refine the voronoi cell if asked by removing tiny surfaces
       if (surf_min > ZERO){
         c2.init(-lx,lx,-ly,ly,-lz,lz);
+        double fs_scale = 1.;
+        if (flag_surf_ratio) fs_scale = 1./cell->surface_area();
   
         int nf = fs.size();
         // sort neighbors by area if asked to keep a minimum # of neighbors
@@ -1264,7 +1277,7 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
 
         // add condition on surface
         for (int i = 0; i < nf; ++i){
-          if (i < nminnei || fs[i] > surf_min){
+          if (i < nminnei || (fs[i]*fs_scale) > surf_min){
             int jd = neigh[i];
   
             // apply pbc
@@ -1294,7 +1307,7 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       for (int i = 3; i <= MIN(6,nn); ++i) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
-      if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
+      if (fabs(edge_min) > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
 
       // assign voronoi index and neighbor list info
       int nf = fs.size();
@@ -1352,6 +1365,9 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       if (surf_min > ZERO){
   
         int nf = fs.size();
+        double fs_scale = 1.;
+        if (flag_surf_ratio) 1./cell->surface_area();
+
         // sort neighbors by area if asked to keep a minimum # of neighbors
         if (nminnei > 0){
           for (int i = 0; i < nf; ++i)
@@ -1366,7 +1382,7 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         c2.init(-lx,lx,-ly,ly,-lz,lz);
         // add condition on surface
         for (int i = 0; i < nf; ++i){
-          if (i < nminnei || fs[i] > surf_min){
+          if (i < nminnei || (fs[i]*fs_scale) > surf_min){
             int jd = neigh[i];
   
             // apply pbc
@@ -1396,7 +1412,7 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       for (int i = 3; i <= MIN(6,nn); ++i) index[i] = ff[i];
     
       // refine the voronoi cell if asked by skipping ultra short edges
-      if (edge_min > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
+      if (fabs(edge_min) > ZERO || fpedge) RefineEdge(fs.size(), cell, index, edge_min, fpedge);
 
       // assign voronoi index and neighbor list info
       int nf = fs.size();
@@ -1430,7 +1446,7 @@ return;
  * cell (in)  : voro::voronoicell_neighbor
  * idx  (out) : carries the refined edge counts
  * ---------------------------------------------------------------------------*/
-void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, double edge_min, FILE *fpedge)
+void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, double e_min_in, FILE *fpedge)
 {
   std::vector<double> vpos;
   std::vector<int>    vlst;
@@ -1438,8 +1454,12 @@ void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, do
   cell->vertices(vpos);
   cell->face_vertices(vlst);
 
+  double edge_min = fabs(e_min_in);
+  int flag_edge_ratio = 0;
+  if (e_min_in < 0.) flag_edge_ratio = 1;
+
   int nv = vlst.size();
-  double perim[nf], edges[nv];
+  double perim[nf], edges[nv], perim_tot = 0.;
   int k = 0, is = 0, ie = 0;
   while (k < nv){
     perim[is] = 0.;
@@ -1454,20 +1474,23 @@ void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, do
       edges[ie++] = r;
       perim[is] += r;
     }
-    perim[is] = 1./perim[is];
+    perim_tot += perim[is];
     ++is; k += ned;
   }
   
   int ford[nf];
   k = is = ie = 0;
+  double ed_scale = 1.;
+  if (flag_edge_ratio) ed_scale = 2./perim_tot;
+
   while (k < nv){
     int ned = vlst[k++];
 
     int nuc = 0;
     for (int ii = 0; ii < ned; ++ii){
-      double rwt = edges[ie] * perim[is];
+      double rwt = edges[ie] * ed_scale;
       if (fpedge) fprintf(fpedge, "%lg %g\n", rwt, edges[ie]);
-      if (edges[ie] <= edge_min) ++nuc;
+      if ((edges[ie]*ed_scale) <= edge_min) ++nuc;
       ++ie;
     }
     ford[is++] = ned - nuc;

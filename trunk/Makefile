@@ -18,8 +18,8 @@ LIB    = $(FFTLIB) $(LPKLIB) $(USRLIB) $(VoroLIB) $(GslLIB)
 #LPKLIB = -L/opt/clapack/3.2.1/lib -lclapack -lblas -lf2c -lm
 
 # Voro++, Needed.
-VoroINC = -I/opt/libs/voro_svn/src
-VoroLIB = -L/opt/libs/voro_svn/src -lvoro++
+VoroINC = -I/opt/libs/voro/include/voro++
+VoroLIB = -L/opt/libs/voro/lib -lvoro++
 
 # GSL, needed
 GslINC  = -I/opt/libs/gsl/include

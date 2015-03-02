@@ -906,13 +906,14 @@ void Driver::MapType2Elem(const int flag, const int ntype)
   char str[MAXLINE];
   if (flag == 0){
     printf("\nIf you want to map the atomic types to elements, input the element\n");
-    printf("symbols in sequence now: ");
+    printf("symbols (and radii) in sequence now: ");
   } else {
     printf("Total number of atomic types in the system are %d.\n", ntype); 
     printf("Please input the element symbol for each atomic type in sequence: ");
   }
 
-  if (count_words(fgets(str,MAXLINE,stdin)) >= ntype){
+  int n = count_words(fgets(str,MAXLINE,stdin));
+  if (n >= ntype){
     if (element) delete element;
     if (type2atnum)  memory->destroy(type2atnum);
     if (type2radius) memory->destroy(type2radius);
@@ -925,6 +926,21 @@ void Driver::MapType2Elem(const int flag, const int ntype)
       type2atnum[ip] =  element->Name2Num(ptr);
       type2radius[ip]=  element->Name2Radius(ptr);
       ptr = strtok(NULL, " \n\t\r\f");
+    }
+
+    if (n == ntype+ntype){
+      double *Rnew;
+      memory->create(Rnew, ntype+1, "Rnew");
+      int flag = 1;
+      for (int ip = 1; ip <= ntype; ++ip){
+        Rnew[ip] = atof(ptr);
+        if (Rnew[ip] < 0.) flag = 0;
+        ptr = strtok(NULL, " \n\t\r\f");
+      }
+      if (flag){
+        for (int ip = 1; ip <= ntype; ++ip) type2radius[ip] = Rnew[ip];
+      }
+      memory->destroy(Rnew);
     }
     printf("\nThe atomic types are assigned as:");
     for (int ip = 1; ip <= ntype; ++ip){
@@ -981,7 +997,8 @@ void Driver::set_cutoffs(int flag)
   fgets(str,MAXLINE, stdin);
   char * ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[0] = atof(ptr);
-  printf("Surface whose area is less than %lg will be removed!\n\n", mins[0]);
+  if (mins[0] > 0.) printf("Surface whose area is less than %lg will be removed!\n\n", mins[0]);
+  else  printf("Surface whose area takes less than %lg%% will be removed!\n\n", fabs(mins[0])*100.);
 
   printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
   printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
@@ -997,7 +1014,8 @@ void Driver::set_cutoffs(int flag)
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) mins[2] = atof(ptr);
-    printf("Edges whose lengths are less than %lg will be skipped!\n", mins[2]);
+    if (mins[2] > 0.) printf("Edge whose length is less than %lg will be skipped!\n", mins[2]);
+    else printf("Edge whose length takes less than %lg%% of the total circumference will be skipped!\n", fabs(mins[2])*100.);
   } else mins[2] = -1.;
 
 return;

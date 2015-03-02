@@ -150,7 +150,7 @@ void Driver::bonds()
     if (one->natom > natom){
       natom = one->natom;
       memory->grow(is, natom+1, "is:grow");
-      memory->grow(js, natom+1, "is:grow");
+      memory->grow(js, natom+1, "js:grow");
     }
     for (int id = 1; id <= one->natom; ++id) is[id] = one->atsel[id];
 
@@ -171,8 +171,6 @@ void Driver::bonds()
     double xij[3], xik[3], rij, rik;
     double lx = one->lx, ly = one->ly, lz = one->lz;
     double xy = one->xy, xz = one->xz, yz = one->yz;
-
-    set<int> counted;
 
     // now to do the real job
     if (job == 1){ // bond length
