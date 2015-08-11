@@ -25,8 +25,7 @@ private:
   DumpAtom *one;
   int *attyp, **neilist;
   double *pattern, **x;
-
-  int bonded(int,int);
+  double *lop_sum;
 
   // determine local environment
   int flag_env;

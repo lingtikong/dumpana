@@ -15,12 +15,13 @@ void Driver::bonds()
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
   printf("  1. bond lengths between selected atoms;\n");
   printf("  2. bond angles  between selected atoms;\n");
+  printf("  3. distances    between selected atoms;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
-  if (job < 1 || job > 2){
+  if (job < 1 || job > 3){
     for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
     return;
   }
@@ -34,7 +35,7 @@ void Driver::bonds()
   one = all[istr];
   one->ComputeVoro(mins);
 
-  if (job == 1) printf("\nA pair of atoms defines a bond, first define one end of the bond.\n");
+  if (job == 1 || job == 3) printf("\nA pair of atoms should be defined to compute the bond length or distance,\nfirst please define one end of the pair.\n");
   else printf("\nThree atoms define an angle, now define the central atom.\n");
   while (1){
     printf("Please input the atom selection command, `h` for help [all]: ");
@@ -56,7 +57,7 @@ void Driver::bonds()
     break;
   }
 
-  if (job == 1) printf("\nNow to define the other end of the bond.\n");
+  if (job == 1 || job == 3) printf("\nNow to define the other end of the pair.\n");
   else printf("\nNow to define the first end of the bond angle.\n");
   while (1){
     printf("Please input the atom selection command, `h` for help [all]: ");
@@ -107,9 +108,12 @@ void Driver::bonds()
   if (job == 1){
     printf("[bondlen.dat]: ");
     if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, "bondlen.dat");
-  } else {
+  } else if (job == 2){
     printf("[bondang.dat]: ");
     if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, "bondang.dat");
+  } else {
+    printf("[pairdst.dat]: ");
+    if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, "pairdst.dat");
   }
   ptr = strtok(str," \n\t\r\f");
   fname = new char[strlen(ptr)+1];
@@ -121,11 +125,15 @@ void Driver::bonds()
     fprintf(fp,"# selection command for the 1st end of bonds: %s", isel);
     fprintf(fp,"# selection command for the 2nd end of bonds: %s", jsel);
     fprintf(fp,"# frame index id jd ip jp bondlength\n");
-  } else {
+  } else if (job == 2){
     fprintf(fp,"# selection command for the center  of angles: %s", isel);
     fprintf(fp,"# selection command for the 1st end of angles: %s", jsel);
     fprintf(fp,"# selection command for the 2nd end of angles: %s", ksel);
     fprintf(fp,"# frame index jd id kd theta cos(theta)\n");
+  } else {
+    fprintf(fp,"# selection command for the 1st end of pair: %s", isel);
+    fprintf(fp,"# selection command for the 2nd end of pair: %s", jsel);
+    fprintf(fp,"# frame index id jd ip jp distance\n");
   }
 
   // working space for selection info
@@ -142,7 +150,7 @@ void Driver::bonds()
     one = all[img];
 
     // Compute the Voronoi neighbors
-    one->ComputeVoro(mins);
+    if (job < 3) one->ComputeVoro(mins);
 
     // make the first selection
     one->selection(isel);
@@ -205,7 +213,7 @@ void Driver::bonds()
       }
       counted.clear();
 
-    } else {       // bond angle
+    } else if (job == 2) {       // bond angle
 
       int iangle = 0;
 
@@ -246,6 +254,31 @@ void Driver::bonds()
               fprintf(fp,"%d %d %d %d %d %g %lg\n", img+1, ++iangle, jd, id, kd, ang, cos);
             }
           }
+        }
+      }
+
+    } else { // distance between pairs
+
+      int ipair = 0;
+      for (int id = 1; id <= one->natom; ++id){
+        if (is[id] == 0) continue;
+        int ip = one->attyp[id];
+  
+        for (int jd = id+1; jd <= one->natom; ++jd){
+          if (js[jd] == 0) continue;
+          int jp = one->attyp[jd];
+  
+          for (int idim = 0; idim < 3; ++idim){
+            xij[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
+            while (xij[idim] > 0.5) xij[idim] -= 1.;
+            while (xij[idim] <-0.5) xij[idim] += 1.;
+          }
+          xij[0] = xij[0] * lx + xij[1] * xy + xij[2] * xz;
+          xij[1] = xij[1] * ly + xij[2] * yz;
+          xij[2] = xij[2] * lz;
+          rij = sqrt(xij[0]*xij[0] + xij[1]*xij[1] + xij[2]*xij[2]);
+  
+          fprintf(fp,"%d %d %d %d %d %d %lg\n", img+1, ++ipair, id, jd, ip, jp, rij);
         }
       }
     }

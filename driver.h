@@ -21,6 +21,7 @@ public:
 
 private:
   char *dump;                             // dump file name; should carries the last file name
+  int flag_dump;                          // flag related to the reading of dump
   int min_mem;                            // Flag, whether to minimize memory usage
   int nframe;                             // total # of frames
   int istr, iend, inc;                    // frame range

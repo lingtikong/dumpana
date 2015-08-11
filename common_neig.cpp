@@ -27,6 +27,7 @@ ComputeCNAAtom::ComputeCNAAtom(const int job, DumpAtom *dump, FILE *fp, double t
   neilist = one->neilist;
 
   thr_env = thr;
+  lop_sum = NULL;
 
   flag_env = 0;
   if (thr > 0.) flag_env = 1;
@@ -34,6 +35,7 @@ ComputeCNAAtom::ComputeCNAAtom(const int job, DumpAtom *dump, FILE *fp, double t
   memory = one->memory;
   if (one->prop == NULL) memory->create(one->prop, one->natom+1, "prop");
   pattern = one->prop;
+  memory->create(lop_sum, one->ntype+1, "lop_sum");
 
   // to the real job
   if (job == 1) compute_cna();
@@ -55,6 +57,7 @@ ComputeCNAAtom::~ComputeCNAAtom()
   neilist = NULL;
   pattern = NULL;
 
+  memory->destroy(lop_sum);
   memory = NULL;
   one = NULL;
 }
@@ -124,7 +127,7 @@ void ComputeCNAAtom::compute_cna()
 	     j = common[jj];
 	     for (kk = jj+1; kk < ncommon; ++kk) {
 	       k = common[kk];
-	       if (bonded(j,k)) {
+	       if (one->bonded(j,k)) {
 	         ++nbonds;
 	         ++bonds[jj];
 	         ++bonds[kk];
@@ -227,29 +230,28 @@ return;
  * ---------------------------------------------------------------------- */
 void ComputeCNAAtom::output(FILE *fp)
 {
+  for (int ip = 0; ip <= one->ntype; ++ip) lop_sum[ip] = 0.;
   fprintf(fp,"# box info: %lg %lg %lg %lg %lg %lg\n", one->lx, one->ly, one->lz, one->xy, one->xz, one->yz);
   if (flag_env){
-    for (int id = 1; id <= one->natom; ++id)
-      fprintf(fp,"%d %d %lg %lg %lg %lg %d\n", id, attyp[id], x[id][0], x[id][1], x[id][2], pattern[id], one->env[id]);
+    for (int id = 1; id <= one->natom; ++id){
+      int ip = attyp[id];
+      fprintf(fp,"%d %d %lg %lg %lg %lg %d\n", id, ip, x[id][0], x[id][1], x[id][2], pattern[id], one->env[id]);
+      lop_sum[ip] += pattern[id];
+    }
 
   } else {
-    for (int id = 1; id <= one->natom; ++id)
-      fprintf(fp,"%d %d %lg %lg %lg %lg\n", id, attyp[id], x[id][0], x[id][1], x[id][2], pattern[id]);
+    for (int id = 1; id <= one->natom; ++id){
+      int ip = attyp[id];
+      fprintf(fp,"%d %d %lg %lg %lg %lg\n", id, ip, x[id][0], x[id][1], x[id][2], pattern[id]);
+      lop_sum[ip] += pattern[id];
+    }
   }
+  for (int ip = 1; ip <= one->ntype; ++ip) lop_sum[0] += lop_sum[ip];
+  fprintf(fp, "##--------- Average LOP info ---------##\n## Step  Ave-Total Ave-each-type\n");
+  fprintf(fp, "#! %d %lg", one->tstep, lop_sum[0]/double(one->natom));
+  for (int ip = 1; ip <= one->ntype; ++ip) fprintf(fp, " %lg", lop_sum[ip]/double(one->numtype[ip]));
+  fprintf(fp, "\n##------------------------------------##\n");
 return;
-}
-
-/* ----------------------------------------------------------------------
- * Private method, to check if two atoms are bonded to each other
- * ---------------------------------------------------------------------- */
-int ComputeCNAAtom::bonded(int id, int jd)
-{
-  int ni = neilist[0][id];
-  for (int jj = 1; jj <= ni; ++jj){
-    if (neilist[jj][id] == jd) return 1;
-  }
-
-return 0;
 }
 
 /* ----------------------------------------------------------------------

@@ -15,6 +15,7 @@ Driver::Driver(int narg, char** arg)
   type2atnum = NULL; type2radius = NULL;
   element = NULL;
   min_mem = weighted = 0;
+  flag_dump = 0;
 
   memory = new Memory();
 
@@ -39,7 +40,7 @@ Driver::Driver(int narg, char** arg)
     } else if (strcmp(arg[iarg], "-oe") == 0){ // flag for Voronoi edge ratio outputs
       flag_out |= OutEdge;
 
-    } else if (strcmp(arg[iarg], "-ose") == 0){ // flat for Voronoi surface/edge ratio outputs
+    } else if (strcmp(arg[iarg], "-ose") == 0){ // flag for Voronoi surface/edge ratio outputs
       flag_out |= OutSurf;
       flag_out |= OutEdge;
 
@@ -55,8 +56,11 @@ Driver::Driver(int narg, char** arg)
     } else if (strcmp(arg[iarg], "-i") == 0){ // to write out atom IDs in counting size of persisting clusters
       flag_out |= WHereId;
 
-    } else if (strcmp(arg[iarg], "-mm") == 0){  // Flag indicate to minimize memory usage
+    } else if (strcmp(arg[iarg], "-mm") == 0){  // Flag indicates to minimize memory usage
       min_mem = 1;
+
+    } else if (strcmp(arg[iarg], "-pbc") == 0){  // Flag indicates to apply PBC upon reading the configurations
+      flag_dump |= 2;
 
     } else {
       break;
@@ -68,6 +72,7 @@ Driver::Driver(int narg, char** arg)
   // show dumpana version info
   ShowVersion();
 
+  if (min_mem)  flag_dump |= 1;
   // read dump files
   readdump(narg, iarg, arg);
 
@@ -285,11 +290,7 @@ void Driver::readdump(const int narg, int inow, char **arg)
   int idum = 0, id_max = 0, nmax = 0;
   char flag[4];
   flag[0] = '-'; flag[1] = '\\'; flag[2] = '|'; flag[3] = '/';
-  printf("\n"); for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
-
-  // read dump flags
-  int rflag = 0;
-  if (min_mem) rflag |= 1;
+  for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
   // read dump file one by one
   while (! df_list.empty()){
@@ -305,12 +306,12 @@ void Driver::readdump(const int narg, int inow, char **arg)
       continue;
     }
     
-    printf("Now to read atomic configurationss from file: %s...  ", dump);
+    printf("Now to read atomic configurations from file: %s...  ", dump);
     int nf_one = 0;
 
     // read file
     while (!feof(fp)){
-      one = new DumpAtom(fp, dump, rflag);
+      one = new DumpAtom(fp, dump, flag_dump);
 
       if (one->initialized){
         all.push_back(one); ++nf_one;
@@ -829,7 +830,7 @@ return;
  *------------------------------------------------------------------------------ */
 void Driver::ShowVersion()
 {
-  printf("\nDumpAna revision %d, compiled on %s %s\n", VERSION, __DATE__, __TIME__);
+  printf("\nDumpAna version 1.%d, compiled on %s %s\n", VERSION, __DATE__, __TIME__);
 }
 
 /*------------------------------------------------------------------------------
@@ -851,15 +852,16 @@ void Driver::help()
   printf("\nUsage:\n    dumpana [options] [file [file2]]\n\nAvailable options:\n");
   printf("    -h       To display this help info;\n");
   printf("    -1       To tell the code to exit once an analysis is done;\n");
-  printf("    -os      To output the surface area and its ratio when analyze Voronoi diagram;\n");
-  printf("    -oe      To output the edge length and its ratio when analyze Voronoi diagram;\n");
+  printf("    -os      To output the area ratio and the surface area when analyzing the Voronoi diagram;\n");
+  printf("    -oe      To output the length ratio and the edge length when analyzing the Voronoi diagram;\n");
   printf("    -ose     To set both `-os` and `-oe`;\n");
-  printf("    -s       To skip writing feff.inp files when preparing FEFF for desired voronoi\n");
+  printf("    -s       To skip writing feff.inp files when preparing FEFF for desired Voronoi\n");
   printf("             clusters; instead, output the CN info only.\n");
   printf("    -w/-x    To or not to perform weighted Voronoi tessellation, if possible;\n");
   printf("             by default, weigthed will be done if element mapping has been done;\n");
   printf("    -mm      To indicate to minimize memory usage;\n");
-  printf("    file     Must be lammps atomic style dump files, or custom style containing id,\n");
+  printf("    -pbc     To indicate to enforce PBC when reading the configuration file;\n");
+  printf("    file     Must be LAMMPS atomic style dump files, or custom style containing id,\n");
   printf("             type, x/xs, y/ys, z/zs, and/or ix, iy, iz information.\n");
   printf("             Default: dump.lammpstrj.\n");
   printf("\n\n");
@@ -997,7 +999,7 @@ void Driver::set_cutoffs(int flag)
   fgets(str,MAXLINE, stdin);
   char * ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[0] = atof(ptr);
-  if (mins[0] > 0.) printf("Surface whose area is less than %lg will be removed!\n\n", mins[0]);
+  if (mins[0] >= 0.) printf("Surface whose area is less than %lg will be removed!\n\n", mins[0]);
   else  printf("Surface whose area takes less than %lg%% will be removed!\n\n", fabs(mins[0])*100.);
 
   printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");

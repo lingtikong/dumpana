@@ -20,7 +20,9 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   type2radius = NULL;
   flag_smix = 0; smix = 0.;
 
+  int flag_pbc = 0;
   if (flag & 1) least_memory = 1;
+  if (flag & 2) flag_pbc = 1;
 
   realcmd = NULL;
   attyp = atsel = numtype = env = NULL;
@@ -30,7 +32,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   voro.clear();
   neilist = image = NULL;
   prop = volume = NULL;
-  MaxNei = 20;
+  MaxNei = 16;
   vmins[0] = vmins[1] = vmins[2] = 0.;
 
   fname = new char [strlen(dumpfile)+1];
@@ -206,6 +208,31 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
         s[id][2] = h_inv[2]*x0[2];
       }
     }
+  }
+
+  // apply PBC and put all atoms in the central box
+  if (flag_pbc){
+    if (image){
+      for (int id = 1; id <= natom; ++id){
+        while (s[id][0] >= 1.){ s[id][0] -= 1.; image[id][0]++;}
+        while (s[id][0] < 0. ){ s[id][0] += 1.; image[id][0]--;}
+        while (s[id][1] >= 1.){ s[id][1] -= 1.; image[id][1]++;}
+        while (s[id][1] < 0. ){ s[id][1] += 1.; image[id][1]--;}
+        while (s[id][2] >= 1.){ s[id][2] -= 1.; image[id][2]++;}
+        while (s[id][2] < 0. ){ s[id][2] += 1.; image[id][2]--;}
+      }
+    } else {
+      for (int id = 1; id <= natom; ++id){
+        while (s[id][0] >= 1.) s[id][0] -= 1.;
+        while (s[id][0] <  0.) s[id][0] += 1.;
+        while (s[id][1] >= 1.) s[id][1] -= 1.;
+        while (s[id][1] <  0.) s[id][1] += 1.;
+        while (s[id][2] >= 1.) s[id][2] -= 1.;
+        while (s[id][2] <  0.) s[id][2] += 1.;
+      }
+    }
+
+    if (least_memory == 0) dir2car();
   }
 
   memory->create(numtype,ntype+1,"numtype");
@@ -826,15 +853,15 @@ void DumpAtom::SelHelp()
   printf("from the current selection randomly; `seed` is the seed for the uniform\n");
   printf("random number generator, if a non-positive number is provided, it will be\n");
   printf("set automatically based on current time. The logical operation before `ran`\n");
-  printf("is always assumed to be AND, no matter what is defined;\n");
+  printf("is always assumed to be AND, even when `|' is specified;\n");
   printf("or `voro MinSurf NMinNei MinEdge NVoroIndex VoroIndices', which will\n");
-  printf("select atoms with certain Voronoi indices. `MinSurf' and `MinEdge%%' defines\n");
+  printf("select atoms with certain Voronoi indices. `MinSurf' and `MinEdge' defines\n");
   printf("the thresholds for surface and edge, respectively; they can be zero; `NMinNei'\n");
   printf("defines the Minimum # of neighbors wanted, zero means no limitations; `NVoroIndex'\n");
   printf("defines the # of Voronoi indices that will follow, it can be zero; in case\n");
   printf("`NVoroIndex` is negative, atoms whose Voronoi index are not in the following\n");
   printf("will be selected instead. The following `NVoroIndex' arguments should be\n");
-  printf("be the Voronoi indices, for example: 0,6,0,8.\n");
+  printf("the Voronoi indices, for example: 0,6,0,8.\n");
   printf("If the key is `VORO` instead, the central atom and its neighbors will also\n");
   printf("be included or excluded, depending on if `NVoroIndex' is positive or negative.\n");
   printf("\n`op` is either `=`, `>`, `>=`, `<`, `<=`, `<>`, `><`, or `%%`,\n");
@@ -976,6 +1003,7 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         for (int i = 0; i < nf; ++i){
           if (i < nminnei || (fs[i]*fs_scale) > surf_min){
             int jd = neigh[i];
+            if (jd <= 0) continue;
   
             // apply pbc
             double xij = atpos[jd][0]-xpos;
@@ -1009,8 +1037,11 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         MaxNei = nf + 2;
         memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
-      neilist[0][id] = nf;
-      for (int i = 0; i < nf; ++i) neilist[i+1][id] = neigh[i];
+      int fid = 0;
+      for (int i = 0; i < nf; ++i){
+        if (neigh[i] > 0) neilist[++fid][id] = neigh[i];;
+      }
+      neilist[0][id] = fid;
       volume[id] = vol;
 
       // output voro index info
@@ -1022,6 +1053,7 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       }
 
     } while (cl.inc());
+    cell = NULL;
 
   } else {  // orthogonal box
 
@@ -1071,6 +1103,7 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         for (int i = 0; i < nf; ++i){
           if (i < nminnei || (fs[i]*fs_scale) > surf_min){
             int jd = neigh[i];
+            if (jd <= 0) continue;
   
             // apply pbc
             double xij = atpos[jd][0]-xpos;
@@ -1104,8 +1137,11 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         MaxNei = nf + 2;
         memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
-      neilist[0][id] = nf;
-      for (int i = 0; i < nf; ++i) neilist[i+1][id] = neigh[i];
+      int fid = 0;
+      for (int i = 0; i < nf; ++i){
+        if (neigh[i] > 0) neilist[++fid][id] = neigh[i];;
+      }
+      neilist[0][id] = fid;
       volume[id] = vol;
 
       // output voro index info
@@ -1117,6 +1153,7 @@ void DumpAtom::Direct_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       }
 
     } while (cl.inc());
+    cell = NULL;
   }
 return;
 }
@@ -1279,6 +1316,7 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         for (int i = 0; i < nf; ++i){
           if (i < nminnei || (fs[i]*fs_scale) > surf_min){
             int jd = neigh[i];
+            if (jd <= 0) continue;
   
             // apply pbc
             double xij = atpos[jd][0]-xpos;
@@ -1318,8 +1356,11 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         MaxNei = nf + 2;
         memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
-      neilist[0][id] = nf;
-      for (int i = 0; i < nf; ++i) neilist[i+1][id] = neigh[i];
+      int fid = 0;
+      for (int i = 0; i < nf; ++i){
+        if (neigh[i] > 0) neilist[++fid][id] = neigh[i];;
+      }
+      neilist[0][id] = fid;
       volume[id] = vol;
 
       // output voro index info
@@ -1331,6 +1372,7 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       }
 
     } while (cl.inc());
+    cell = NULL;
 
   } else {  // orthogonal box
 
@@ -1384,6 +1426,8 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         for (int i = 0; i < nf; ++i){
           if (i < nminnei || (fs[i]*fs_scale) > surf_min){
             int jd = neigh[i];
+            if (jd <= 0) continue;
+  
   
             // apply pbc
             double xij = atpos[jd][0]-xpos;
@@ -1423,8 +1467,11 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
         MaxNei = nf + 2;
         memory->grow(neilist, MaxNei+1, natom+1, "neilist");
       }
-      neilist[0][id] = nf;
-      for (int i = 0; i < nf; ++i) neilist[i+1][id] = neigh[i];
+      int fid = 0;
+      for (int i = 0; i < nf; ++i){
+        if (neigh[i] > 0) neilist[++fid][id] = neigh[i];;
+      }
+      neilist[0][id] = fid;
       volume[id] = vol;
 
       // output voro index info
@@ -1436,6 +1483,7 @@ void DumpAtom::Radica_Voro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
       }
 
     } while (cl.inc());
+    cell = NULL;
   }
 return;
 }
@@ -1459,10 +1507,9 @@ void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, do
   if (e_min_in < 0.) flag_edge_ratio = 1;
 
   int nv = vlst.size();
-  double perim[nf], edges[nv], perim_tot = 0.;
+  double perim = 0., edges[nv];
   int k = 0, is = 0, ie = 0;
   while (k < nv){
-    perim[is] = 0.;
     int ned = vlst[k++];
     for (int ii = 0; ii < ned; ++ii){
       int jj = (ii+1)%ned;
@@ -1472,23 +1519,23 @@ void DumpAtom::RefineEdge(int nf, voro::voronoicell_neighbor *cell, int *idx, do
       double dz = vpos[v1*3+2] - vpos[v2*3+2];
       double r = sqrt(dx*dx+dy*dy+dz*dz);
       edges[ie++] = r;
-      perim[is] += r;
+      perim += r;
     }
-    perim_tot += perim[is];
     ++is; k += ned;
   }
   
   int ford[nf];
   k = is = ie = 0;
+  double inv_perim = 2./perim;
   double ed_scale = 1.;
-  if (flag_edge_ratio) ed_scale = 2./perim_tot;
+  if (flag_edge_ratio) ed_scale = inv_perim;
 
   while (k < nv){
     int ned = vlst[k++];
 
     int nuc = 0;
     for (int ii = 0; ii < ned; ++ii){
-      double rwt = edges[ie] * ed_scale;
+      double rwt = edges[ie] * inv_perim;
       if (fpedge) fprintf(fpedge, "%lg %g\n", rwt, edges[ie]);
       if ((edges[ie]*ed_scale) <= edge_min) ++nuc;
       ++ie;

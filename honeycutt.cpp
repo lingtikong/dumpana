@@ -28,11 +28,16 @@ void Driver::honeycutt_andersen()
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  unbond = 1;
 
-  int outcomm = 0;
+  int outflag = 0;
   printf("\nWould you like to output the common neighbors? (y/n)[n]: ");
   fgets(str, MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
-  if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  outcomm = 1;
+  if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  outflag |= 1;
+
+  printf("\nWould you like to output the atomic coordinates? (y/n)[n]: ");
+  fgets(str, MAXLINE, stdin);
+  ptr = strtok(str, " \n\t\r\f");
+  if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  outflag |= 2;
 
   printf("Please input the file name to output the HA bond index info [ha.dat]: ");
   fgets(str, MAXLINE, stdin);
@@ -43,7 +48,9 @@ void Driver::honeycutt_andersen()
   }
 
   FILE *fp = fopen(fname, "w");
-  fprintf(fp, "# id  jd index\n"); fflush(fp);
+  if (outflag & 2) fprintf(fp, "# id  jd index i-x i-y i-z j-x j-y j-z\n");
+  else fprintf(fp, "# id  jd index\n");
+  fflush(fp);
 
   // now to loop over all asked images
   for (int img = istr; img <= iend; img += inc){
@@ -57,7 +64,7 @@ void Driver::honeycutt_andersen()
     for (int id = 1; id <= one->natom; ++id){
       if (unbond){
         for (int jd = id+1; jd <= one->natom; ++jd){
-          count_HA(id, jd, fp, outcomm);
+          count_HA(id, jd, fp, outflag);
         }
 
       } else {
@@ -67,7 +74,7 @@ void Driver::honeycutt_andersen()
           int jd  = one->neilist[kk][id];
           if (id > jd) continue;
 
-          count_HA(id, jd, fp, outcomm);
+          count_HA(id, jd, fp, outflag);
         }
       }
     }
@@ -122,7 +129,9 @@ void Driver::count_HA(int id, int jd, FILE * fp, const int flag)
   }
 
   fprintf(fp,"%d %d %d%d%d%d", id, jd, ibond, ncomm, nbond, nconf);
-  if (flag) for (int ii = 0; ii < ncomm; ++ii) fprintf(fp," %d", comms[ii]);
+  if (flag & 2) fprintf(fp," %lg %lg %lg %lg %lg %lg", one->atpos[id][0], 
+    one->atpos[id][1], one->atpos[id][2], one->atpos[jd][0], one->atpos[jd][1], one->atpos[jd][2]);
+  if (flag & 1) for (int ii = 0; ii < ncomm; ++ii) fprintf(fp," %d", comms[ii]);
   fprintf(fp,"\n");
 
 return;

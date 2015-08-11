@@ -40,7 +40,7 @@ void Driver::compute_sh()
   }
 
   // identify local environment based on a threshold value
-  int flag_env;
+  int flag_env = 0;
   printf("\nWould you like to discriminate the local environment based on the measured\n");
   printf("  1.  q%d;\n  2.  w%d;\n  3.  q%dq%d;\n  0.  None.\nYour choice [0]: ", L, L, L, L);
   if (count_words(fgets(str, MAXLINE, stdin)) > 0){
