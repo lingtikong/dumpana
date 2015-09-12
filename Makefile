@@ -1,7 +1,7 @@
 .SUFFIXES : .o .cpp
 # compiler and flags
-CC     = /opt/intel/bin/icc
-#CC     = g++ -Wno-unused-result
+#CC     = /opt/intel/bin/icc
+CC     = g++ -Wno-unused-result
 LINK   = $(CC) ${PARALIB}
 CFLAGS = -O3 $(UFLAG) $(DEBUG)
 #

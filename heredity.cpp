@@ -222,7 +222,7 @@ void Driver::heredity()
           check_neigh(nextshell, one, now, ids_one, cid);
         }
       }
-      fprintf(fp, "# current timestep: %d, previous timestep: %d, number of inheretied clusters: %d\n", now->tstep, one->tstep, ids_all.size());
+      fprintf(fp, "# current timestep: %d, previous timestep: %d, number of inheretied clusters: %d\n", now->tstep, one->tstep, static_cast<int>(ids_all.size()));
       if (flag_out&WHereId) fprintf(fp, "# cluster-id nat-in-cluster  atom-IDs\n");
       else fprintf(fp, "# cluster-id nat-in-cluster\n");
 
