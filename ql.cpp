@@ -29,6 +29,30 @@ void Driver::compute_sh()
   }
   printf("q%dq%d will be evaluated for your selected frames.\n", L, L);
 
+  // selection commands for atoms
+  one = all[istr];
+  char selcmd[MAXLINE];
+  while (1){
+    printf("\nPlease input the atom selection command, `h` for help [all]: ");
+    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      strcpy(selcmd, str);
+      ptr = strtok(str," \n\t\r\f");
+      if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
+    } else strcpy(selcmd,"all\n");
+  
+    // check the selection command on the first frame
+    one->selection(selcmd); one->SelInfo();
+    if (one->nsel < 1){
+      printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
+      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+        char *ptr = strtok(str," \n\t\r\f");
+        if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
+      }
+    }
+    break;
+  }
+  printf("q%dq%d will be evaluated for atoms/neighbors within %s.\n", L, L, selcmd);
+
   char prefix[MAXLINE];
   sprintf(prefix, "q%dq%d", L, L);
   // prefix to output files
@@ -77,25 +101,36 @@ void Driver::compute_sh()
 
     memory->grow(qw, 3, one->natom+1, "qw");
     memory->grow(qlm, one->natom+1, L+L+1, "qlm");
+
+    // apply atom selection
+    one->selection(selcmd);
+    if (min_mem) one->FreeVoro();
+    if (one->nsel < 1) continue;
+
     // Loop over all atoms
 #pragma omp parallel for default(shared)
     for (int id = 1; id <= one->natom; ++id){
       double norm2 = 0.;
+      qw[1][id] = 0.;
+      if (one->atsel[id] == 0) continue;
       
       for (int m = -L; m <= L; ++m){
         qlm[id][m+L] = 0.;
 
         int ni = one->neilist[0][id];
+        int ni_use = ni;
         for (int jj = 1; jj <= ni; ++jj){
           int jd = one->neilist[jj][id];
           double rij[3];
-          for (int idim = 0; idim < 3; ++idim) rij[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
+          if (one->atsel[jd]){
+            for (int idim = 0; idim < 3; ++idim) rij[idim] = one->atpos[jd][idim] - one->atpos[id][idim];
 
-          one->ApplyPBC(rij[0], rij[1], rij[2]);
+            one->ApplyPBC(rij[0], rij[1], rij[2]);
 
-          qlm[id][m+L] += sh->Y(L, m, rij);
+            qlm[id][m+L] += sh->Y(L, m, rij);
+          } else --ni_use;
         }
-        if (ni > 0) qlm[id][m+L] /= double(ni);
+        if (ni_use > 0) qlm[id][m+L] /= double(ni_use);
         norm2 += qlm[id][m+L] * qlm[id][m+L];
       }
       double norm = sqrt(norm2);
@@ -118,14 +153,16 @@ void Driver::compute_sh()
     // Now to evaluate qlql
     for (int id = 1; id <= one->natom; ++id){
       qw[2][id] = 0.;
+      if (one->atsel[id] == 0) continue;
 
       int ni = one->neilist[0][id];
+      int ni_use = ni;
       for (int jj = 1; jj <= ni; ++jj){
         int jd = one->neilist[jj][id];
-
-        for (int i = 0; i <= L+L; ++i) qw[2][id] += qlm[id][i]*qlm[jd][i];
+        if (one->atsel[jd]) for (int i = 0; i <= L+L; ++i) qw[2][id] += qlm[id][i]*qlm[jd][i];
+        else --ni_use;
       }
-      if (ni > 0) qw[2][id] /= double(ni);
+      if (ni_use > 0) qw[2][id] /= double(ni_use);
     }
 
     // identify local environment
@@ -145,8 +182,8 @@ void Driver::compute_sh()
       fprintf(fp, "# 1  2    3 4 5 6   7   8   9\n");
       fprintf(fp, "# id type x y z q%d w%d q%dq%d env\n", L, L, L, L);
       for (int id = 1; id <= one->natom; ++id){
-        fprintf(fp, "%d %d %lg %lg %lg %lg %lg %lg %d\n", id, one->attyp[id], one->atpos[id][0], one->atpos[id][1],
-        one->atpos[id][2], qw[0][id], qw[1][id], qw[2][id], one->env[id]);
+        if (one->atsel[id] == 1) fprintf(fp, "%d %d %lg %lg %lg %lg %lg %lg %d\n", id,
+          one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2], qw[0][id], qw[1][id], qw[2][id], one->env[id]);
       }
       one->prop = NULL;
 
@@ -154,8 +191,8 @@ void Driver::compute_sh()
       fprintf(fp, "# 1  2    3 4 5 6   7   8\n");
       fprintf(fp, "# id type x y z q%d w%d q%dq%d\n", L, L, L, L);
       for (int id = 1; id <= one->natom; ++id){
-        fprintf(fp, "%d %d %lg %lg %lg %lg %lg %lg\n", id, one->attyp[id], one->atpos[id][0], one->atpos[id][1],
-        one->atpos[id][2], qw[0][id], qw[1][id], qw[2][id]);
+        if (one->atsel[id] == 1) fprintf(fp, "%d %d %lg %lg %lg %lg %lg %lg\n", id,
+          one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2], qw[0][id], qw[1][id], qw[2][id]);
       }
     }
     fclose(fp);
