@@ -3,15 +3,16 @@
 dumpname=
 dumpana_flags=
 elements=
-name=
 logfile=">&1"
+name=
+path="."
 
 # Text to be shown when help is requested
 show_help() {
 cat << EOF
 
 Usage: ${0##*/} --scripts=<name> --dump=<dumpname> --elements="<elements>"
-    [-h | --help] [--logfile=<path>] [-- <extra dumpana options>]
+    [-h | --help] [--logfile=<path>] [--path=<path>] [-- <extra dumpana options>]
 
 Run dumpana binary multiple times with <dumpname> file loaded and <elements> mapped, and commands
 parsed from files with name <name>*.commands (in lexographical order).
@@ -37,6 +38,9 @@ parsed from files with name <name>*.commands (in lexographical order).
     --logfile=<path>                    path to file to which output from dumpana binary will be redirected;
                                         script will add time signature after '_' character
                                         e.g. (--logfile=log1, --logfile=userslog)
+    --path=<path>                       path to dumpana binary; use when script is run not from the
+                                        directory containing binary
+                                        e.g. (--path=/path/to/binary)
     -- <extra dumpana options>          pass extra paremeters to dumpana binary
                                         e.g. (-- -1, -- -os -mm)
 
@@ -55,7 +59,7 @@ on_exit() {
 }
 
 # options parsing
-OPTS=`getopt -n "dumpana-script-runner" -a -o h -l dump:,elements:,help,logfile:,scripts: -- "$@"`
+OPTS=`getopt -n "dumpana-script-runner" -a -o h -l dump:,elements:,help,logfile:,path:,scripts: -- "$@"`
 eval set -- "$OPTS"
 while :; do
     case "$1" in
@@ -67,6 +71,9 @@ while :; do
             shift 2 ;;
         --logfile)
             logfile="$2"
+            shift 2 ;;
+        --path)
+            path="$2"
             shift 2 ;;
         --scripts)
             name="$2"
@@ -108,7 +115,7 @@ instructions=0
 
 # find all scripts with commands
 # execute find & split it's output by newline delimiter
-IFS=$'\n' cmds_array=(`find . -name "$name*.commands" | sort`)
+IFS=$'\n' cmds_array=(`find . -path "*$name*.commands" | sort`)
 echo "Found ${#cmds_array[@]} commands file(s)."
 for file in "${cmds_array[@]}"; do
     cat "$file" >> tmp.commands
@@ -129,9 +136,9 @@ if [[ $logfile != ">&1" ]]; then
 fi
 
 # call program & redirect output to log file
-cmd="./dumpana $dumpana_flags $dumpname < tmp.commands $logfile"
+cmd="./$path/dumpana $dumpana_flags $dumpname < tmp.commands $logfile"
 echo "Command called: $cmd" | tr -s ' '
-eval $cmd
+# eval $cmd
 
 # cleanup
 rm tmp.commands
