@@ -995,7 +995,10 @@ void Driver::set_cutoffs(int flag)
   char str[MAXLINE];
   mins[0] = 0.5; mins[1] = 0.; mins[2] = 0.01;
 
-  printf("\nPlease input your criterion for tiny surfaces, 0 to keep all [%g]: ", mins[0]);
+  printf("\nPlease input your threshold for tiny surfaces. A positive number will remove atoms\n");
+  printf("with a corresponding surface area smaller than the number input from the neighbor list.\n");
+  printf("A negative number will use the ratio of the surface area against the total surface area\n");
+  printf("of the Voronoi polyhedron. 0 to keep all [%g]: ", mins[0]);
   fgets(str,MAXLINE, stdin);
   char * ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[0] = atof(ptr);
@@ -1012,7 +1015,10 @@ void Driver::set_cutoffs(int flag)
   }
 
   if (flag){
-    printf("Please input your criterion for ultra short edges, 0 to keep all [%g]: ", mins[2]);
+    printf("\nPlease input your threshold for short edges. A positive number will remove edges\n");
+    printf("with a length shorter than the number input from the edges. A negative number will\n");
+    printf("the ratio of the length against the total circumference of the Voronoi polyhedron.\n");
+    printf("0 to keep all [%g]: ", mins[2]);
     fgets(str,MAXLINE, stdin);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) mins[2] = atof(ptr);
