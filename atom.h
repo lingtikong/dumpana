@@ -13,6 +13,7 @@
 #include <set>
 #include <list>
 #include <string>
+#include <vector>
 #include "voro++.hh"
 
 using namespace std;
@@ -39,6 +40,10 @@ public:
   int *numtype;
   double **atpos;
   double axis[3][3];
+
+  // Atomic properties, anything in the dump file besides id, type, x, y, z, ix, iy, iz
+  vector<string> prop_label;
+  double **atprop;
 
   // Public interface to compute the Voronoi tessellation
   double *type2radius;

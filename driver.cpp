@@ -202,6 +202,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) heredity();
       break;
 
+    case 22:
+      setrange();
+      if (nsel > 0) property_pc();
+      break;
+
     case 31:
       setrange();
       if (nsel > 0) rings();
@@ -236,6 +241,7 @@ void Driver::MainMenu()
   printf(" 10. Configurational entropy of mixing;|  20. MSD for selected atoms;\n");
   printf("---------------------------------------+----------------------------------------\n");
   printf(" 21. Heredity of atomic clusters;      |  31. Prepare for RINGS;\n");
+  printf(" 22. Pair correlation for atomic prop; \n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;

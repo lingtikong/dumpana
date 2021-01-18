@@ -79,6 +79,10 @@ private:
   void write_gr(double, double, int, double **, int, char *, char *);
   void strfac();
 
+  // Property Pair Correlation
+  void property_pc();
+  void write_prop_pc(double, double, int, double **, int, char *, char *);
+
   // Prepare for FEFF9
   void FEFF_main();
   void FEFF_input(int, FILE *);

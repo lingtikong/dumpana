@@ -28,6 +28,9 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   attyp = atsel = numtype = env = NULL;
   atpos = x = s = NULL;
 
+  atprop = NULL;
+  prop_label.clear();
+
   wted = 0;
   voro.clear();
   neilist = image = NULL;
@@ -84,25 +87,33 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   for (int i = 0; i <= 5; ++i) dcols[i] = i;
   dcols[6] = dcols[7] = dcols[8] = 0;
 
+  map<int,int> col2pid; col2pid.clear();
+
   fgets(str,MAXLINE, fp);
   char *ptr = strtok(str, " \n\t\r\f");
   for (int i = 0; i < 2; ++i) ptr = strtok(NULL," \n\t\r\f");
   int ic = 1;
   while (ptr){
-    if (strcmp(ptr, "id") == 0)   dcols[1] = ic;
-    if (strcmp(ptr, "type") == 0) dcols[2] = ic;
+    int taken = 0;
+    if (strcmp(ptr, "id") == 0)  {dcols[1] = ic; taken = 1;}
+    if (strcmp(ptr, "type") == 0){dcols[2] = ic; taken = 1;}
 
-    if (strcmp(ptr, "xs") == 0){  dcols[3] = ic; fcord |= 1;}
-    if (strcmp(ptr, "ys") == 0){  dcols[4] = ic; fcord |= 2;}
-    if (strcmp(ptr, "zs") == 0){  dcols[5] = ic; fcord |= 4;}
+    if (strcmp(ptr, "xs") == 0 || strcmp(ptr, "xsu") == 0){dcols[3] = ic; fcord |= 1; taken = 1;}
+    if (strcmp(ptr, "ys") == 0 || strcmp(ptr, "ysu") == 0){dcols[4] = ic; fcord |= 2; taken = 1;}
+    if (strcmp(ptr, "zs") == 0 || strcmp(ptr, "zsu") == 0){dcols[5] = ic; fcord |= 4; taken = 1;}
 
-    if (strcmp(ptr, "x") == 0){   dcols[3] = ic; fcord &= 6;}
-    if (strcmp(ptr, "y") == 0){   dcols[4] = ic; fcord &= 5;}
-    if (strcmp(ptr, "z") == 0){   dcols[5] = ic; fcord &= 3;}
+    if (strcmp(ptr, "x") == 0 || strcmp(ptr, "xu") == 0){   dcols[3] = ic; fcord &= 6; taken = 1;}
+    if (strcmp(ptr, "y") == 0 || strcmp(ptr, "yu") == 0){   dcols[4] = ic; fcord &= 5; taken = 1;}
+    if (strcmp(ptr, "z") == 0 || strcmp(ptr, "zu") == 0){   dcols[5] = ic; fcord &= 3; taken = 1;}
 
-    if (strcmp(ptr, "ix") == 0){  dcols[6] = ic; }
-    if (strcmp(ptr, "iy") == 0){  dcols[7] = ic; }
-    if (strcmp(ptr, "iz") == 0){  dcols[8] = ic; }
+    if (strcmp(ptr, "ix") == 0){dcols[6] = ic; taken = 1;}
+    if (strcmp(ptr, "iy") == 0){dcols[7] = ic; taken = 1;}
+    if (strcmp(ptr, "iz") == 0){dcols[8] = ic; taken = 1;}
+
+    if (taken == 0){
+      prop_label.push_back(ptr);
+      col2pid[ic] = prop_label.size() - 1;
+    }
 
     ++ic;
     ptr = strtok(NULL," \n\t\r\f");
@@ -127,6 +138,10 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   memory->create(s, natom+1, 3, "s");
   atpos = s;
 
+  // property related
+  int nprop = prop_label.size();
+  if (nprop >= 1) memory->create(atprop, natom+1, nprop, "atprop");
+  
   // read coordinate
   int id, ip, ix, iy, iz;
   double xp, yp, zp;
@@ -135,6 +150,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
 
     int ic = 1, frd = 0, fimg = 0;
     ptr = strtok(str, " \n\t\r\f");
+    vector<string> prop; prop.clear();
     while (ptr){
       if (ic == dcols[1]){ id = atoi(ptr); frd |=  1; }
       if (ic == dcols[2]){ ip = atoi(ptr); frd |=  2; }
@@ -146,6 +162,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
         if (ic == dcols[7]){ iy = atoi(ptr); fimg |= 2; }
         if (ic == dcols[8]){ iz = atoi(ptr); fimg |= 4; }
       }
+      if (col2pid.count(ic) > 0) prop.push_back(ptr);
 
       ptr = strtok(NULL," \n\t\r\f"); ++ic;
     }
@@ -159,6 +176,9 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
         image[id][1] = iy;
         image[id][2] = iz;
       }
+      for (int ii = 0; ii < nprop; ++ii)
+        atprop[id][ii] = atof(prop[ii].c_str());
+
     } else { return; } // insufficient info, return
   }
 
@@ -239,6 +259,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   for (int i = 0; i <=ntype; ++i) numtype[i] = 0;
   for (int i = 1; i <=natom; ++i) ++numtype[attyp[i]];
 
+  col2pid.clear();
   initialized = 1;
 
 return;
@@ -253,6 +274,7 @@ DumpAtom::~DumpAtom()
   if (realcmd) delete []realcmd;
   memory->destroy(attyp);
   memory->destroy(atsel);
+  memory->destroy(atprop);
   memory->destroy(image);
   memory->destroy(numtype);
 
@@ -264,6 +286,7 @@ DumpAtom::~DumpAtom()
   memory->destroy(volume);
 
   voro.clear();
+  prop_label.clear();
   type2radius = NULL;
 
   memory->destroy(env);
