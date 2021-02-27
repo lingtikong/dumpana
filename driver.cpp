@@ -846,12 +846,12 @@ void Driver::guess_image()
   // first image
   DumpAtom *prev = all[0];
   prev->car2dir();
-  int **image = prev->image;
-  if (image != NULL) return;
+  if (prev->image != NULL) return;
 
   int natom = prev->natom;
-  memory->create(image, natom+1, 3, "image");
-  for (int id = 1; id <= natom; ++id) image[id][0] = image[id][1] = image[id][2] = 0;
+  memory->create(prev->image, natom+1, 3, "image");
+#pragma omp parallel for default(shared)
+  for (int id = 0; id <= natom; ++id) prev->image[id][0] = prev->image[id][1] = prev->image[id][2] = 0;
 
   // remaining images
   for (int img = 1; img < nframe; img++){
@@ -860,13 +860,14 @@ void Driver::guess_image()
     memory->create(one->image, natom+1, 3, "image");
     one->car2dir();
 
+//#pragma omp parallel for default(shared)
     for (int id = 1; id <= natom; ++id){
       for (int idim = 0; idim < 3; ++idim){
         one->image[id][idim] = prev->image[id][idim];
+
         double dx = one->atpos[id][idim] - prev->atpos[id][idim];
-        one->image[id][idim] = prev->image[id][idim];
-        if (dx >= 0.5) one->image[id][idim]--;
-        if (dx <=-0.5) one->image[id][idim]++;
+        if (dx >= 0.5) one->image[id][idim] = one->image[id][idim] - 1;
+        if (dx <=-0.5) one->image[id][idim] = one->image[id][idim] + 1;
       }
     }
     prev = one;
