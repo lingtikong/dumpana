@@ -28,6 +28,7 @@ private:
   DumpAtom *one;                          // pointer to one frame
   vector<DumpAtom *> all;                 // all frames from lammps atom style dump
   void readdump(const int,int,char **);   // to read in the dump file
+  void guess_image();                     // to guess the image info, if not supplied.
   void MainMenu();
 
   // private method to set the cutoff for face or edge, needed by most others

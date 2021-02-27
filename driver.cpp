@@ -20,6 +20,7 @@ Driver::Driver(int narg, char** arg)
   memory = new Memory();
 
   int loop = 1;
+  int f_guess_image = 0;
 
   flag_out = 0;
   flag_out |= OutFeff; // by default, feff.inp is written
@@ -62,6 +63,9 @@ Driver::Driver(int narg, char** arg)
     } else if (strcmp(arg[iarg], "-pbc") == 0){  // Flag indicates to apply PBC upon reading the configurations
       flag_dump |= 2;
 
+    } else if (strcmp(arg[iarg], "-gi") == 0){   // Flag indicates to guess the image info based on sequential displacments
+      f_guess_image = 1;
+
     } else {
       break;
     }
@@ -80,6 +84,7 @@ Driver::Driver(int narg, char** arg)
     help();
     return;
   }
+  if (f_guess_image) guess_image();
 
   // main menu
   char str[MAXLINE];
@@ -832,6 +837,45 @@ return;
 }
 
 /*------------------------------------------------------------------------------
+ * Method to guess the image info from displacement between sequential frames.
+ * If distance is within half box length, same image; otherwise +/- image info
+ * The images for the first frame is set to be 0.
+ *------------------------------------------------------------------------------ */
+void Driver::guess_image()
+{
+  // first image
+  DumpAtom *prev = all[0];
+  prev->car2dir();
+  int **image = prev->image;
+  if (image != NULL) return;
+
+  int natom = prev->natom;
+  memory->create(image, natom+1, 3, "image");
+  for (int id = 1; id <= natom; ++id) image[id][0] = image[id][1] = image[id][2] = 0;
+
+  // remaining images
+  for (int img = 1; img < nframe; img++){
+    one = all[img];
+    if (one->natom != natom || one->image != NULL) return;
+    memory->create(one->image, natom+1, 3, "image");
+    one->car2dir();
+
+    for (int id = 1; id <= natom; ++id){
+      for (int idim = 0; idim < 3; ++idim){
+        one->image[id][idim] = prev->image[id][idim];
+        double dx = one->atpos[id][idim] - prev->atpos[id][idim];
+        one->image[id][idim] = prev->image[id][idim];
+        if (dx >= 0.5) one->image[id][idim]--;
+        if (dx <=-0.5) one->image[id][idim]++;
+      }
+    }
+    prev = one;
+  }
+
+return;
+}
+
+/*------------------------------------------------------------------------------
  * To display the code name and version info
  *------------------------------------------------------------------------------ */
 void Driver::ShowVersion()
@@ -867,6 +911,7 @@ void Driver::help()
   printf("             by default, weigthed will be done if element mapping has been done;\n");
   printf("    -mm      To indicate to minimize memory usage;\n");
   printf("    -pbc     To indicate to enforce PBC when reading the configuration file;\n");
+  printf("    -gi      To indicate to guess the image info from displacement between consecutive frames;\n");
   printf("    file     Must be LAMMPS atomic style dump files, or custom style containing id,\n");
   printf("             type, x/xs, y/ys, z/zs, and/or ix, iy, iz information.\n");
   printf("             Default: dump.lammpstrj.\n");
