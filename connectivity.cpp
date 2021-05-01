@@ -137,7 +137,7 @@ void Driver::ClusterConnectivity()
       fprintf(fpx,"# Cluster connectivity info for atoms selected by: %s", selcmd);
       fprintf(fpx,"# centered on clsuters:" );
       for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); ++it) fprintf(fpx," %s", it->c_str());
-      fprintf(fpx,"\n# frame atom SC-id voronoi-index #connected connected-clusters\n");
+      fprintf(fpx,"\n# frame atom SC-id voronoi-index #-neigh-clusters atom-(voronoi-index):connection_type\n");
     }
   }
 
@@ -198,17 +198,14 @@ void Driver::ClusterConnectivity()
 
     } else if (job == 2){ // Connectivity info
 
-      map<int,int> nconn, SCid;
-      map<bigint,int> conns, connt;
+      map<bigint,int> connt;
       nconn.clear(); SCid.clear(); conns.clear(); connt.clear();
 
       for (int id = 1; id <= natom; ++id){
         if (cenlist[id] == 0) continue;
 
         ++nclus;
-        if (nconn.count(id) < 1){
-          nconn[id] = 0;
-        }
+        if (nconn.count(id) < 1) nconn[id] = 0;
           
         for (int jd = id+1; jd <= natom; ++jd){
           if (cenlist[jd] == 0) continue;
@@ -245,14 +242,15 @@ void Driver::ClusterConnectivity()
         if (nconn[id] == 0) ++niso;
       }
 
-      nsuper = 0;
       for (int id = 1; id <= natom; ++id) SCid[id] = 0;
 
+      checked.clear();
       for (int id = 1; id <= natom; ++id){
+        if (cenlist[id] == 0) continue;
         if (SCid[id] == 0){
            SCid[id] = ++nsuper;
-           set<int> checked; checked.clear();
-           IterateOverConn(id, nsuper, natom, SCid, nconn, conns, checked);
+
+           IterateOverConn(id, nsuper, natom);
         }
       }
 
@@ -283,7 +281,7 @@ void Driver::ClusterConnectivity()
     for (set<std::string>::iterator it = voroset.begin(); it != voroset.end(); ++it) printf(" %s", it->c_str());
     printf("\n"); for (int i = 0; i < 20; ++i) printf("----");
     printf("\nNClus NSuper Niso NLinked Vertex%% Edge%% Face%% Penetrate%%\n");
-    printf("%d %d  %d %d", nclus, nsuper, niso, nsuper-niso); counts[0] = MAX(1,counts[0]);
+    printf("%d %d  %d %d", nclus, nsuper-niso, niso, nclus-niso); counts[0] = MAX(1,counts[0]);
     for (int ii = 1; ii < 5; ++ii) printf(" %g", double(counts[ii])/double(counts[0])*100.);
     printf("\n"); for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
     
@@ -292,8 +290,8 @@ void Driver::ClusterConnectivity()
     fprintf(fp,"\n#"); for (int i = 0; i < 20; ++i) fprintf(fp,"----");
     fprintf(fp,"\n# Definitions\n#  NClus      : total number of clusters;\n");
     fprintf(fp,"#  NSuper     : total number of super clusters;\n");
-    fprintf(fp,"#  Niso       : total number of isolated clusters, ie, not linked;\n");
-    fprintf(fp,"#  NLinked    : total number of linked clusters, Niso + NLinked = NSuper;\n");
+    fprintf(fp,"#  Niso       : total number of isolated clusters, ie, not linked to any other;\n");
+    fprintf(fp,"#  NLinked    : total number of linked clusters, Niso + NLinked = NClus;\n");
     fprintf(fp,"#  Vertex%%    : for linked clusters, the percentage of shared via vertex;\n");
     fprintf(fp,"#  Edge%%      : for linked clusters, the percentage of shared via edge;\n");
     fprintf(fp,"#  Face%%      : for linked clusters, the percentage of shared via face;\n");
@@ -301,7 +299,7 @@ void Driver::ClusterConnectivity()
     fprintf(fp,"#                i.e., nearby cluster centers are bonded to each other;\n#");
     for (int i = 0; i < 20; ++i) fprintf(fp,"----");
     fprintf(fp,"\n#NClus NSuper Niso NLinked Vertex%% Edge%%   Face%%   Penetrate%%\n");
-    fprintf(fp,"%d %d  %d %d", nclus, nsuper, niso, nsuper-niso); counts[0] = MAX(1,counts[0]);
+    fprintf(fp,"%d %d  %d %d", nclus, nsuper-niso, niso, nclus-niso); counts[0] = MAX(1,counts[0]);
     for (int ii = 1; ii < 5; ++ii) fprintf(fp," %g", double(counts[ii])/double(counts[0])*100.); fprintf(fp,"\n");
   }
 
@@ -314,14 +312,15 @@ return;
 }
 
 /*------------------------------------------------------------------------------ */
-void Driver::IterateOverConn(int id, int scid, int natom, map<int,int> Sid, map<int,int> nc, map<bigint,int> cns, set<int> cked)
+void Driver::IterateOverConn(int id, const int sid, int natom)
 {
-  cked.insert(id);
-  for (int ii = 1; ii <= nc[id]; ++ii){
-    int jd = cns[(id-1)*natom + ii];
-    Sid[jd] = scid;
+  checked.insert(id);
+  for (int ii = 1; ii <= nconn[id]; ++ii){
+    int jd = conns[(id-1)*natom + ii];
+    if (checked.count(jd) > 0) continue;
 
-    if (cked.count(jd) < 1) IterateOverConn(jd, scid, natom, Sid, nc, cns, cked);
+    SCid[jd] = sid;
+    IterateOverConn(jd, sid, natom);
   }
 
 return;
