@@ -93,6 +93,7 @@ private:
 
   // Connectivity info for certain clusters
   void ClusterConnectivity();
+  void IterateOverConn(int, int, int, map<int,int>, map<int,int>, map<bigint,int>, set<int>);
 
   // bond length or bond angle distribution; Voronoi neighbors are seen as bonded
   void bonds();

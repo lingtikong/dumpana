@@ -165,11 +165,8 @@ void Driver::ClusterConnectivity()
     for (int ii = 0; ii <= natom; ++ii) cenlist[ii] = 0;
 
     // look for the list of desired centeral atoms
-    natom = one->natom;
     for (int ii = 1; ii <= natom; ++ii){
-      cenlist[ii] = 0;
       if (one->atsel[ii] == 0) continue;
-
       if (voroset.size() == 0 || voroset.count(one->voro[ii]) > 0) cenlist[ii] = 1;
     }
 
@@ -211,12 +208,12 @@ void Driver::ClusterConnectivity()
         ++nclus;
         if (nconn.count(id) < 1){
           nconn[id] = 0;
-          SCid[id] = ++nsuper;
         }
           
         for (int jd = id+1; jd <= natom; ++jd){
           if (cenlist[jd] == 0) continue;
 
+          // To determine the num of common neighbors
           int ncomm = 0, paired = 0;
           int ni = one->neilist[0][id];
           int nj = one->neilist[0][jd];
@@ -228,10 +225,11 @@ void Driver::ClusterConnectivity()
               if (iid == jjd) ++ncomm;
             }
           }
+          // To define the connection type:
+          // 0, not connected; 1, sharing point; 2, sharing edge; 3, sharing face; 4, bonded
           ncomm = MIN(3,ncomm);
           if (paired) ncomm = 4;
           if (ncomm){
-            SCid[jd] = SCid[id];
             if (nconn.count(jd) < 1) nconn[jd] = 0;
             ++nconn[id]; ++nconn[jd];
 
@@ -245,6 +243,17 @@ void Driver::ClusterConnectivity()
           }
         }
         if (nconn[id] == 0) ++niso;
+      }
+
+      nsuper = 0;
+      for (int id = 1; id <= natom; ++id) SCid[id] = 0;
+
+      for (int id = 1; id <= natom; ++id){
+        if (SCid[id] == 0){
+           SCid[id] = ++nsuper;
+           set<int> checked; checked.clear();
+           IterateOverConn(id, nsuper, natom, SCid, nconn, conns, checked);
+        }
       }
 
       // output connectivity info if asked
@@ -304,4 +313,17 @@ void Driver::ClusterConnectivity()
 return;
 }
 
+/*------------------------------------------------------------------------------ */
+void Driver::IterateOverConn(int id, int scid, int natom, map<int,int> Sid, map<int,int> nc, map<bigint,int> cns, set<int> cked)
+{
+  cked.insert(id);
+  for (int ii = 1; ii <= nc[id]; ++ii){
+    int jd = cns[(id-1)*natom + ii];
+    Sid[jd] = scid;
+
+    if (cked.count(jd) < 1) IterateOverConn(jd, scid, natom, Sid, nc, cns, cked);
+  }
+
+return;
+}
 /*------------------------------------------------------------------------------ */
