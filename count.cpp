@@ -41,6 +41,7 @@ void Driver::count_selected()
   fprintf(fp,"# Number of atoms within selection wrt MD time: %s", selcmd);
   fprintf(fp,"# Istep  Number-atoms-in-selection\n");
 
+  int nused = 0;
   // loop over all frames
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
@@ -49,9 +50,11 @@ void Driver::count_selected()
     one->selection(selcmd);
 
     fprintf(fp, "%d %d\n", one->tstep, one->nsel);
+    ++nused;
   }
   fclose(fp);
 
+  printf("\n%d images were analyzed and the result is written to %s\n", nused, ptr);
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;
