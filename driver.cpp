@@ -217,6 +217,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) rings();
       break;
 
+    case 32:
+      setrange();
+      if (nsel > 0) count_selected();
+      break;
+
     default:
       loop = 0;
       break;
@@ -246,7 +251,7 @@ void Driver::MainMenu()
   printf(" 10. Configurational entropy of mixing;|  20. MSD for selected atoms;\n");
   printf("---------------------------------------+----------------------------------------\n");
   printf(" 21. Heredity of atomic clusters;      |  31. Prepare for RINGS;\n");
-  printf(" 22. Pair correlation for atomic prop; |\n");
+  printf(" 22. Pair correlation for atomic prop; |  32. Count selection wrt time;\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;

@@ -124,6 +124,9 @@ private:
   void heredity();
   void check_neigh(std::set<int>, DumpAtom *, DumpAtom *, std::list<int> *, int *);
 
+  // Count atoms within selection wrt tstep
+  void count_selected();
+
   // help info
   void help();
   void ShowVersion();
