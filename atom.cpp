@@ -828,13 +828,62 @@ void DumpAtom::selection(const char *line)
 
       } else break;
 
+    } else if (strcmp(key,"R")==0 || strcmp(key, "r")==0){ // selection by region
+      double inside = 1.;                     // R, inside region
+      if (strcmp(key, "r")==0) inside = -1.;  // r, outside region
+
+      int dir = 3;
+      double c0[4], radius;
+      oper = strtok(NULL, " \n\t\r\f");
+      if (strcmp(oper, "C") == 0 || strcmp(oper, "c") == 0){ // Cylindrical: dir c1 c2 Radius
+        strcat(onecmd," "); strcat(onecmd,oper);
+
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (strcmp(ptr, "x") == 0 || strcmp(ptr, "X") == 0){
+          dir = 0; c0[0] = 0.;
+
+        } else if (strcmp(ptr, "y") == 0 || strcmp(ptr, "Y") == 0){
+          dir = 1;
+        } else {
+          dir = 2;
+        }
+
+      } else {                                               // Spherical: cx cy cz Radius
+        strcat(onecmd," "); strcat(onecmd,"S");
+        ptr = strtok(NULL, " \n\t\r\f");
+        c0[0] = atof(ptr);
+      }
+      strcat(onecmd," "); strcat(onecmd,ptr);
+
+      for (int ii = 1; ii < 4; ++ii){
+        ptr = strtok(NULL, " \n\t\r\f");
+        c0[ii]  = atof(ptr);
+        strcat(onecmd," "); strcat(onecmd,ptr);
+      }
+      radius = c0[3];
+      if (dir == 1) c0[0] = c0[1];
+      if (dir == 2){ c0[0] = c0[1]; c0[1] = c0[2];}
+
+      // need cartesian coordinate system
+      dir2car();
+      double dr[4], r2 = radius * radius;
+      for (int id = 1; id <= natom; ++id){
+        for (int idim = 0; idim < 3; ++idim) dr[idim] = atpos[id][idim] - c0[idim];
+        ApplyPBC(dr[0], dr[1], dr[2]);
+        dr[dir] = 0.;
+        double dr2 = dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2];
+        double side = (r2 - dr2)*inside;
+        if (logand  && side < 0.) atsel[id] = 0;
+        else if (!logand && side > 0.) atsel[id] = 1;
+      }
+
     } else if (strcmp(key,"all") == 0){ // select all; it will discard all previous selections
       strcpy(realcmd,""); strcpy(onecmd,key);
       for (int id = 1; id <= natom; ++id) atsel[id] = 1;
 
     } else if (strcmp(key,"!") == 0 || strcmp(key,"~") == 0){  // reverse the previous selection
       strcpy(onecmd,key);
-      for (int id = 1; id <= natom; ++id) atsel[id] = (atsel[id] + 1)%2;
+      for (int id = 1; id <= natom; ++id) atsel[id] = 1 - atsel[id];
 
     } else break;
 
@@ -894,6 +943,10 @@ void DumpAtom::SelHelp()
   printf("`key <> num1 num2` selects `num1 <= kye <= num2`, `key >< num1 num2`\n");
   printf("selects `key <= num1 or key >= num2`, while `key %% num1 num2` selects\n");
   printf("atoms satisify `key%%num1 == num2`.\n");
+  printf("\n`key` could also be `R` or `r`, corresponding to space within (R) or beyond (r)\n");
+  printf("a cylindrical (when `op` is `C`) or a spherical (when `op` is `S`) region.\n");
+  printf("In this case, the grammar is:\n");
+  printf("  `R/r C dir c1 c1 radius`  or `R/r S cx cy cz radius`\nwhere radius is always in length unit.\n");
   printf("\nMultiple `key op values` could be combined together, by either `&`\n");
   printf("or `|`, which means logical `and` or `or`, respectively. In this case\n");
   printf("the selections take effects sequentially.\n");
