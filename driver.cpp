@@ -246,7 +246,7 @@ void Driver::MainMenu()
   printf(" 10. Configurational entropy of mixing;|  20. MSD for selected atoms;\n");
   printf("---------------------------------------+----------------------------------------\n");
   printf(" 21. Heredity of atomic clusters;      |  31. Count # selected atoms vs time;\n");
-  printf(" 22. Pair correlation for atomic prop;   \n");
+  printf(" 22. Pair correlation for atomic prop; | \n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;

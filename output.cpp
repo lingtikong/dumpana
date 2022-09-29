@@ -194,7 +194,7 @@ void Driver::OutputVoroCells( )
 
         if (type2atnum == NULL){ // no elements assigned, print atomic type num as element
           fprintf(fp,"%d %lg %lg %lg", one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
-          if (flabel) fprintf(fp," %d", ic);
+          if (flabel) fprintf(fp," %d-%d", ic, id);
           if (idx < 3) fprintf(fp," crystal_vector %d %lg %lg %lg\n", idx+1, one->axis[idx][0], one->axis[idx][1], one->axis[idx][2]);
           else fprintf(fp,"\n");
 
@@ -202,7 +202,7 @@ void Driver::OutputVoroCells( )
           char ename[3];
           element->Num2Name(type2atnum[one->attyp[id]], ename);
           fprintf(fp,"%2s %lg %lg %lg", ename, one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
-          if (flabel) fprintf(fp," %d", ic);
+          if (flabel) fprintf(fp," %d-%d", ic, id);
           if (idx < 3){
             fprintf(fp," crystal_vector %d %lg %lg %lg\n", idx+1, one->axis[idx][0], one->axis[idx][1], one->axis[idx][2]);
           } else {
