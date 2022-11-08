@@ -170,8 +170,9 @@ void Driver::csro()
     ntotal = 0;
     for (int jp = 1; jp <= ntype; ++jp) ntotal += NumNei[ip][jp];
     for (int jp = 1; jp <= ntype; ++jp){
-      printf("%10.6f", 1.-double(NumNei[ip][jp])/double(ntotal)/concentration[jp]);
-      fprintf(fp, "%10.6f", 1.-double(NumNei[ip][jp])/double(ntotal)/concentration[jp]);
+      double alpha = 1. - double(NumNei[ip][jp]) / (double(ntotal) * concentration[jp]);
+      printf("%10.6f", alpha);
+      fprintf(fp, "%10.6f", alpha);
     }
   }
   fprintf(fp,"\n");
