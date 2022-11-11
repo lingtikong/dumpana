@@ -1105,6 +1105,8 @@ void Driver::set_r2cuts()
 
   printf("\nThere are %d atomic types in the current frame.\n", one->ntype);
   printf("The cutoff distances will be used to define neighbors.\n");
+  printf("The global cutoff distances should be relative small, while\n");
+  printf("those pairs with larger cutoffs can be defined individually.\n\n");
   printf("Please input global cutoff distances for all atomic pairs [2.0]: ");
   fgets(str,MAXLINE, stdin);
   char * ptr = strtok(str, " \n\t\r\f");
