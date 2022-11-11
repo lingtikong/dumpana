@@ -351,6 +351,26 @@ return;
 }
 
 /*------------------------------------------------------------------------------
+ * Method to get the pbc distance for a coordinator vector
+ *----------------------------------------------------------------------------*/
+double DumpAtom::get_dist2(double xij, double yij, double zij)
+{
+  if (cartesian) return xij*xij + yij*yij + zij*zij;
+  double rij[3];
+  if (triclinic){
+     rij[0] = xij*lx + yij*xy + zij*xz;
+     rij[1] = yij*ly + zij*yz;
+     rij[2] = zij*lz;
+
+  } else {
+     rij[0] = xij*lx;
+     rij[1] = yij*ly;
+     rij[2] = zij*lz;
+  }
+  return rij[0]*rij[0] + rij[1]*rij[1] + rij[2]*rij[2];
+}
+
+/*------------------------------------------------------------------------------
  * Method to convert cartesian coordinates into fractional
  *----------------------------------------------------------------------------*/
 void DumpAtom::car2dir()
@@ -1631,7 +1651,7 @@ return;
 }
 
 /* -----------------------------------------------------------------------------
- * Private method to apply PBC on a cartesian vector
+ * Private method to apply PBC
  * -----------------------------------------------------------------------------
  * xij (inout) : x
  * yij (inout) : y
@@ -1639,40 +1659,50 @@ return;
  * ---------------------------------------------------------------------------*/
 void DumpAtom::ApplyPBC(double &xij, double &yij, double &zij)
 {
-  if (triclinic) {  // non-orthogonal box
-    while (zij > hz){
-      xij -= xz;
-      yij -= yz;
-      zij -= lz;
-    }
-    while (zij <-hz){
-      xij += xz;
-      yij += yz;
-      zij += lz;
-    }
-    
-    while (yij > hy){
-      xij -= xy;
-      yij -= ly;
-    }
-    while (yij <-hy){
-      xij += xy;
-      yij += ly;
-    }
-    
-    while (xij > hx) xij -= lx;
-    while (xij <-hx) xij += lx;
+  if (cartesian) {
+     if (triclinic) {  // non-orthogonal box
+       while (zij > hz){
+         xij -= xz;
+         yij -= yz;
+         zij -= lz;
+       }
+       while (zij <-hz){
+         xij += xz;
+         yij += yz;
+         zij += lz;
+       }
+       
+       while (yij > hy){
+         xij -= xy;
+         yij -= ly;
+       }
+       while (yij <-hy){
+         xij += xy;
+         yij += ly;
+       }
+       
+       while (xij > hx) xij -= lx;
+       while (xij <-hx) xij += lx;
+   
+     } else { // orthogonal box
+   
+       while (xij > hx) xij -= lx;
+       while (xij <-hx) xij += lx;
+     
+       while (yij > hy) yij -= ly;
+       while (yij <-hy) yij += ly;
+     
+       while (zij > hz) zij -= lz;
+       while (zij <-hz) zij += lz;
+     }
 
-  } else { // orthogonal box
-
-    while (xij > hx) xij -= lx;
-    while (xij <-hx) xij += lx;
-  
-    while (yij > hy) yij -= ly;
-    while (yij <-hy) yij += ly;
-  
-    while (zij > hz) zij -= lz;
-    while (zij <-hz) zij += lz;
+  } else {
+    while (xij >= 0.5) xij -= 1.;
+    while (xij < -0.5) xij += 1.;
+    while (yij >= 0.5) yij -= 1.;
+    while (yij < -0.5) yij += 1.;
+    while (zij >= 0.5) zij -= 1.;
+    while (zij < -0.5) zij += 1.;
   }
 return;
 }

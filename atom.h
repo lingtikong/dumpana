@@ -58,6 +58,9 @@ public:
   double *volume;        // Voronoi volume
   void FreeVoro();       // free memory of neilist, voro, and volume
 
+  // Neibhbor List calculation based on distance instead of voro
+  void ComputeNeiList(double **);
+
   void selection(const char *);
   void SelInfo();
   void SelHelp();
@@ -66,6 +69,7 @@ public:
   void dir2car();
 
   void ApplyPBC(double &, double &, double &);
+  double get_dist2(double, double, double);
 
   int *env;
   double *prop;          // Property, can by anything

@@ -217,6 +217,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) count_selected();
       break;
 
+    case 32:
+      setrange();
+      if (nsel > 0) unwrap();
+      break;
+
     default:
       loop = 0;
       break;
@@ -246,7 +251,7 @@ void Driver::MainMenu()
   printf(" 10. Configurational entropy of mixing;|  20. MSD for selected atoms;\n");
   printf("---------------------------------------+----------------------------------------\n");
   printf(" 21. Heredity of atomic clusters;      |  31. Count # selected atoms vs time;\n");
-  printf(" 22. Pair correlation for atomic prop; | \n");
+  printf(" 22. Pair correlation for atomic prop; |  32. Unwrap PBC bonded atoms;\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;
@@ -1077,6 +1082,60 @@ void Driver::set_cutoffs(int flag)
     if (mins[2] > 0.) printf("Edge whose length is less than %lg will be skipped!\n", mins[2]);
     else printf("Edge whose length takes less than %lg%% of the total circumference will be skipped!\n", fabs(mins[2])*100.);
   } else mins[2] = -1.;
+
+return;
+}
+
+/*------------------------------------------------------------------------------
+ * Private method to set the cutoffs for atomic pairs
+ * 
+ * When calling this subroutine, one must has been pointed to a dump frame
+ *------------------------------------------------------------------------------ */
+void Driver::set_r2cuts()
+{
+  char str[MAXLINE];
+  double rc = 2.;
+
+  if (one == NULL){
+     printf("\nERROR: It seems that `one` has not be pointed to a dump frame yet. I cannot procceed.\n");
+     return;
+  }
+  if (r2cuts) memory->destroy(r2cuts);
+  memory->create(r2cuts, one->ntype+1, one->ntype+1, "r2cuts");
+
+  printf("\nThere are %d atomic types in the current frame.\n", one->ntype);
+  printf("The cutoff distances will be used to define neighbors.\n");
+  printf("Please input global cutoff distances for all atomic pairs [2.0]: ");
+  fgets(str,MAXLINE, stdin);
+  char * ptr = strtok(str, " \n\t\r\f");
+  if (ptr) rc = atof(ptr);
+  for (int i = 0; i <= one->ntype; ++i)
+  for (int j = 0; j <= one->ntype; ++j) r2cuts[i][j] = rc*rc;
+
+  printf("If some pairs of aotmic types should have special cutoff distance, please define it now:\n");
+  while (1){
+     printf("Please input the type pair and their cutoff distance, Enter to stop: ");
+     fgets(str,MAXLINE, stdin);
+     char * ptr = strtok(str, " \n\t\r\f");
+     if (ptr == NULL) break;
+     int ip = atoi(ptr);
+     ptr = strtok(NULL, " \n\t\r\f");
+     if (ptr == NULL) break;
+     int jp = atoi(ptr);
+     ptr = strtok(NULL, " \n\t\r\f");
+     if (ptr == NULL) break;
+     rc = atof(ptr);
+     r2cuts[ip][jp] = r2cuts[jp][ip] = rc*rc;
+  }
+  printf("\nThe cutoff distance to define neighbors will be:\n");
+  for (int i = 0; i <= one->ntype; ++i) printf("-----");
+  printf("\n     "); for (int i = 1; i <= one->ntype; ++i) printf("%5d", i);
+  printf("\n"); for (int i = 0; i <= one->ntype; ++i) printf("-----");
+  for (int i = 1; i <= one->ntype; ++i){
+      printf("\n%5d", i);
+      for (int j = 1; j <= i; ++j) printf("%5.2f", sqrt(r2cuts[i][j]));
+  }
+  printf("\n"); for (int i = 0; i <= one->ntype; ++i) printf("-----"); printf("\n");
 
 return;
 }

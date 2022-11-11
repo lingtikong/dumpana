@@ -35,6 +35,10 @@ private:
   double mins[3];
   void set_cutoffs(int);
 
+  // private method to set the cutoff for bond distances for each pair
+  double **r2cuts;
+  void set_r2cuts();
+
   // map atomic type to elements
   ChemElements *element;
   int *type2atnum, weighted;
@@ -48,6 +52,10 @@ private:
 
   // to output selected frames
   void writesel();
+
+  // to unwrap so bonded atoms will be in correct positions
+  void unwrap();
+  void unwrap_neighbors(int, int *, int *, int);
 
   // to output selected frames in bgf format with properties
   void writebgf();
