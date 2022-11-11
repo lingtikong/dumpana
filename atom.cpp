@@ -20,9 +20,9 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   type2radius = NULL;
   flag_smix = 0; smix = 0.;
 
-  int flag_pbc = 0;
+  int flag_wrap = 0;
   if (flag & 1) least_memory = 1;
-  if (flag & 2) flag_pbc = 1;
+  if (flag & 2) flag_wrap = 1;
 
   realcmd = NULL;
   attyp = atsel = numtype = env = NULL;
@@ -230,8 +230,8 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
     }
   }
 
-  // apply PBC and put all atoms in the central box
-  if (flag_pbc){
+  // wrap all atoms into the central box
+  if (flag_wrap){
     if (image){
       for (int id = 1; id <= natom; ++id){
         while (s[id][0] >= 1.){ s[id][0] -= 1.; image[id][0]++;}

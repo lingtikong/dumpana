@@ -60,7 +60,7 @@ Driver::Driver(int narg, char** arg)
     } else if (strcmp(arg[iarg], "-mm") == 0){  // Flag indicates to minimize memory usage
       min_mem = 1;
 
-    } else if (strcmp(arg[iarg], "-pbc") == 0){  // Flag indicates to apply PBC upon reading the configurations
+    } else if (strcmp(arg[iarg], "-wrap") == 0){  // Flag indicates to wrap the atoms into the central domain.
       flag_dump |= 2;
 
     } else if (strcmp(arg[iarg], "-gi") == 0){   // Flag indicates to guess the image info based on sequential displacments
@@ -916,7 +916,7 @@ void Driver::help()
   printf("    -w/-x    To or not to perform weighted Voronoi tessellation, if possible;\n");
   printf("             by default, weigthed will be done if element mapping has been done;\n");
   printf("    -mm      To indicate to minimize memory usage;\n");
-  printf("    -pbc     To indicate to enforce PBC when reading the configuration file;\n");
+  printf("    -wrap    To enforce wrapping atoms into the central domain;\n");
   printf("    -gi      To indicate to guess the image info from displacement between consecutive frames;\n");
   printf("    file     Must be LAMMPS atomic style dump files, or custom style containing id,\n");
   printf("             type, x/xs, y/ys, z/zs, and/or ix, iy, iz information.\n");
