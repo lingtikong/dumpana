@@ -10,34 +10,13 @@
  *----------------------------------------------------------------------------*/
 void Driver::unwrap()
 {
-  int method = 1;
   char str[MAXLINE];
   printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
   printf("   To unwrap the atomic positions for the selected frames.");
-  printf("\nPlease select the method to generate the neighbor list:\n");
-  for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
-  printf("  1. Voronoi method;\n");
-  printf("  2. Cutoff distances;\n");
-  printf("  0. Return;\nYour choice [%d]: ", method);
-  fgets(str,MAXLINE, stdin);
-  char *ptr = strtok(str, " \n\t\r\f");
-  if (ptr) method = atoi(ptr);
-  printf("Your selection : %d\n", method);
-  if (method < 1 || method > 2){
-    for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
-    return;
-  }
-  printf("\n");
 
   one = all[istr];
   int ntype = one->ntype;
-  if (method == 1){
-     // refinement info
-     set_cutoffs(0);
-
-  } else {
-     set_r2cuts();
-  }
+  choose_neighbor_method();
 
   // now to do the real method
   for (int img = istr; img <= iend; img += inc){
@@ -46,13 +25,9 @@ void Driver::unwrap()
     // ntype of different frames must be the same
     if (one->ntype != ntype) continue;
 
-    if (method == 1){
-       // Compute Vorornoi info, so as to get the neighbor list
-       one->ComputeVoro(mins);
-
-    } else {
-       one->ComputeNeiList(r2cuts);
-    }
+    // get neighbor list
+    if (neighbor_method == 1) one->ComputeVoro(mins);
+    else one->ComputeNeiList(r2cuts);
 
     // set local variables
     int *unwraped = new int[one->natom+1];
@@ -94,9 +69,9 @@ void Driver::unwrap_neighbors(int id, int *status, int *parents, int level)
 
           status[jd] = 1;
        }
-       bool done = false;
-       for (int il = 0; il < level; il ++) done = done || jd == parents[il];
-       if (~done){
+       int done = 0;
+       for (int il = 0; il < level; il ++) done += (jd == parents[il]);
+       if (done == 0){
           parents[level+1] = jd;
           unwrap_neighbors(jd, status, parents, level+1);
        }

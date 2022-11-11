@@ -39,6 +39,10 @@ private:
   double **r2cuts;
   void set_r2cuts();
 
+  // choose the method to define nearest neighbors
+  int neighbor_method;
+  void choose_neighbor_method();
+
   // map atomic type to elements
   ChemElements *element;
   int *type2atnum, weighted;

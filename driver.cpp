@@ -1129,7 +1129,7 @@ void Driver::set_r2cuts()
   }
   printf("\nThe cutoff distance to define neighbors will be:\n");
   for (int i = 0; i <= one->ntype; ++i) printf("-----");
-  printf("\n     "); for (int i = 1; i <= one->ntype; ++i) printf("%5d", i);
+  printf("\n  "); for (int i = 1; i <= one->ntype; ++i) printf("%5d", i);
   printf("\n"); for (int i = 0; i <= one->ntype; ++i) printf("-----");
   for (int i = 1; i <= one->ntype; ++i){
       printf("\n%5d", i);
@@ -1138,5 +1138,31 @@ void Driver::set_r2cuts()
   printf("\n"); for (int i = 0; i <= one->ntype; ++i) printf("-----"); printf("\n");
 
 return;
+}
+
+/*------------------------------------------------------------------------------
+ * Private method to choose the method to compute the neighbor list.
+ *------------------------------------------------------------------------------ */
+void Driver::choose_neighbor_method()
+{
+  char str[MAXLINE];
+  neighbor_method = 1;
+
+  printf("\nPlease select the method to generate the neighbor list:\n");
+  for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
+  printf("  1. Voronoi method;\n");
+  printf("  2. Cutoff distances;\n");
+  printf("Your choice [%d]: ", neighbor_method);
+  fgets(str,MAXLINE, stdin);
+  char *ptr = strtok(str, " \n\t\r\f");
+  if (ptr) neighbor_method = atoi(ptr);
+  if (neighbor_method < 1 || neighbor_method > 2) neighbor_method = 1;
+  printf("Your selection : %d\n", neighbor_method);
+
+  one = all[istr];
+  if (neighbor_method == 1) set_cutoffs(0);
+  else set_r2cuts();
+
+  return;
 }
 /*----------------------------------------------------------------------------*/
