@@ -1112,9 +1112,9 @@ void Driver::set_r2cuts()
   for (int i = 0; i <= one->ntype; ++i)
   for (int j = 0; j <= one->ntype; ++j) r2cuts[i][j] = rc*rc;
 
-  printf("If some pairs of aotmic types should have special cutoff distance, please define it now:\n");
-  while (1){
-     printf("Please input the type pair and their cutoff distance, Enter to stop: ");
+  printf("\nIf some atomic type pairs should have special cutoff distance, please define it now:\n");
+  while ( 1 ){
+     printf("Please input the type pair and its cutoff distance, empty to exit: ");
      fgets(str,MAXLINE, stdin);
      char * ptr = strtok(str, " \n\t\r\f");
      if (ptr == NULL) break;
@@ -1127,7 +1127,8 @@ void Driver::set_r2cuts()
      rc = atof(ptr);
      r2cuts[ip][jp] = r2cuts[jp][ip] = rc*rc;
   }
-  printf("\nThe cutoff distance to define neighbors will be:\n");
+
+  printf("\nThe cutoff distances to determine bonds/ neighbors will be:\n");
   for (int i = 0; i <= one->ntype; ++i) printf("-----");
   printf("\n  "); for (int i = 1; i <= one->ntype; ++i) printf("%5d", i);
   printf("\n"); for (int i = 0; i <= one->ntype; ++i) printf("-----");
@@ -1143,7 +1144,7 @@ return;
 /*------------------------------------------------------------------------------
  * Private method to choose the method to compute the neighbor list.
  *------------------------------------------------------------------------------ */
-void Driver::choose_neighbor_method()
+void Driver::choose_neighbor_method(int flag)
 {
   char str[MAXLINE];
   neighbor_method = 1;
@@ -1160,7 +1161,7 @@ void Driver::choose_neighbor_method()
   printf("Your selection : %d\n", neighbor_method);
 
   one = all[istr];
-  if (neighbor_method == 1) set_cutoffs(0);
+  if (neighbor_method == 1) set_cutoffs(flag);
   else set_r2cuts();
 
   return;

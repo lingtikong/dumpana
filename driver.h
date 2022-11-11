@@ -41,7 +41,7 @@ private:
 
   // choose the method to define nearest neighbors
   int neighbor_method;
-  void choose_neighbor_method();
+  void choose_neighbor_method(int);
 
   // map atomic type to elements
   ChemElements *element;

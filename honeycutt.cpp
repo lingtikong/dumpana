@@ -3,7 +3,7 @@
 #include <vector>
 
 /*------------------------------------------------------------------------------
- * Method to compute the Honeycutt-Andersen index based on the  voronoi neighbors
+ * Method to compute the Honeycutt-Andersen index based on the neighbor list
  * for selected frames. Only bonded pairs are analysed.
  *
  * The first index 1 means the selected pair are bonded, the second gives the
@@ -18,9 +18,9 @@ void Driver::honeycutt_andersen()
   printf("   Honeycutt-Andersen  Bond  Analysis   ");
   for (int i = 0; i < 5; ++i) printf("===="); printf("\n");
 
-  // voronoi refinement
-  set_cutoffs(0);
+  // choose method to calculate neighbor list
   one = all[istr];
+  choose_neighbor_method(0);
 
   int unbond = 0;
   printf("\nWould you like to analyse un-bonded pairs? (y/n)[n]: ");
@@ -56,8 +56,9 @@ void Driver::honeycutt_andersen()
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
 
-    // Compute Voronoi neighbor info
-    one->ComputeVoro(mins);
+    // get neighbor list
+    if (neighbor_method == 1) one->ComputeVoro(mins);
+    else one->ComputeNeiList(r2cuts);
 
     fprintf(fp,"# frame number: %d\n", img);
     // now to analyse the Honeycutt-Andersen bond type info

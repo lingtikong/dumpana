@@ -16,7 +16,7 @@ void Driver::unwrap()
 
   one = all[istr];
   int ntype = one->ntype;
-  choose_neighbor_method();
+  choose_neighbor_method(0);
 
   // now to do the real method
   for (int img = istr; img <= iend; img += inc){

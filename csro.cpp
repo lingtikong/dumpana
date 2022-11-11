@@ -32,9 +32,9 @@ void Driver::csro()
   }
   printf("\n");
 
-  // refinement info
-  set_cutoffs(0);
+  // choose method to calculate neighbor list
   one = all[istr];
+  choose_neighbor_method(0);
 
   // output file name for per atom CSRO
   FILE *fp; fp = NULL;
@@ -71,8 +71,9 @@ void Driver::csro()
       fprintf(fp,"\n");
     }
 
-    // Compute Vorornoi info, so as to get the neighbor list
-    one->ComputeVoro(mins);
+    // get neighbor list
+    if (neighbor_method == 1) one->ComputeVoro(mins);
+    else one->ComputeNeiList(r2cuts);
 
     // Cartesian coordinate needed
     one->dir2car();

@@ -17,8 +17,8 @@ void Driver::Compute_CNACNP()
   printf("\nReference: Comp. Phys. Comm. 177:518, 2007.\n");
   for (int i = 0; i < 20; ++i) printf("----");
   printf("\nNow please select your desired job:\n");
-  printf("  1. CNA based on Voronoi info;\n");
-  printf("  2. CNP based on Voronoi info;\n");
+  printf("  1. CNA parameter;\n");
+  printf("  2. CNP parameter;\n");
   printf("  3. Centro-symmetry parameter;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   fgets(str,MAXLINE, stdin);
@@ -31,11 +31,11 @@ void Driver::Compute_CNACNP()
   }
   printf("\n");
 
-  // thresholds for surface and edges
-  set_cutoffs(0);
-
   // Show relevant info if Weighted Voronoi is used
   one = all[istr];
+
+  // method to determin the neighbor list
+  choose_neighbor_method(1);
 
   char *fname = new char[8];
   if (job == 1){
@@ -68,7 +68,10 @@ void Driver::Compute_CNACNP()
   }
 
   FILE *fp = fopen(fname, "w");
-  fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
+  if (neighbor_method == 1)
+     fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
+  else
+     fprintf(fp,"# Neighbor list determined based on distance of atom pairs.\n");
   if (job == 1) fprintf(fp,"# CNA: 1, FCC; 2, HCP; 3, BCC; 4, ICOS; 4, OTHER; 5, UNKNOWN.\n# id type x y z cna\n");
   else if (thr > 0.) fprintf(fp, "# id type x y z %s env\n", jobstr);
   else fprintf(fp, "# id type x y z %s\n", jobstr);
@@ -93,10 +96,11 @@ void Driver::Compute_CNACNP()
   // now to loop over all asked images
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
-
-    // Compute the Voronoi info
-    one->ComputeVoro(mins);
     one->dir2car();
+
+    // get neighbor list
+    if (neighbor_method == 1) one->ComputeVoro(mins);
+    else one->ComputeNeiList(r2cuts);
 
     fprintf(fp,"# frame number: %d\n", img);
     // now to compute the CNA/CNP info
