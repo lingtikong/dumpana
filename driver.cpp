@@ -219,7 +219,7 @@ Driver::Driver(int narg, char** arg)
 
     case 32:
       setrange();
-      if (nsel > 0) unwrap();
+      if (nsel > 0) {unwrap(); writesel();}
       break;
 
     default:

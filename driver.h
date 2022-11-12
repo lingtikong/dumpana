@@ -59,7 +59,7 @@ private:
 
   // to unwrap so bonded atoms will be in correct positions
   void unwrap();
-  void unwrap_neighbors(int, int *, int *);
+  void unwrap_neighbors(int, int *);
 
   // to output selected frames in bgf format with properties
   void writebgf();

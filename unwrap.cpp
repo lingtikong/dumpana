@@ -33,21 +33,18 @@ void Driver::unwrap()
 
     // set local variables
     int *visited = new int[one->natom+1];
-    int *unwraped = new int[one->natom+1];
-    for (int i = 1; i <= one->natom; ++i) unwraped[i] = 0;
-    for (int i = 1; i <= one->natom; ++i) visited[i] = 0;
+    for (int id = 0; id <= one->natom; ++id) visited[id] = 0;
 
-    for (int id = 1; id <= one->natom; ++id){
-        if (unwraped[id] == 0) unwraped[id] = 1;
-        if (visited[id] == 0) unwrap_neighbors(id, unwraped, visited);
-    }
+    for (int id = 1; id <= one->natom; ++id)
+        if (visited[id] == 0) unwrap_neighbors(id, visited);
 
-    if (min_mem) one->FreeVoro();
     one->dir2car();
-    delete unwraped;
+    if (min_mem) one->FreeVoro();
+
+    delete visited;
   }
   
-  printf("\nSelected frames are now unwrapped, you can use option 11 to output them.\n");
+  printf("\nSelected frames are now unwrapped, now you can output them.\n");
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;
@@ -56,12 +53,12 @@ return;
 /*------------------------------------------------------------------------------
  * Recursive method to unwrap the neighbors of current central atom.
  *----------------------------------------------------------------------------*/
-void Driver::unwrap_neighbors(int id, int *status, int *visited)
+void Driver::unwrap_neighbors(int id, int *visited)
 {
    visited[id] = 1;
    for (int jj = 1; jj <= one->neilist[0][id]; ++jj){
        int jd = one->neilist[jj][id];
-       if (status[jd] == 0){
+       if (visited[jd] == 0){
           double xij = one->atpos[jd][0] - one->atpos[id][0];
           double yij = one->atpos[jd][1] - one->atpos[id][1];
           double zij = one->atpos[jd][2] - one->atpos[id][2];
@@ -71,9 +68,8 @@ void Driver::unwrap_neighbors(int id, int *status, int *visited)
           one->atpos[jd][1] = one->atpos[id][1] + yij;
           one->atpos[jd][2] = one->atpos[id][2] + zij;
 
-          status[jd] = 1;
+          unwrap_neighbors(jd, visited);
        }
-       if (visited[jd] == 0) unwrap_neighbors(jd, status, visited);
    }
 
    return;
