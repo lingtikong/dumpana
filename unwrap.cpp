@@ -11,7 +11,9 @@
 void Driver::unwrap()
 {
   printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
-  printf("   To unwrap the atomic positions for the selected frames.");
+  printf("   To unwrap the atomic positions for the selected frames,\n");
+  printf("So that bonded atoms are neighboring to each other, instead of\n");
+  printf("crossing the PBC boundary. It might only work for molecular systems.");
 
   one = all[istr];
   int ntype = one->ntype;
