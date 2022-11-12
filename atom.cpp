@@ -356,6 +356,7 @@ return;
 double DumpAtom::get_dist2(double xij, double yij, double zij)
 {
   if (cartesian) return xij*xij + yij*yij + zij*zij;
+
   double rij[3];
   if (triclinic){
      rij[0] = xij*lx + yij*xy + zij*xz;
@@ -1661,39 +1662,39 @@ void DumpAtom::ApplyPBC(double &xij, double &yij, double &zij)
 {
   if (cartesian) {
      if (triclinic) {  // non-orthogonal box
-       while (zij > hz){
+       while (zij >= hz){
          xij -= xz;
          yij -= yz;
          zij -= lz;
        }
-       while (zij <-hz){
+       while (zij < -hz){
          xij += xz;
          yij += yz;
          zij += lz;
        }
        
-       while (yij > hy){
+       while (yij >= hy){
          xij -= xy;
          yij -= ly;
        }
-       while (yij <-hy){
+       while (yij < -hy){
          xij += xy;
          yij += ly;
        }
        
-       while (xij > hx) xij -= lx;
-       while (xij <-hx) xij += lx;
+       while (xij >= hx) xij -= lx;
+       while (xij < -hx) xij += lx;
    
      } else { // orthogonal box
    
-       while (xij > hx) xij -= lx;
-       while (xij <-hx) xij += lx;
+       while (xij >= hx) xij -= lx;
+       while (xij < -hx) xij += lx;
      
-       while (yij > hy) yij -= ly;
-       while (yij <-hy) yij += ly;
+       while (yij >= hy) yij -= ly;
+       while (yij < -hy) yij += ly;
      
-       while (zij > hz) zij -= lz;
-       while (zij <-hz) zij += lz;
+       while (zij >= hz) zij -= lz;
+       while (zij < -hz) zij += lz;
      }
 
   } else {

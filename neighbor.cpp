@@ -14,16 +14,16 @@ void DumpAtom::ComputeNeiList(double **rcut_sq)
   if (neilist) memory->destroy(neilist);
   memory->create(neilist, MaxNei+1, natom+1, "neilist");
 
-  for (int i = 0; i <= natom; ++i) neilist[0][i] = 0;
+  for (int id = 0; id <= natom; ++id) neilist[0][id] = 0;
 
-  for (int i = 1; i <= natom; ++i){
-      int ip = attyp[i];
-      for (int j = i+1; j <= natom; ++j){
-          int jp = attyp[j];
+  for (int id = 1; id <= natom; ++id){
+      int ip = attyp[id];
+      for (int jd = id+1; jd <= natom; ++jd){
+          int jp = attyp[jd];
 
-          double xij = atpos[j][0] - atpos[i][0];
-          double yij = atpos[j][1] - atpos[i][1];
-          double zij = atpos[j][2] - atpos[i][2];
+          double xij = atpos[jd][0] - atpos[id][0];
+          double yij = atpos[jd][1] - atpos[id][1];
+          double zij = atpos[jd][2] - atpos[id][2];
 
           ApplyPBC(xij, yij, zij);
 
@@ -31,16 +31,16 @@ void DumpAtom::ComputeNeiList(double **rcut_sq)
 
           if (r2 > rcut_sq[ip][jp]) continue;
 
-          int ni = ++neilist[0][i];
-          int nj = ++neilist[0][j];
+          int ni = ++neilist[0][id];
+          int nj = ++neilist[0][jd];
           int nmax = MAX(ni, nj);
           if (nmax > MaxNei){
              MaxNei = nmax + 2;
              memory->grow(neilist, MaxNei+1, natom+1, "neilist");
           }
 
-          neilist[ni][i] = j;
-          neilist[nj][j] = i;
+          neilist[ni][id] = jd;
+          neilist[nj][jd] = id;
       }
   }
 return;

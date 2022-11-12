@@ -10,7 +10,6 @@
  *----------------------------------------------------------------------------*/
 void Driver::unwrap()
 {
-  char str[MAXLINE];
   printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
   printf("   To unwrap the atomic positions for the selected frames.");
 
@@ -24,23 +23,25 @@ void Driver::unwrap()
 
     // ntype of different frames must be the same
     if (one->ntype != ntype) continue;
+    one->car2dir();
 
     // get neighbor list
     if (neighbor_method == 1) one->ComputeVoro(mins);
     else one->ComputeNeiList(r2cuts);
 
     // set local variables
+    int *visited = new int[one->natom+1];
     int *unwraped = new int[one->natom+1];
-    int *parents = new int[one->natom+1];
     for (int i = 1; i <= one->natom; ++i) unwraped[i] = 0;
+    for (int i = 1; i <= one->natom; ++i) visited[i] = 0;
 
     for (int id = 1; id <= one->natom; ++id){
         if (unwraped[id] == 0) unwraped[id] = 1;
-        parents[0] = id;
-        unwrap_neighbors(id, unwraped, parents, 0);
+        if (visited[id] == 0) unwrap_neighbors(id, unwraped, visited);
     }
 
     if (min_mem) one->FreeVoro();
+    one->dir2car();
     delete unwraped;
   }
   
@@ -53,8 +54,9 @@ return;
 /*------------------------------------------------------------------------------
  * Recursive method to unwrap the neighbors of current central atom.
  *----------------------------------------------------------------------------*/
-void Driver::unwrap_neighbors(int id, int *status, int *parents, int level)
+void Driver::unwrap_neighbors(int id, int *status, int *visited)
 {
+   visited[id] = 1;
    for (int jj = 1; jj <= one->neilist[0][id]; ++jj){
        int jd = one->neilist[jj][id];
        if (status[jd] == 0){
@@ -69,12 +71,7 @@ void Driver::unwrap_neighbors(int id, int *status, int *parents, int level)
 
           status[jd] = 1;
        }
-       int done = 0;
-       for (int il = 0; il < level; il ++) done += (jd == parents[il]);
-       if (done == 0){
-          parents[level+1] = jd;
-          unwrap_neighbors(jd, status, parents, level+1);
-       }
+       if (visited[jd] == 0) unwrap_neighbors(jd, status, visited);
    }
 
    return;
