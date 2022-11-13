@@ -3,6 +3,7 @@
 #include <list>
 #include <string>
 #include <algorithm>
+#include <sys/stat.h>
 
 /*------------------------------------------------------------------------------
  * Constructor of driver, main menu
@@ -460,6 +461,7 @@ void Driver::writesel()
     ptr = strtok(str, " \n\t\r\f");
     fname = new char [strlen(ptr)+1];
     strcpy(fname, ptr);
+    ConfirmOverwrite(fname);
     fp = fopen(fname, "w");
 
     for (int img = istr; img<= iend; img += inc){
@@ -572,6 +574,7 @@ void Driver::writesel()
     ptr = strtok(str, " \n\t\r\f");
     fname = new char [strlen(ptr)+1];
     strcpy(fname, ptr);
+    ConfirmOverwrite(fname);
     fp = fopen(fname, "w");
 
     for (int img = istr; img <= iend; img += inc){
@@ -816,13 +819,16 @@ void Driver::avedump()
     atpos[ii][2] = atpos[ii][2]*lz;
   }
   
-  char str[MAXLINE];
+  char str[MAXLINE], *fname;
   printf("\n"); for (int i = 0; i < 20; ++i) printf("====");
   printf("\nPlease input the output xyz file name [dumpave.xyz]: ");
   if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str,"dumpave.xyz");
 
-  char *fout = strtok(str, " \n\t\r\f");
-  FILE *fp = fopen(fout, "w");
+  char *ptr = strtok(str, " \n\t\r\f");
+  fname = new char[strlen(ptr)+1];
+  strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
+  FILE *fp = fopen(fname, "w");
 
   fprintf(fp,"%d\n", nfirst);
   fprintf(fp,"Averaged over frames from %d to %d with incremental of %d: %lg %lg %lg %lg %lg %lg\n",
@@ -1185,6 +1191,36 @@ void Driver::choose_neighbor_method(int flag)
   one = all[istr];
   if (neighbor_method == 1) set_cutoffs(flag);
   else set_r2cuts();
+
+  return;
+}
+
+/*------------------------------------------------------------------------------
+ * Private method to check the existence of a file; if yes, confirm if overwrite
+ * or not.
+ * The input `fname` must be a variable created by `new`.
+ *------------------------------------------------------------------------------ */
+void Driver::ConfirmOverwrite(char *fname)
+{
+  struct stat buffer;
+  if (stat(fname, &buffer) == 0){
+     char str[MAXLINE];
+     printf("\nWARNING: File `%s` exists, overwritten? (y/n)[y]: ", fname);
+     fgets(str, MAXLINE, stdin);
+     char *ptr = strtok(str, " \n\t\r\f");
+     if (ptr != NULL && strcmp(ptr, "y") != 0 && strcmp(ptr, "Y") != 0){
+        while (1){
+              printf("Please input the new file name: ");
+              fgets(str, MAXLINE, stdin);
+              ptr = strtok(str, " \n\t\r\f");
+              if (ptr) break;
+        }
+        ConfirmOverwrite(ptr);
+        delete []fname;
+        fname = new char [strlen(ptr)+1];
+        strcpy(fname, ptr);
+     }
+  }
 
   return;
 }

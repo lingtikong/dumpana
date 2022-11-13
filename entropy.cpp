@@ -23,7 +23,10 @@ void Driver::compute_smix()
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) strcpy(str, "smix.dat");
   ptr = strtok(str, " \n\t\r\f");
-  FILE *fp = fopen(ptr,"w");
+  char *fname = new char [strlen(ptr)+1];
+  strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
+  FILE *fp = fopen(fname,"w");
   fprintf(fp,"# Configurational entropy of mixing, in unit of kB/mole.\n");
   fprintf(fp,"# Ref: JY Qin, Acta Phys.-Chim. Sin. 28(7):1586-1592, 2012.\n# MD-step smix\n");
 
@@ -98,7 +101,8 @@ void Driver::compute_smix()
   fprintf(fp, "# Average: %lg kB/mole\n", smix_tot);
   fclose(fp);
   
-  printf("\n%d images were used in computing smix (ave: %g kB), written to %s\n", nused, smix_tot, ptr);
+  printf("\n%d images were used in computing smix (ave: %g kB), written to %s\n", nused, smix_tot, fname);
+  delete []fname;
 
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 

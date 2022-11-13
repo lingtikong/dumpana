@@ -122,6 +122,7 @@ void Driver::writebgf()
 
   char *fname = new char[strlen(ptr)+1];
   strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
   FILE *fp = fopen(fname, "w");
   
   // map atomic type to elements

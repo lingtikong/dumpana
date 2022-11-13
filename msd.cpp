@@ -158,9 +158,14 @@ void Driver::compute_msd()
   printf("Please input the file to output the MSD info [msd.dat]: ");
   fgets(str,MAXLINE, stdin);
   char *ptr = strtok(str, " \n\t\r\f");
-  if (ptr == NULL) strcpy(str, "msd.dat");
-  ptr = strtok(str, " \n\t\r\f");
-  FILE *fp = fopen(ptr,"w");
+  if (ptr == NULL){
+     strcpy(str, "msd.dat");
+     ptr = strtok(str, " \n\t\r\f");
+  }
+  char *fname = new char [strlen(ptr)+1];
+  strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
+  FILE *fp = fopen(fname,"w");
   fprintf(fp,"# MSD for: %s", selcmd);
   fprintf(fp,"# d-step x y z r\n");
   for (int it = 0; it < nused; ++it){
@@ -169,7 +174,8 @@ void Driver::compute_msd()
   fclose(fp);
   
   memory->destroy(msd);
-  printf("\n%d images were used in the evaluation of MSD, which is written to %s\n", nused, ptr);
+  printf("\n%d images were used in the evaluation of MSD, which is written to %s\n", nused, fname);
+  delete []fname;
 
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 

@@ -175,7 +175,10 @@ void Driver::compute_sh()
     // Now to output the results
     sprintf(str, "%s_%d.dat", prefix, one->iframe);
     ptr = strtok(str, " \n\t\r\f");
-    FILE *fp = fopen(ptr, "w");
+    char *fname = new char [strlen(ptr)+1];
+    strcpy(fname, ptr);
+    ConfirmOverwrite(fname);
+    FILE *fp = fopen(fname, "w");
     fprintf(fp, "#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
     fprintf(fp, "#%s local order parameter for frame %d of %s\n", prefix, one->iframe, one->fname);
     if (flag_env){
@@ -198,7 +201,8 @@ void Driver::compute_sh()
     fclose(fp);
 
     if (min_mem) one->FreeVoro();
-    printf(" Frame %d done, the results are written to: %s\n", img+1, ptr);
+    printf(" Frame %d done, the results are written to: %s\n", img+1, fname);
+    delete []fname;
   }
 
   if (qw)  memory->destroy(qw);

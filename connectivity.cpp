@@ -105,6 +105,7 @@ void Driver::ClusterConnectivity()
       strcpy(fname, str);
     }
     // open and write header
+    ConfirmOverwrite(fname);
     fp = fopen(fname,"w");
     fprintf(fp,"#Voronoi refinement info: surf_min = %g, edge_min = %g, nei_min = %d\n", mins[0], mins[2], int(mins[1]));
     fprintf(fp,"#Voronoi indices of the %d%s shell neighbors of atoms selected by: %s", nshell, Nos[nshell], selcmd);
@@ -124,6 +125,7 @@ void Driver::ClusterConnectivity()
       sprintf(str,"Connectivity.dat");
       strcpy(fname, str);
     }
+    ConfirmOverwrite(fname);
     fp = fopen(fname,"w");
 
     // detailed info is optional

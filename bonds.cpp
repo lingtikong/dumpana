@@ -118,6 +118,7 @@ void Driver::bonds()
   ptr = strtok(str," \n\t\r\f");
   fname = new char[strlen(ptr)+1];
   strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
 
   // write header of output
   FILE *fp = fopen(fname, "w");

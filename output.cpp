@@ -75,6 +75,7 @@ void Driver::OutputVoroCells( )
   if (ptr == NULL) {strcpy(str,"vorocell.xyz"); ptr = strtok(str, " \n\t\r\f");}
   char *fname = new char[strlen(ptr)+1];
   strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
   FILE *fp = fopen(fname, "w");
   
   if (job == 1){ // output selected cluster and the Voronoi vertices

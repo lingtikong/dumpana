@@ -44,17 +44,23 @@ void Driver::compare_rmsd()
 
   FILE *fp1 = NULL, *fp2 = NULL;
   printf("Frames from No. %d to No. %d with increment of %d will be compared to %d.\n", istr+1, iend+1, inc, iref);
-  printf("\nIf you want to output the results to a file, input the filename now: ");
+  printf("\nIf you want to output the results to a file, input the file name now: ");
   if (count_words(fgets(str,MAXLINE,stdin)) > 0){
     char *ptr = strtok(str, " \n\t\r\f");
-    fp1 = fopen(ptr, "w");
-    if (fp1) printf("The related info will be written to file: %s\n", ptr);
+    char *fname = new char[strlen(ptr)+1];
+    strcpy(fname, ptr);
+    ConfirmOverwrite(fname);
+    fp1 = fopen(fname, "w");
+    if (fp1) printf("The related info will be written to file: %s\n", fname);
   }
-  printf("If you want to output per-atom displacement, input the filename now: ");
+  printf("If you want to output per-atom displacement, input the file name now: ");
   if (count_words(fgets(str,MAXLINE,stdin)) > 0){
     char *ptr = strtok(str, " \n\t\r\f");
-    fp2 = fopen(ptr, "w");
-    if (fp2) printf("The related info will be written to file: %s\n", ptr);
+    char *fname = new char[strlen(ptr)+1];
+    strcpy(fname, ptr);
+    ConfirmOverwrite(fname);
+    fp2 = fopen(fname, "w");
+    if (fp2) printf("The related info will be written to file: %s\n", fname);
   }
   double disp_tol = 0.;
   if (fp2){

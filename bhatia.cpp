@@ -391,7 +391,10 @@ void Driver::bhatia_thornton()
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) strcpy(str, "sq.dat");
   ptr = strtok(str, " \n\t\r\f");
-  FILE *fp = fopen(ptr,"w");
+  char *fname = new char[strlen(ptr)+1];
+  strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
+  FILE *fp = fopen(fname,"w");
   fprintf(fp,"%s", header);
   fprintf(fp,"# q SNN SNC SCC counts\n");
   dq[0] = 1./inv_dq;
@@ -407,7 +410,8 @@ void Driver::bhatia_thornton()
   memory->destroy(SNN);
   memory->destroy(SNC);
   memory->destroy(SCC);
-  printf("\n%d images were used in the evaluation of S(q), which is written to %s\n", nused, ptr);
+  printf("\n%d images were used in the evaluation of S(q), which is written to %s\n", nused, fname);
+  delete []fname;
 
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 return;

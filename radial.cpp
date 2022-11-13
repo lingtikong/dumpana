@@ -72,13 +72,13 @@ void Driver::radial()
 
   } else if (strcmp(ptr,"X") == 0 || strcmp(ptr, "R") == 0){
     for (int idim = 0; idim < 3; ++idim){
-      ptr = strtok(NULL, " \n\t\r\f");
-      if (ptr == NULL){
-        printf("\nInsufficient input!\n");
-        for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
-        return;
-      }
-      cpos[idim] = atof(ptr);
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL){
+           printf("\nInsufficient input!\n");
+           for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
+           return;
+        }
+        cpos[idim] = atof(ptr);
     }
     ic = 0;
 
@@ -131,7 +131,10 @@ void Driver::radial()
 
     // open file, and write the header
     sprintf(str, "%s_%d", prefix, one->iframe);
-    FILE *fp = fopen(str, "w");
+    char *fname = new char [strlen(str)+1];
+    strcpy(fname, str);
+    ConfirmOverwrite(fname);
+    FILE *fp = fopen(fname, "w");
     fprintf(fp, "# Frame %d from file %s\n", one->iframe, one->fname);
     fprintf(fp, "# 1  2 3 4  5    6\n");
     fprintf(fp, "# id x y z ibin d2c\n");
@@ -149,8 +152,10 @@ void Driver::radial()
     }
     fclose(fp);
 
-    printf("Frame %d done, and the results are written to %s\n", one->iframe, str);
+    printf("Frame %d done, and the results are written to %s\n", one->iframe, fname);
+    delete []fname;
   }
+  delete []prefix;
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;

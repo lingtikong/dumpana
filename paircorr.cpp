@@ -189,12 +189,16 @@ void Driver::paircorr()
 
       if (min_mem) one->FreeVoro();
       if (flag_each == 1){
-        sprintf(str, "%s_%d.dat", fprefix, img+1);
-        write_gr(rmin, delr, nbin, gr, nused, str, header);
-        nused = 0;
-        printf("  PDF of frame %d evaluated and written to %s\n", img+1, ptr);
+         sprintf(str, "%s_%d.dat", fprefix, img+1);
+         char *fname = new char [strlen(str)+1];
+         strcpy(fname, ptr);
+         write_gr(rmin, delr, nbin, gr, nused, fname, header);
+         nused = 0;
+         printf("  PDF of frame %d evaluated and written to %s\n", img+1, fname);
 #pragma omp parallel for default(shared)
-        for (int i = 0; i < nbin; ++i) gr[i][0] = gr[i][1] = 0.;
+         for (int i = 0; i < nbin; ++i) gr[i][0] = gr[i][1] = 0.;
+
+         delete []fname;
       }
     } // end loop over frames
 
@@ -251,12 +255,16 @@ void Driver::paircorr()
       ++nused;
       if (min_mem) one->FreeVoro();
       if (flag_each == 1){
-        sprintf(str, "%s_%d.dat", fprefix, img+1);
-        write_gr(rmin, delr, nbin, gr, nused, str, header);
-        nused = 0;
-        printf("  PDF of frame %d evaluated and written to %s\n", img+1, ptr);
+         sprintf(str, "%s_%d.dat", fprefix, img+1);
+         char *fname = new char [strlen(str)+1];
+         strcpy(fname, ptr);
+         write_gr(rmin, delr, nbin, gr, nused, fname, header);
+         nused = 0;
+         printf("  PDF of frame %d evaluated and written to %s\n", img+1, fname);
 #pragma omp parallel for default(shared)
-        for (int i = 0; i < nbin; ++i) gr[i][0] = gr[i][1] = 0.;
+         for (int i = 0; i < nbin; ++i) gr[i][0] = gr[i][1] = 0.;
+
+         delete []fname;
       }
     }
   }
@@ -268,7 +276,8 @@ void Driver::paircorr()
   delete timer;
 
   memory->destroy(gr);
-  if (flag_each == 0) printf("\n%d images were used in the evaluation of g(r), which is written to %s\n", nused, ptr);
+  if (flag_each == 0) printf("\n%d images were used in the evaluation of g(r), which is written to %s\n", nused, fprefix);
+  delete []fprefix;
 
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
@@ -289,6 +298,7 @@ void Driver::write_gr(double rmin, double delr, int nbin, double **gr, int nused
   }
   
   // output the result
+  ConfirmOverwrite(fname);
   FILE *fp = fopen(fname,"w");
   fprintf(fp,"%s", header);
   fprintf(fp,"# r  g(r) int\n");

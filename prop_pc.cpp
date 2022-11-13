@@ -225,12 +225,15 @@ void Driver::property_pc()
 
       if (min_mem) one->FreeVoro();
       if (flag_each == 1){
-        sprintf(str, "%s_%d.dat", fprefix, img+1);
-        write_prop_pc(rmin, delr, nbin, gr, nused, str, header);
-        nused = 0;
-        printf("  PDF of frame %d evaluated and written to %s\n", img+1, ptr);
+         sprintf(str, "%s_%d.dat", fprefix, img+1);
+         char *fname = new char [strlen(str)+1];
+         strcpy(fname, str);
+         write_prop_pc(rmin, delr, nbin, gr, nused, fname, header);
+         nused = 0;
+         printf("  PDF of frame %d evaluated and written to %s\n", img+1, fname);
+         delete []fname;
 #pragma omp parallel for default(shared)
-        for (int i = 0; i < nbin; ++i) gr[i][0] = gr[i][1] = 0.;
+         for (int i = 0; i < nbin; ++i) gr[i][0] = gr[i][1] = 0.;
       }
     } // end loop over frames
 
@@ -304,12 +307,15 @@ void Driver::property_pc()
       ++nused;
       if (min_mem) one->FreeVoro();
       if (flag_each == 1){
-        sprintf(str, "%s_%d.dat", fprefix, img+1);
-        write_prop_pc(rmin, delr, nbin, gr, nused, str, header);
-        nused = 0;
-        printf("  PDF of frame %d evaluated and written to %s\n", img+1, ptr);
+         sprintf(str, "%s_%d.dat", fprefix, img+1);
+         char *fname = new char [strlen(str)+1];
+         strcpy(fname, str);
+         write_prop_pc(rmin, delr, nbin, gr, nused, fname, header);
+         nused = 0;
+         printf("  PDF of frame %d evaluated and written to %s\n", img+1, fname);
+         delete []fname;
 #pragma omp parallel for default(shared)
-        for (int i = 0; i < nbin; ++i) gr[i][0] = gr[i][1] = 0.;
+         for (int i = 0; i < nbin; ++i) gr[i][0] = gr[i][1] = 0.;
       }
     }
   }
@@ -326,7 +332,8 @@ void Driver::property_pc()
   memory->destroy(ave_prop);
   memory->destroy(std_prop);
 
-  if (flag_each == 0) printf("\n%d images were used in the evaluation of C(r), which is written to %s\n", nused, ptr);
+  if (flag_each == 0) printf("\n%d images were used in the evaluation of C(r), which is written to %s\n", nused, fprefix);
+  delete []fprefix;
 
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
@@ -347,6 +354,7 @@ void Driver::write_prop_pc(double rmin, double delr, int nbin, double **gr, int 
   }
   
   // output the result
+  ConfirmOverwrite(fname);
   FILE *fp = fopen(fname,"w");
   fprintf(fp,"%s", header);
   fprintf(fp,"# r  C(r) int_gr\n");

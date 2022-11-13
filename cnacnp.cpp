@@ -57,6 +57,7 @@ void Driver::Compute_CNACNP()
     fname = new char[strlen(ptr)+1];
     strcpy(fname, ptr);
   }
+  ConfirmOverwrite(fname);
 
   double thr = 0.;
   if (job == 2 || job == 3){

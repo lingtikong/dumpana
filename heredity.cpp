@@ -60,7 +60,10 @@ void Driver::heredity()
   printf("\nPlease input the file name to output the results [heredity.dat]: ");
   if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str,"heredity.dat");
   ptr = strtok(str," \n\t\r\f");
-  FILE *fp = fopen(ptr, "w");
+  char *fname = new char [strlen(ptr)+1];
+  strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
+  FILE *fp = fopen(fname, "w");
 
   int nused = 0;
   DumpAtom *now;  // pointer to current frame
@@ -253,6 +256,7 @@ void Driver::heredity()
   delete timer;
 
   printf("\n%d images were used in the evaluation of heredity.\n",  nused);
+  delete []fname;
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 return;
 }

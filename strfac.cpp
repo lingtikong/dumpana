@@ -212,9 +212,14 @@ void Driver::strfac()
   printf("Please input the file name to output S(q) [sq.dat]: ");
   fgets(str,MAXLINE, stdin);
   ptr = strtok(str, " \n\t\r\f");
-  if (ptr == NULL) strcpy(str, "sq.dat");
-  ptr = strtok(str, " \n\t\r\f");
-  FILE *fp = fopen(ptr,"w");
+  if (ptr == NULL){
+     strcpy(str, "sq.dat");
+     ptr = strtok(str, " \n\t\r\f");
+  }
+  char *fname = new char [strlen(ptr)+1];
+  strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
+  FILE *fp = fopen(fname,"w");
   fprintf(fp,"# q S(q)\n");
 
   dq[0] = 1./rdq;
@@ -227,7 +232,8 @@ void Driver::strfac()
   
   memory->destroy(sqall);
   memory->destroy(sq);
-  printf("\n%d images were used in the evaluation of S(k), which is written to %s\n", nused, ptr);
+  printf("\n%d images were used in the evaluation of S(k), which is written to %s\n", nused, fname);
+  delete []fname;
 
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 

@@ -180,7 +180,10 @@ void Driver::spatial()
     strcpy(str, "spatial.dat");
     ptr = strtok(str, " \n\t\r\f");
   }
-  FILE *fp = fopen(ptr,"w");
+  char *fname = new char [strlen(ptr)+1];
+  strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
+  FILE *fp = fopen(fname,"w");
   fprintf(fp,"# Spatial distribution for atoms: %s", selcmd);
   fprintf(fp,"# Similar to fix-ave-spatial format; mesh size: %d x %d x %d.\n", nbin[0], nbin[1], nbin[2]);
   fprintf(fp,"# index sx sy sz #atoms\n");
@@ -208,7 +211,8 @@ void Driver::spatial()
   fclose(fp);
 
   memory->destroy(hits);
-  printf("\n%d images were used in the evaluation and the result is written to %s\n", nused, ptr);
+  printf("\n%d images were used in the evaluation and the result is written to %s\n", nused, fname);
+  delete []fname;
 
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 

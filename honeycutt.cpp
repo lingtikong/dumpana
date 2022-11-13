@@ -13,7 +13,7 @@
  *----------------------------------------------------------------------------*/
 void Driver::honeycutt_andersen()
 {
-  char str[MAXLINE];
+  char str[MAXLINE], *ptr;
   printf("\n"); for (int i = 0; i < 5; ++i) printf("====");
   printf("   Honeycutt-Andersen  Bond  Analysis   ");
   for (int i = 0; i < 5; ++i) printf("===="); printf("\n");
@@ -25,7 +25,7 @@ void Driver::honeycutt_andersen()
   int unbond = 0;
   printf("\nWould you like to analyse un-bonded pairs? (y/n)[n]: ");
   fgets(str, MAXLINE, stdin);
-  char *ptr = strtok(str, " \n\t\r\f");
+  ptr = strtok(str, " \n\t\r\f");
   if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  unbond = 1;
 
   int outflag = 0;
@@ -41,11 +41,14 @@ void Driver::honeycutt_andersen()
 
   printf("Please input the file name to output the HA bond index info [ha.dat]: ");
   fgets(str, MAXLINE, stdin);
-  char *fname = strtok(str, " \n\t\r\f");
-  if (fname == NULL){
-    strcpy(str,"ha.dat\n");
-    fname = strtok(str, " \n\t\r\f");
+  ptr = strtok(str, " \n\t\r\f");
+  if (ptr == NULL){
+     strcpy(str,"ha.dat\n");
+     ptr = strtok(str, " \n\t\r\f");
   }
+  char *fname = new char [strlen(ptr)+1];
+  strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
 
   FILE *fp = fopen(fname, "w");
   if (outflag & 2) fprintf(fp, "# id  jd index i-x i-y i-z j-x j-y j-z\n");
@@ -84,6 +87,7 @@ void Driver::honeycutt_andersen()
   }
   printf("\n"); for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
   fclose(fp);
+  delete []fname;
 
 return;
 }

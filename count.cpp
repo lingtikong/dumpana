@@ -37,7 +37,10 @@ void Driver::count_selected()
     strcpy(str, "count.dat");
     ptr = strtok(str, " \n\t\r\f");
   }
-  FILE *fp = fopen(ptr,"w");
+  char *fname = new char [strlen(ptr)+1];
+  strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
+  FILE *fp = fopen(fname,"w");
   fprintf(fp,"# Number of atoms within selection wrt MD time: %s", selcmd);
   fprintf(fp,"# Istep  Number-atoms-in-selection\n");
 
@@ -54,7 +57,8 @@ void Driver::count_selected()
   }
   fclose(fp);
 
-  printf("\n%d images were analyzed and the result is written to %s\n", nused, ptr);
+  printf("\n%d images were analyzed and the result is written to %s\n", nused, fname);
+  delete []fname;
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;

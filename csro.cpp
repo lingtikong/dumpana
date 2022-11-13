@@ -41,7 +41,10 @@ void Driver::csro()
   printf("\nPlease input the output file name [csro.dat]: ");
   if (count_words(fgets(str,MAXLINE, stdin)) < 1) strcpy(str,"csro.dat");
   ptr = strtok(str, " \n\t\r\f");
-  fp = fopen(ptr, "w");
+  char *fname = new char [strlen(ptr)+1];
+  strcpy(fname, ptr);
+  ConfirmOverwrite(fname);
+  fp = fopen(fname, "w");
 
   int ntype = all[istr]->ntype;
   // work spaces
@@ -178,6 +181,7 @@ void Driver::csro()
   }
   fprintf(fp,"\n");
   fclose(fp);
+  delete []fname;
 
   memory->destroy(nnei);
   memory->destroy(NumType);
