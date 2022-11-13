@@ -1225,16 +1225,17 @@ void Driver::ConfirmOverwrite(char *fname)
      input->read_stdin(str);
      char *ptr = strtok(str, " \n\t\r\f");
      if (ptr != NULL && strcmp(ptr, "y") != 0 && strcmp(ptr, "Y") != 0){
-        while (1){
+        while ( 1 ){
               printf("Please input the new file name: ");
               input->read_stdin(str);
               ptr = strtok(str, " \n\t\r\f");
               if (ptr) break;
         }
-        ConfirmOverwrite(ptr);
         delete []fname;
         fname = new char [strlen(ptr)+1];
         strcpy(fname, ptr);
+
+        ConfirmOverwrite(fname);
      }
   }
 
