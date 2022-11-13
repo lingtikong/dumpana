@@ -59,7 +59,7 @@ public:
   void FreeVoro();       // free memory of neilist, voro, and volume
 
   // Neibhbor List calculation based on distance instead of voro
-  void ComputeNeiList(double **);
+  void ComputeNeiList(double ***);
 
   void selection(const char *);
   void SelInfo();

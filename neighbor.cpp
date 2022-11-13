@@ -9,7 +9,7 @@
  * Parameters:
  *  cutoffs  : square of cutoff distances for each pair of atom types
  *----------------------------------------------------------------------------*/
-void DumpAtom::ComputeNeiList(double **rcut_sq)
+void DumpAtom::ComputeNeiList(double ***rcut_sq)
 {
   if (neilist) memory->destroy(neilist);
   memory->create(neilist, MaxNei+1, natom+1, "neilist");
@@ -29,7 +29,7 @@ void DumpAtom::ComputeNeiList(double **rcut_sq)
 
           double r2 = get_dist2(xij, yij, zij);
 
-          if (r2 > rcut_sq[ip][jp]) continue;
+          if (r2 < rcut_sq[ip][jp][0] || r2 > rcut_sq[ip][jp][1]) continue;
 
           int ni = ++neilist[0][id];
           int nj = ++neilist[0][jd];

@@ -36,7 +36,7 @@ private:
   void set_cutoffs(int);
 
   // private method to set the cutoff for bond distances for each pair
-  double **r2cuts;
+  double ***r2cuts;
   void set_r2cuts();
 
   // choose the method to define nearest neighbors
