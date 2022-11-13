@@ -145,5 +145,6 @@ private:
 
   Memory *memory;
   int count_words(const char *);
+  void ConfirmOverwrite(char *);
 };
 #endif
