@@ -31,7 +31,8 @@ void Driver::bhatia_thornton()
   while (1){
     printf("\nPlease input the selection command for atoms, `h` for help [all]: ");
   
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(srcsel, str);
       char *ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -40,11 +41,12 @@ void Driver::bhatia_thornton()
     // check the selection command on the first frame
     one->selection(srcsel); one->SelInfo();
     if (one->nsel < 1){
-      printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
-        char *ptr = strtok(str," \n\t\r\f");
-        if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
-      }
+       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
+       input->read_stdin(str);
+       if (count_words(str) > 0){
+          char *ptr = strtok(str," \n\t\r\f");
+          if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
+       }
     }
     break;
   }
@@ -58,7 +60,8 @@ void Driver::bhatia_thornton()
   // solvent atoms
   while (B.empty()){
     printf("please input your type list to be seen as solvent [2]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       char *ptr = strtok(str," \n\t\r\f");
       while (ptr){
         int it = atoi(ptr);
@@ -76,7 +79,8 @@ void Driver::bhatia_thornton()
   // solute atoms
   while (A.empty()){
     printf("Please input your type list to be seen as solute  [1]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       char *ptr = strtok(str," \n\t\r\f");
       while (ptr){
         int it = atoi(ptr);
@@ -102,7 +106,8 @@ void Driver::bhatia_thornton()
   // bound for q
   double qmax = 6.;
   printf("\nNow please input your desired maximum q [%lg]: ", qmax);
-  if (count_words(fgets(str,MAXLINE,stdin)) >= 1){
+  input->read_stdin(str);
+  if (count_words(str) >= 1){
     char *ptr = strtok(str," \n\t\r\f");
     qmax = atof(ptr);
 
@@ -119,7 +124,8 @@ void Driver::bhatia_thornton()
   nq[0] = nq[1] = nq[2] = 41;
 
   printf("Now please input the # of q-points along each direction [%d %d %d]: ", nq[0], nq[1], nq[2]);
-  if (count_words(fgets(str,MAXLINE,stdin)) >= 3){
+  input->read_stdin(str);
+  if (count_words(str) >= 3){
     char *ptr = strtok(str," \n\t\r\f");
     for (int i = 0; i < 3; ++i){
       nq[i] = MAX(0, atoi(ptr)-1);
@@ -277,7 +283,8 @@ void Driver::bhatia_thornton()
   // output the Bhatia-Thornton structure factor for each q-point
   printf("\nIf you want to output the Bhatia-Thornton structure factor info for\n");
   printf("the whole q-mesh, input the prefix for the files now, enter to skip: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     char *ptr = strtok(str," \n\t\r\f");
 
     // SNN
@@ -330,7 +337,8 @@ void Driver::bhatia_thornton()
   // output the radial BT result
   int nbin = 201;
   printf("Please input the # of bins to output S-q [%d]: ", nbin);
-  if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     char *ptr = strtok(str, " \n\t\r\f");
     nbin = MAX(1, atoi(ptr));
   }
@@ -387,7 +395,7 @@ void Driver::bhatia_thornton()
   }
 
   printf("Please input the file to output S(q) [sq.dat]: ");
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) strcpy(str, "sq.dat");
   ptr = strtok(str, " \n\t\r\f");

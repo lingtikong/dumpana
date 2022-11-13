@@ -17,7 +17,7 @@ void Driver::bonds()
   printf("  2. bond angles  between selected atoms;\n");
   printf("  3. distances    between selected atoms;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
@@ -39,7 +39,8 @@ void Driver::bonds()
   else printf("\nThree atoms define an angle, now define the central atom.\n");
   while (1){
     printf("Please input the atom selection command, `h` for help [all]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(isel, str);
       ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -49,7 +50,8 @@ void Driver::bonds()
     one->selection(isel); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
       }
@@ -61,7 +63,8 @@ void Driver::bonds()
   else printf("\nNow to define the first end of the bond angle.\n");
   while (1){
     printf("Please input the atom selection command, `h` for help [all]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(jsel, str);
       ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -71,7 +74,8 @@ void Driver::bonds()
     one->selection(jsel); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
       }
@@ -83,7 +87,8 @@ void Driver::bonds()
     printf("\nNow to define the second end of the bond angle.\n");
     while (1){
       printf("Please input the atom selection command, `h` for help [all]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         strcpy(ksel, str);
         ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -93,7 +98,8 @@ void Driver::bonds()
       one->selection(ksel); one->SelInfo();
       if (one->nsel < 1){
         printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-        if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+        input->read_stdin(str);
+        if (count_words(str) > 0){
           char *ptr = strtok(str," \n\t\r\f");
           if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
         }
@@ -107,13 +113,16 @@ void Driver::bonds()
   printf("\nNow please input the output file name ");
   if (job == 1){
     printf("[bondlen.dat]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, "bondlen.dat");
+    input->read_stdin(str);
+    if (count_words(str) < 1) strcpy(str, "bondlen.dat");
   } else if (job == 2){
     printf("[bondang.dat]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, "bondang.dat");
+    input->read_stdin(str);
+    if (count_words(str) < 1) strcpy(str, "bondang.dat");
   } else {
     printf("[pairdst.dat]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, "pairdst.dat");
+    input->read_stdin(str);
+    if (count_words(str) < 1) strcpy(str, "pairdst.dat");
   }
   ptr = strtok(str," \n\t\r\f");
   fname = new char[strlen(ptr)+1];

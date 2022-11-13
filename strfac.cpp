@@ -18,7 +18,8 @@ void Driver::strfac()
   // ask for the max value of k's
   qmax = 10.;
   printf("\nPlease input the upper bound of the q-vectors [%g]: ", qmax);
-  if (count_words(fgets(str,MAXLINE, stdin)) >= 1){
+  input->read_stdin(str);
+  if (count_words(str) >= 1){
     ptr = strtok(str, " \n\t\r\f");
     qmax = atof(ptr);
   }
@@ -28,7 +29,8 @@ void Driver::strfac()
 
   printf("\nThe computation for 3D is rather expensive, be patient if you use a large q-mesh.\n");
   printf("Please input the # of q-points along each direction [%d %d %d]: ", nq[0], nq[1], nq[2]);
-  if (count_words(fgets(str,MAXLINE, stdin)) >= 3){
+  input->read_stdin(str);
+  if (count_words(str) >= 3){
     ptr = strtok(str, " \n\t\r\f");
     for (int i = 0; i < 2; ++i){
       nq[i] = abs(atoi(ptr));
@@ -39,7 +41,8 @@ void Driver::strfac()
 
   // ask for the # of bins for S(q)
   printf("Please input the # of bins for S(q) [%d]: ", nbin);
-  if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) nbin = atoi(ptr);
     nbin = MAX(2,nbin);
@@ -53,7 +56,8 @@ void Driver::strfac()
   char selcmd[MAXLINE];
   while (1){
     printf("\nPlease input the atom selection command, `h` for help [all]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(selcmd, str);
       ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -63,7 +67,8 @@ void Driver::strfac()
     one->selection(selcmd); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
       }
@@ -145,7 +150,8 @@ void Driver::strfac()
   for (int i = 0; i < nbin; ++i) sq[i][0] = sq[i][1]  = 0.;
 
   printf("\nIf you want to output S(kx,ky,kz), input a file name, enter to skip: ");
-  if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     ptr = strtok(str, " \n\t\r\f");
     FILE *fp = fopen(ptr,"w");
     fprintf(fp,"# kx ky kz  S(k)\n");
@@ -210,7 +216,7 @@ void Driver::strfac()
   }
 
   printf("Please input the file name to output S(q) [sq.dat]: ");
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL){
      strcpy(str, "sq.dat");

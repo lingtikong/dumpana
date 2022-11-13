@@ -22,7 +22,7 @@ void Driver::csro()
   printf("  1. Overall CSRO based on Voronoi info;\n");
   printf("  2. Peratom CSRO based on Voronoi info;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
@@ -39,7 +39,8 @@ void Driver::csro()
   // output file name for per atom CSRO
   FILE *fp; fp = NULL;
   printf("\nPlease input the output file name [csro.dat]: ");
-  if (count_words(fgets(str,MAXLINE, stdin)) < 1) strcpy(str,"csro.dat");
+  input->read_stdin(str);
+  if (count_words(str) < 1) strcpy(str,"csro.dat");
   ptr = strtok(str, " \n\t\r\f");
   char *fname = new char [strlen(ptr)+1];
   strcpy(fname, ptr);

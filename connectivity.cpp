@@ -12,7 +12,7 @@ void Driver::ClusterConnectivity()
   printf("  1. Voronoi indices for neighbors of certain clusters;\n");
   printf("  2. Statistics on connectivities of certain clusters;\n");
   printf("  0. return.\nYour choice [%d]: ", job);
-  fgets(str,MAXLINE,stdin);
+  input->read_stdin(str);
 
   char *ptr = strtok(str," \n\t\r\f");
   if (ptr) job = atoi(ptr);
@@ -31,7 +31,8 @@ void Driver::ClusterConnectivity()
   printf("\nYou can constrain the central atom of the desired clusters by a selection command.\n");
   while (1){
     printf("Please input your selection command, `h` for help [all]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(selcmd, str);
       char *ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -42,7 +43,8 @@ void Driver::ClusterConnectivity()
     one->selection(selcmd); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
       }
@@ -54,7 +56,8 @@ void Driver::ClusterConnectivity()
   set<std::string> voroset; std::string vindex;
   printf("\nPlease input the Voronoi index of the desired clusters, e.g., 0,6,0,8.\n");
   printf("If multiple indices are wanted, separate them by space: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     printf("\nClusters centered on Atoms with Voronoi indices: %s will be analysed.\n", str);
 
     char *ptr = strtok(str," \n\t\r\f");
@@ -66,7 +69,8 @@ void Driver::ClusterConnectivity()
     }
   } else {
     printf("\nAre you sure you want to analyse clusters centered on each atom? (y/n)[y]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"n")==0 || strcmp(ptr,"N")==0){
         for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
@@ -85,7 +89,8 @@ void Driver::ClusterConnectivity()
   if (job == 1){
     // cluster size related info
     printf("\nWhich shell of the certral atom`s neighbors would you like to analyse? (1-%d)[1]: ",MaxShell);
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       char *ptr = strtok(str," \n\t\r\f");
       nshell = atoi(ptr);
     }
@@ -95,7 +100,8 @@ void Driver::ClusterConnectivity()
 
     // output filename
     printf("\nPlease input the output file name [NeighVoro-%d%s.dat]: ", nshell, Nos[nshell]);
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       ptr = strtok(str," \n\t\r\f");
       fname = new char [strlen(ptr)+1];
       strcpy(fname, ptr);
@@ -116,7 +122,8 @@ void Driver::ClusterConnectivity()
   } else if (job == 2){
     // output filename
     printf("\nPlease input the output file name [Connectivity.dat]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       ptr = strtok(str," \n\t\r\f");
       fname = new char [strlen(ptr)+1];
       strcpy(fname, ptr);
@@ -130,7 +137,8 @@ void Driver::ClusterConnectivity()
 
     // detailed info is optional
     printf("If you want to output the cluster info, input the file name now: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       ptr = strtok(str," \n\t\r\f");
 
       // open and write header

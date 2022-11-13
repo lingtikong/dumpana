@@ -28,7 +28,8 @@ void Driver::radial()
   printf("point is expected. While if `type` == `X` or `R`, three numbers giving\n");
   printf("the cartesian coordinate of the center should be followed.\n");
   printf("\nNow, please input your command: ");
-  if (count_words(fgets(str,MAXLINE, stdin)) < 2){
+  input->read_stdin(str);
+  if (count_words(str) < 2){
     for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
     return;
   }
@@ -99,7 +100,8 @@ void Driver::radial()
   
   // output filename prefix
   printf("Please input the prefix for output file names [radial]: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, "radial");
+  input->read_stdin(str);
+  if (count_words(str) < 1) strcpy(str, "radial");
   ptr = strtok(str," \n\t\r\f");
   prefix = new char[strlen(ptr)+1];
   strcpy(prefix, ptr);

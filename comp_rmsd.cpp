@@ -14,12 +14,14 @@ void Driver::compare_rmsd()
   char str[MAXLINE];
   printf("\nTotal number of frames read: %d\n", nframe);
   printf("Please input your desired frame that will be set as a reference [1]: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) > 0) iref = atoi(strtok(str, " \n\t\r\f"))-1;
+  input->read_stdin(str);
+  if (count_words(str) > 0) iref = atoi(strtok(str, " \n\t\r\f"))-1;
   iref = MAX(0, MIN(iref, nframe-1));
   printf("Frame %d will be set as a reference.\n", iref+1);
 
   printf("\nPlease input the frame, or frame range that will be compared to frame %d: ", iref+1);
-  int nw = count_words(fgets(str,MAXLINE,stdin));
+  input->read_stdin(str);
+  int nw = count_words(str);
   if (nw < 1){
     istr = 0; iend = 0; inc = 1;
 
@@ -45,7 +47,8 @@ void Driver::compare_rmsd()
   FILE *fp1 = NULL, *fp2 = NULL;
   printf("Frames from No. %d to No. %d with increment of %d will be compared to %d.\n", istr+1, iend+1, inc, iref);
   printf("\nIf you want to output the results to a file, input the file name now: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     char *ptr = strtok(str, " \n\t\r\f");
     char *fname = new char[strlen(ptr)+1];
     strcpy(fname, ptr);
@@ -54,7 +57,8 @@ void Driver::compare_rmsd()
     if (fp1) printf("The related info will be written to file: %s\n", fname);
   }
   printf("If you want to output per-atom displacement, input the file name now: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     char *ptr = strtok(str, " \n\t\r\f");
     char *fname = new char[strlen(ptr)+1];
     strcpy(fname, ptr);
@@ -65,7 +69,8 @@ void Driver::compare_rmsd()
   double disp_tol = 0.;
   if (fp2){
     printf("If you want to count  the displaced atoms, input a threshold  now: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0) disp_tol = atof(strtok(str, " \n\t\r\f"));
+    input->read_stdin(str);
+    if (count_words(str) > 0) disp_tol = atof(strtok(str, " \n\t\r\f"));
     if (disp_tol > 0.) printf("Atoms with a displacment > %g will be counted as moved.\n", disp_tol);
     else printf("All atoms will be counted as moved.\n");
     disp_tol *= disp_tol;

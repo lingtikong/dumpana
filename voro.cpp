@@ -16,7 +16,7 @@ void Driver::voro()
   one = all[istr];
 
   printf("\nPlease input the prefix for output files [voro]: ");
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) {strcpy(str,"voro"); ptr = strtok(str, " \n\t\r\f");}
   char *prefix = new char[strlen(ptr)+1];

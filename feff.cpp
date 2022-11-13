@@ -29,7 +29,8 @@ void Driver::FEFF_main()
   printf("respective default/previous values will be used.\n");
   while (1){
     printf("Please input your selection command, `h` for help [type = 1]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(selcmd, str);
       char *ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -57,7 +58,8 @@ void Driver::FEFF_main()
     one->selection(selcmd); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
       }
@@ -68,7 +70,8 @@ void Driver::FEFF_main()
   // XANES or EXAFS
   int job = 2;
   printf("\nWould you like to do a (1) XANES or (2) EXAFS calculation? (1/2)[%d]: ", job);
-  if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     char *ptr = strtok(str," \n\t\r\f");
     job = 2-atoi(ptr)%2;
   }
@@ -82,7 +85,8 @@ void Driver::FEFF_main()
   // working directory: directory to write all output files
   printf("\nPlease define the working directory, i.e., directory to write all\n");
   printf("output files/directories [.]: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     char *ptr = strtok(str," \n\t\r\f");
     strcpy(workdir, ptr);
 
@@ -100,7 +104,8 @@ void Driver::FEFF_main()
   const int MaxShell = 12;
   int nshell = 2;
   printf("\nHow many shells would you like to include into the cluster? (1-%d)[%d]: ",MaxShell, nshell);
-  if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     char *ptr = strtok(str," \n\t\r\f");
     nshell = atoi(ptr);
   }

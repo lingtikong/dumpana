@@ -30,7 +30,8 @@ void Driver::spatial()
   printf("combination of `x`, `y`, and/or `z` is allowed. If not specified, the\n");
   printf("whole box along that direction is seen as a block.\n");
   printf("\nNow, please input your command: ");
-  if (count_words(fgets(str,MAXLINE, stdin)) < 4){
+  input->read_stdin(str);
+  if (count_words(str) < 4){
     for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
     return;
   }
@@ -97,7 +98,8 @@ void Driver::spatial()
   char selcmd[MAXLINE];
   while (1){
     printf("\nPlease input the atom selection command, `h` for help [all]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(selcmd, str);
       ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -107,7 +109,8 @@ void Driver::spatial()
     one->selection(selcmd); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
       }
@@ -164,18 +167,17 @@ void Driver::spatial()
   // output the result
   int fastz = 1;
   printf("\nPlease input the fastest direction to output the data (x/z)[z]: ");
-  fgets(str,MAXLINE, stdin); ptr = strtok(str, " \n\t\r\f");
+  input->read_stdin(str); ptr = strtok(str, " \n\t\r\f");
   if (ptr != NULL && (strcmp(ptr,"x") == 0 || strcmp(ptr, "X") == 0)) fastz = 0;
 
   // output a blank line after each cycle of the fatest direction
   int blank = 0;
   printf("\nWould you like to write a blank line after each cycle of the fatest direction (y/n)[n]: ");
-  fgets(str,MAXLINE, stdin); ptr = strtok(str, " \n\t\r\f");
+  input->read_stdin(str); ptr = strtok(str, " \n\t\r\f");
   if (ptr != NULL && (strcmp(ptr,"y") == 0 || strcmp(ptr, "Y") == 0)) blank = 1;
 
   printf("\nPlease input the file name to output the result [spatial.dat]: ");
-  fgets(str,MAXLINE, stdin);
-  ptr = strtok(str, " \n\t\r\f");
+  input->read_stdin(str); ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL){
     strcpy(str, "spatial.dat");
     ptr = strtok(str, " \n\t\r\f");

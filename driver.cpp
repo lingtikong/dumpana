@@ -23,6 +23,7 @@ Driver::Driver(int narg, char** arg)
 
   int loop = 1;
   int f_guess_image = 0;
+  int f_script = 0;
 
   flag_out = 0;
   flag_out |= OutFeff; // by default, feff.inp is written
@@ -68,6 +69,9 @@ Driver::Driver(int narg, char** arg)
     } else if (strcmp(arg[iarg], "-gi") == 0){   // Flag indicates to guess the image info based on sequential displacments
       f_guess_image = 1;
 
+    } else if (strcmp(arg[iarg], "-save") == 0){ // Flag to save user inputs as stdin.log
+      f_script = 1;
+
     } else {
       break;
     }
@@ -77,6 +81,7 @@ Driver::Driver(int narg, char** arg)
 
   // show dumpana version info
   ShowVersion();
+  input = new UserInput(f_script);
 
   if (min_mem)  flag_dump |= 1;
   // read dump files
@@ -96,7 +101,7 @@ Driver::Driver(int narg, char** arg)
     printf("\nPlease select your desired task to perform:\n");
     MainMenu();
     printf("  0. Exit.\nYour choice [%d]: ", job);
-    fgets(str,MAXLINE,stdin);
+    input->read_stdin(str);
 
     char *ptr = strtok(str," \n\t\r\f");
     if (ptr) job = atoi(ptr);
@@ -277,6 +282,7 @@ Driver::~Driver()
   one = NULL;
   all.clear();
 
+  delete input;
   delete memory;
 return;
 }
@@ -378,7 +384,7 @@ void Driver::setrange()
   printf("\n"); for (int i = 0; i < 20; ++i) printf("====");
   printf("\nTotal number of frames read: %d\n", nframe);
   printf("Please input your desired frame, or frame range to analyse [1]: ");
-  fgets(str,MAXLINE,stdin);
+  input->read_stdin(str);
   int nw = count_words(str);
   if (nw < 1){
     istr = 0; iend = 0; inc = 1;
@@ -427,7 +433,7 @@ void Driver::writesel()
   printf("  3. Write as dump atom;\n");
   printf("  4. Shift selected frames;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
@@ -439,18 +445,21 @@ void Driver::writesel()
 
   if (job == 1){
     printf("\nPlease input the output file name [%s.xyz]: ", dump);
-    if (count_words(fgets(str,MAXLINE,stdin)) < 1) sprintf(str,"%s.xyz", dump);
+    input->read_stdin(str);
+    if (count_words(str) < 1) sprintf(str,"%s.xyz", dump);
 
   } else if (job == 2) {
     printf("\nPlease input the prefix for output files [%s]: ", dump);
-    if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, dump);
+    input->read_stdin(str);
+    if (count_words(str) < 1) strcpy(str, dump);
     ptr = strtok(str, " \n\t\r\f");
     fname = new char[strlen(ptr)+1];
     strcpy(fname, ptr);
 
   } else if (job == 3 || job == 4) {
     printf("\nPlease input the output file name [%s]: ", dump);
-    if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str, dump);
+    input->read_stdin(str);
+    if (count_words(str) < 1) strcpy(str, dump);
   }
 
   int nused = 0;
@@ -618,7 +627,7 @@ void Driver::writesel()
     printf("  1. Translate the box by a defined vector;\n");
     printf("  2. Confine the center-of-mass of a group of atoms;\n");
     printf("  0. Return;\nYour choice [%d]: ", mjob);
-    fgets(str,MAXLINE, stdin);
+    input->read_stdin(str);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) mjob = atoi(ptr);
     printf("Your selection : %d\n", mjob);
@@ -632,7 +641,8 @@ void Driver::writesel()
     if (mjob == 1){
       shift[0] = shift[1] = shift[2] = 0.;
       printf("\nPlease input the vector (fractional) to translate the box [0. 0. 0.]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) >= 3){
+      input->read_stdin(str);
+      if (count_words(str) >= 3){
         ptr = strtok(str, " \n\t\r\f");
         for (int i = 0; i < 2; ++i){
           shift[i] = atoi(ptr);
@@ -653,7 +663,8 @@ void Driver::writesel()
         printf("\nPlease input the selection command for the group of atoms (NOTE, the group\n");
         printf("definition is based on image NO. %d.), `h` for help [all]: ", istr+1);
   
-        if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+        input->read_stdin(str);
+        if (count_words(str) > 0){
           strcpy(selcmd, str);
           char *ptr = strtok(str," \n\t\r\f");
           if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -675,7 +686,8 @@ void Driver::writesel()
       dir_flag[0] = dir_flag[1] = dir_flag[2] = 0;
       new_com[0]  = new_com[1]  = new_com[2] = 0.;
       printf("\nPlease input the new COM of these atoms, NULL to skip [NULL NULL NULL]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) >= 3){
+      input->read_stdin(str);
+      if (count_words(str) >= 3){
         ptr = strtok(str, " \n\t\r\f");
         for (int i = 0; i < 2; ++i){
           if (strcmp(ptr, "NULL") != 0){
@@ -822,7 +834,8 @@ void Driver::avedump()
   char str[MAXLINE], *fname;
   printf("\n"); for (int i = 0; i < 20; ++i) printf("====");
   printf("\nPlease input the output xyz file name [dumpave.xyz]: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str,"dumpave.xyz");
+  input->read_stdin(str);
+  if (count_words(str) < 1) strcpy(str,"dumpave.xyz");
 
   char *ptr = strtok(str, " \n\t\r\f");
   fname = new char[strlen(ptr)+1];
@@ -925,6 +938,7 @@ void Driver::help()
   printf("    -mm      To indicate to minimize memory usage;\n");
   printf("    -wrap    To enforce wrapping atoms into the central domain;\n");
   printf("    -gi      To indicate to guess the image info from displacement between consecutive frames;\n");
+  printf("    -save    To save the user input to file `script.inp`, facilitating scripting;\n");
   printf("    file     Must be LAMMPS atomic style dump files, or custom style containing id,\n");
   printf("             type, x/xs, y/ys, z/zs, and/or ix, iy, iz information.\n");
   printf("             Default: dump.lammpstrj.\n");
@@ -978,7 +992,8 @@ void Driver::MapType2Elem(const int flag, const int ntype)
     printf("Please input the element symbol for each atomic type in sequence: ");
   }
 
-  int n = count_words(fgets(str,MAXLINE,stdin));
+  input->read_stdin(str);
+  int n = count_words(str);
   if (n >= ntype){
     if (element) delete element;
     if (type2atnum)  memory->destroy(type2atnum);
@@ -989,9 +1004,9 @@ void Driver::MapType2Elem(const int flag, const int ntype)
 
     char *ptr = strtok(str," \n\t\r\f");
     for (int ip = 1; ip <= ntype; ++ip){
-      type2atnum[ip] =  element->Name2Num(ptr);
-      type2radius[ip]=  element->Name2Radius(ptr);
-      ptr = strtok(NULL, " \n\t\r\f");
+        type2atnum[ip] =  element->Name2Num(ptr);
+        type2radius[ip]=  element->Name2Radius(ptr);
+        ptr = strtok(NULL, " \n\t\r\f");
     }
 
     if (n == ntype+ntype){
@@ -1063,7 +1078,7 @@ void Driver::set_cutoffs(int flag)
   printf("with a corresponding surface area smaller than the number input from the neighbor list.\n");
   printf("A negative number will use the ratio of the surface area against the total surface area\n");
   printf("of the Voronoi polyhedron. 0 to keep all [%g]: ", mins[0]);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char * ptr = strtok(str, " \n\t\r\f");
   if (ptr) mins[0] = atof(ptr);
   if (mins[0] >= 0.) printf("Surface whose area is less than %lg will be removed!\n\n", mins[0]);
@@ -1072,7 +1087,8 @@ void Driver::set_cutoffs(int flag)
   printf("Sometimes it might be desirable to keep a minimum # of neighbors when refining\n");
   printf("the Voronoi index, for example, keep at least 14 for a bcc lattice, 12 for hcp\n");
   printf("or fcc. If you prefer to do so, input a positive number now [%d]: ", int(mins[1]));
-  if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     mins[1] = atof(strtok(str, " \n\t\r\f"));
     if (mins[1] < 1.) mins[1] = 0.;
     else printf("\nA minimum number of %d neighobrs will be kept no matter how tiny the surface is.\n", int(mins[1]));
@@ -1083,7 +1099,7 @@ void Driver::set_cutoffs(int flag)
     printf("with a length shorter than the number input from the edges. A negative number will\n");
     printf("the ratio of the length against the total circumference of the Voronoi polyhedron.\n");
     printf("0 to keep all [%g]: ", mins[2]);
-    fgets(str,MAXLINE, stdin);
+    input->read_stdin(str);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) mins[2] = atof(ptr);
     if (mins[2] > 0.) printf("Edge whose length is less than %lg will be skipped!\n", mins[2]);
@@ -1116,7 +1132,7 @@ void Driver::set_r2cuts()
   printf("You can input a global cutoff (one number), or a global cutoff range (two numbers);\n");
   printf("in the latter case, pairs with distance within the range will be set as neighbors.\n");
   printf("Please input the cutoff distance or range now [%3.1f %3.1f]: ", r2, r1);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char * ptr = strtok(str, " \n\t\r\f");
   if (ptr) r1 = atof(ptr);
   ptr = strtok(NULL, "  \n\t\r\f");
@@ -1137,7 +1153,7 @@ void Driver::set_r2cuts()
   while ( 1 ){
      r2 = 0.;
      printf("Please input the type pair and its cutoff distance/range, empty to exit: ");
-     fgets(str,MAXLINE, stdin);
+     input->read_stdin(str);
      char * ptr = strtok(str, " \n\t\r\f");
      if (ptr == NULL) break;
      int ip = atoi(ptr);
@@ -1182,7 +1198,7 @@ void Driver::choose_neighbor_method(int flag)
   printf("  1. Voronoi method;\n");
   printf("  2. Cutoff distances;\n");
   printf("Your choice [%d]: ", neighbor_method);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) neighbor_method = atoi(ptr);
   if (neighbor_method < 1 || neighbor_method > 2) neighbor_method = 1;
@@ -1206,12 +1222,12 @@ void Driver::ConfirmOverwrite(char *fname)
   if (stat(fname, &buffer) == 0){
      char str[MAXLINE];
      printf("\nWARNING: File `%s` exists, overwritten? (y/n)[y]: ", fname);
-     fgets(str, MAXLINE, stdin);
+     input->read_stdin(str);
      char *ptr = strtok(str, " \n\t\r\f");
      if (ptr != NULL && strcmp(ptr, "y") != 0 && strcmp(ptr, "Y") != 0){
         while (1){
               printf("Please input the new file name: ");
-              fgets(str, MAXLINE, stdin);
+              input->read_stdin(str);
               ptr = strtok(str, " \n\t\r\f");
               if (ptr) break;
         }

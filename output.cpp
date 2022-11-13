@@ -21,7 +21,7 @@ void Driver::OutputVoroCells( )
   printf("  2. Output selected atoms in selected frames;\n");
   printf("  3. Output selected clusters in selected frames;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
@@ -39,7 +39,8 @@ void Driver::OutputVoroCells( )
   char selcmd[MAXLINE];
   while (1){
     printf("\nPlease input your selection command of central atoms, `h` for help [all]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(selcmd, str);
       char *ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -49,7 +50,8 @@ void Driver::OutputVoroCells( )
     one->selection(selcmd); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y") != 0) continue;
       }
@@ -62,7 +64,8 @@ void Driver::OutputVoroCells( )
   if (job == 3){
     printf("\nWould you like to label the central atoms by adding an extra column\n");
     printf("to the output file? (y/n)[n]: ");
-    if (count_words(fgets(str,MAXLINE, stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       ptr = strtok(str, " \n\t\r\f");
       if (strcmp(ptr, "y")==0 || strcmp(ptr, "Y")==0 ) flabel = 1;
     }
@@ -70,7 +73,7 @@ void Driver::OutputVoroCells( )
 
   // ask for output filename
   printf("\nPlease input the output file name [vorocell.xyz]: ");
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) {strcpy(str,"vorocell.xyz"); ptr = strtok(str, " \n\t\r\f");}
   char *fname = new char[strlen(ptr)+1];

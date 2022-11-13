@@ -20,7 +20,7 @@ void Driver::property_pc()
   printf("  1. C(r) of selected atoms;\n");
   printf("  2. C(r) between two selections;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
@@ -45,7 +45,8 @@ void Driver::property_pc()
     if (job == 1) printf("\nPlease input the selection command for atoms, `h` for help [all]: ");
     else printf("\nPlease input the selection command for source atoms, `h` for help [all]: ");
 
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(srcsel, str);
       char *ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -55,7 +56,8 @@ void Driver::property_pc()
     one->selection(srcsel); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
       }
@@ -68,7 +70,8 @@ void Driver::property_pc()
     // atoms as neighbors
     while (1){
       printf("\nPlease input the selection command for neighbors, `h` for help [all]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         strcpy(dessel, str);
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -78,7 +81,8 @@ void Driver::property_pc()
       one->selection(dessel); one->SelInfo();
       if (one->nsel < 1){
         printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-        if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+        input->read_stdin(str);
+        if (count_words(str) > 0){
           char *ptr = strtok(str," \n\t\r\f");
           if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
         }
@@ -94,7 +98,7 @@ void Driver::property_pc()
   printf("\nThe available properties are: ");
   for (int i = 0; i < one->prop_label.size(); ++i) printf("%d) %s; ", i+1, one->prop_label[i].c_str());
   printf("\nPlease input the id of the property to be used [%d]: ", pid+1);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) pid = atoi(ptr) - 1;
   pid = MIN(MAX(pid, 0), one->prop_label.size());
@@ -102,19 +106,19 @@ void Driver::property_pc()
 
   // bounds of g(r)
   printf("\nPlease input the lower bound of C(r) [%g]: ", rmin);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) rmin = atof(ptr);
   rmin = MAX(rmin, 0.);
 
   printf("Please input the upper bound of C(r) [%g]: ", rmax);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) rmax = atof(ptr);
   rmax = MAX(rmax,rmin+1.);
 
   printf("Please input the # of points of C(r) [%d]: ", nbin);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) nbin = atoi(ptr);
   nbin = MAX(2,nbin);
@@ -124,7 +128,7 @@ void Driver::property_pc()
   printf("  1. the average C(r) for all frames used;\n");
   printf("  2. a separate  C(r) for each frame;\n");
   printf("Your choice [1]: ");
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   int flag_each = 0;
   if (ptr) flag_each = atoi(ptr)-1;
@@ -132,13 +136,13 @@ void Driver::property_pc()
   // output file name or prefix
   if (flag_each == 0){
     printf("\nPlease input the file to output C(r) [pc.dat]: ");
-    fgets(str,MAXLINE, stdin);
+    input->read_stdin(str);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr == NULL) strcpy(str, "pc.dat");
 
   } else {
     printf("\nPlease input the prefix of the output C(r) files [pc]: ");
-    fgets(str,MAXLINE, stdin);
+    input->read_stdin(str);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr == NULL) strcpy(str, "pc");
   }

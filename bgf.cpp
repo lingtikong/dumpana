@@ -19,7 +19,7 @@ void Driver::writebgf()
   printf("  2. fraction of N-edged surface;\n");
   printf("  3. Chemical concentration;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
@@ -37,7 +37,8 @@ void Driver::writebgf()
   char selcmd[MAXLINE];
   while (1){
     printf("\nPlease input your selection command of central atoms, `h` for help [all]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(selcmd, str);
       char *ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -47,7 +48,8 @@ void Driver::writebgf()
     one->selection(selcmd); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
       }
@@ -68,7 +70,10 @@ void Driver::writebgf()
 
   } else if (job == 2){   // N-edged faces as property
     printf("\nPlease input the # of edge for the desired surfaces: ");
-    while (count_words(fgets(str,MAXLINE,stdin)) < 1);
+    while (1){
+      input->read_stdin(str);
+      if (count_words(str) >= 1) break;
+    }
     nedge = atoi(strtok(str," \n\t\r\f"));
     if (nedge < 3 || nedge > 6){
       printf("The # of edges must be within [3, 6].\n");
@@ -83,18 +88,23 @@ void Driver::writebgf()
     printf(" 1. Based on Voronoi cluster;\n");
     printf(" 2. Within defined radius;\n");
     printf("Your choice [%d]: ", ijob);
-    if (count_words(fgets(str,MAXLINE, stdin)) > 0) ijob = atoi(strtok(str, " \n\t\r\f"));
+    input->read_stdin(str);
+    if (count_words(str) > 0) ijob = atoi(strtok(str, " \n\t\r\f"));
     if (ijob == 2){
       printf("Please input the radius to count neighbors, please note that\n");
       printf("the radius should exceed the 3rd Voronoi shell: ");
-      while (count_words(fgets(str,MAXLINE, stdin)) < 1);
+      while (1){
+         input->read_stdin(str);
+         if (count_words(str) >= 1) break;
+      }
 
       rcut = fabs(atof(strtok(str, " \n\t\r\f")));
       rcut2 = rcut*rcut;
     }
 
     printf("Please input the atomic type ID(s) of the solutes [1]: ");
-    if (count_words(fgets(str,MAXLINE, stdin)) > 1){
+    input->read_stdin(str);
+    if (count_words(str) > 1){
       ptr = strtok(str, " \n\t\r\f");
       while (ptr){
         solute.insert(atoi(ptr));
@@ -113,7 +123,7 @@ void Driver::writebgf()
 
   // output file name
   printf("\nPlease input the output file name [atomcfg.bgf]: ");
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) {
     strcpy(str,"atomcfg.bgf");

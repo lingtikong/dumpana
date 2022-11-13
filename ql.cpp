@@ -21,7 +21,8 @@ void Driver::compute_sh()
   int L = 6;
   // ask for l
   printf("\nPlease input the value of l [6]: ");
-  if (count_words(fgets(str, MAXLINE, stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     ptr = strtok(str, " \n\t\r\f");
     L = atoi(ptr);
 
@@ -34,7 +35,8 @@ void Driver::compute_sh()
   char selcmd[MAXLINE];
   while (1){
     printf("\nPlease input the atom selection command, `h` for help [all]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(selcmd, str);
       ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -44,7 +46,8 @@ void Driver::compute_sh()
     one->selection(selcmd); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
       }
@@ -57,7 +60,8 @@ void Driver::compute_sh()
   sprintf(prefix, "q%dq%d", L, L);
   // prefix to output files
   printf("\nPlease input the prefix to output the results [%s]: ", prefix);
-  if (count_words(fgets(str, MAXLINE, stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     ptr = strtok(str, " \n\t\r\f");
 
     strcpy(prefix, ptr);
@@ -67,7 +71,8 @@ void Driver::compute_sh()
   int flag_env = 0;
   printf("\nWould you like to discriminate the local environment based on the measured\n");
   printf("  1.  q%d;\n  2.  w%d;\n  3.  q%dq%d;\n  0.  None.\nYour choice [0]: ", L, L, L, L);
-  if (count_words(fgets(str, MAXLINE, stdin)) > 0){
+  input->read_stdin(str);
+  if (count_words(str) > 0){
     ptr = strtok(str, " \n\t\r\f");
 
     flag_env = atoi(ptr);
@@ -75,7 +80,8 @@ void Driver::compute_sh()
   double thr = 0.;
   if (flag_env >= 1 && flag_env <= 3){
     printf("Please input the threshold value for that: ");
-    if (count_words(fgets(str, MAXLINE, stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       ptr = strtok(str, " \n\t\r\f");
 
       thr = atof(ptr);

@@ -21,7 +21,7 @@ void Driver::Compute_CNACNP()
   printf("  2. CNP parameter;\n");
   printf("  3. Centro-symmetry parameter;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
@@ -50,7 +50,7 @@ void Driver::Compute_CNACNP()
   }
 
   printf("\nPlease input the file name to output the %s info [%s]: ", jobstr, fname);
-  fgets(str, MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr){
     delete []fname;
@@ -63,7 +63,7 @@ void Driver::Compute_CNACNP()
   if (job == 2 || job == 3){
     printf("\nIf you want to identify the local environment as well, please input the\n");
     printf("threshold value now: ");
-    fgets(str, MAXLINE, stdin);
+    input->read_stdin(str);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr) thr = atof(ptr);
   }
@@ -81,7 +81,7 @@ void Driver::Compute_CNACNP()
   if (job == 3){ // job will carry the # of nearest neighbor info now
     while ( 1 ){
       printf("\nPlease input the # of nearest neighbors for your reference lattice [14]: ");
-      fgets(str, MAXLINE, stdin);
+      input->read_stdin(str);
       ptr = strtok(str, " \n\t\r\f");
       if (ptr){
         job = -atoi(ptr);

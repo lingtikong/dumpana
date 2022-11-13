@@ -20,7 +20,7 @@ void Driver::paircorr()
   printf("  1. g(r) of selected atoms;\n");
   printf("  2. g(r) between two selections;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
@@ -40,7 +40,8 @@ void Driver::paircorr()
     if (job == 1) printf("\nPlease input the selection command for atoms, `h` for help [all]: ");
     else printf("\nPlease input the selection command for source atoms, `h` for help [all]: ");
 
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(srcsel, str);
       char *ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -50,7 +51,8 @@ void Driver::paircorr()
     one->selection(srcsel); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
       }
@@ -63,7 +65,8 @@ void Driver::paircorr()
     // atoms as neighbors
     while (1){
       printf("\nPlease input the selection command for neighbors, `h` for help [all]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         strcpy(dessel, str);
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -73,7 +76,8 @@ void Driver::paircorr()
       one->selection(dessel); one->SelInfo();
       if (one->nsel < 1){
         printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-        if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+        input->read_stdin(str);
+        if (count_words(str) > 0){
           char *ptr = strtok(str," \n\t\r\f");
           if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
         }
@@ -86,19 +90,19 @@ void Driver::paircorr()
   
   // bounds of g(r)
   printf("\nPlease input the lower bound of g(r) [%g]: ", rmin);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) rmin = atof(ptr);
   rmin = MAX(rmin, 0.);
 
   printf("Please input the upper bound of g(r) [%g]: ", rmax);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) rmax = atof(ptr);
   rmax = MAX(rmax,rmin+1.);
 
   printf("Please input the # of points of g(r) [%d]: ", nbin);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr) nbin = atoi(ptr);
   nbin = MAX(2,nbin);
@@ -108,7 +112,7 @@ void Driver::paircorr()
   printf("  1. the average g(r) for all frames used;\n");
   printf("  2. a separate  g(r) for each frame;\n");
   printf("Your choice [1]: ");
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   int flag_each = 0;
   if (ptr) flag_each = atoi(ptr)-1;
@@ -116,13 +120,13 @@ void Driver::paircorr()
   // output file name or prefix
   if (flag_each == 0){
     printf("\nPlease input the file to output g(r) [gr.dat]: ");
-    fgets(str,MAXLINE, stdin);
+    input->read_stdin(str);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr == NULL) strcpy(str, "gr.dat");
 
   } else {
     printf("\nPlease input the prefix of the output g(r) files [gr]: ");
-    fgets(str,MAXLINE, stdin);
+    input->read_stdin(str);
     ptr = strtok(str, " \n\t\r\f");
     if (ptr == NULL) strcpy(str, "gr");
   }

@@ -24,23 +24,23 @@ void Driver::honeycutt_andersen()
 
   int unbond = 0;
   printf("\nWould you like to analyse un-bonded pairs? (y/n)[n]: ");
-  fgets(str, MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  unbond = 1;
 
   int outflag = 0;
   printf("\nWould you like to output the common neighbors? (y/n)[n]: ");
-  fgets(str, MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  outflag |= 1;
 
   printf("\nWould you like to output the atomic coordinates? (y/n)[n]: ");
-  fgets(str, MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr && (strcmp(ptr,"y") == 0 || strcmp(ptr,"Y")==0) )  outflag |= 2;
 
   printf("Please input the file name to output the HA bond index info [ha.dat]: ");
-  fgets(str, MAXLINE, stdin);
+  input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL){
      strcpy(str,"ha.dat\n");

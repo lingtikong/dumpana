@@ -10,6 +10,7 @@
 #include <vector>
 #include <string>
 #include "elements.h"
+#include "input.h"
 
 
 using namespace std;
@@ -26,6 +27,7 @@ private:
   int nframe;                             // total # of frames
   int istr, iend, inc;                    // frame range
   DumpAtom *one;                          // pointer to one frame
+  UserInput *input;                       // pointer to user input
   vector<DumpAtom *> all;                 // all frames from lammps atom style dump
   void readdump(const int,int,char **);   // to read in the dump file
   void guess_image();                     // to guess the image info, if not supplied.

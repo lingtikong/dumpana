@@ -18,7 +18,7 @@ void Driver::heredity()
   printf("  1. Heredity of selected cluster between consecutive frames;\n");
   //printf("  2. Sizes of persisting clusters between consecutive frames;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) job = atoi(ptr);
   printf("Your selection : %d\n", job);
@@ -38,7 +38,8 @@ void Driver::heredity()
   // selection commands for atoms
   while (1){
     printf("\nPlease input the selection command for central atoms, `h` for help [all]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(selcmd, str);
       char *ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -48,7 +49,8 @@ void Driver::heredity()
     one->selection(selcmd); one->SelInfo();
     if (one->nsel < 1){
       printf("It seems that no atom is selected, are you sure about this? (y/n)[y]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")!= 0 && strcmp(ptr,"Y")!=0) continue;
       }
@@ -58,7 +60,8 @@ void Driver::heredity()
 
   // output file name
   printf("\nPlease input the file name to output the results [heredity.dat]: ");
-  if (count_words(fgets(str,MAXLINE,stdin)) < 1) strcpy(str,"heredity.dat");
+  input->read_stdin(str);
+  if (count_words(str) < 1) strcpy(str,"heredity.dat");
   ptr = strtok(str," \n\t\r\f");
   char *fname = new char [strlen(ptr)+1];
   strcpy(fname, ptr);
@@ -88,7 +91,8 @@ void Driver::heredity()
     while ( 1 ) {
       printf("\nPlease input the Voronoi index of the desired clusters, e.g., 0,6,0,8.\n");
       printf("If multiple indices are wanted, separate them by space: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         printf("\nClusters centered on Atoms with Voronoi indices: %s will be analysed.\n", str);
    
         char *ptr = strtok(str," \n\t\r\f");
@@ -102,7 +106,8 @@ void Driver::heredity()
 
       } else {
         printf("Atoms with any Voronoi index will be examined, procceed? (y/n)[y]: ");
-        if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+        input->read_stdin(str);
+        if (count_words(str) > 0){
           char *ptr = strtok(str," \n\t\r\f");
           if (strcmp(ptr, "y") == 0 || strcmp(ptr, "Y") == 0) break;
         } else break;

@@ -19,7 +19,7 @@ void Driver::compute_smix()
 
   // output info
   printf("\nPlease input the file to output the entropy info [smix.dat]: ");
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL) strcpy(str, "smix.dat");
   ptr = strtok(str, " \n\t\r\f");
