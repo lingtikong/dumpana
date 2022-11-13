@@ -16,7 +16,6 @@ public:
    void read_stdin(char *);
 
 private:
-   int flag;
    FILE *fp;
 
 };
