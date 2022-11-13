@@ -1104,20 +1104,19 @@ void Driver::set_r2cuts()
   if (r2cuts) memory->destroy(r2cuts);
   memory->create(r2cuts, one->ntype+1, one->ntype+1, 2, "r2cuts");
 
-  printf("\nThere are %d atomic types in the current frame.\n", one->ntype);
-  printf("The cutoff distances will be used to define neighbors.\n");
-  printf("The global cutoff distances should be relative small, while\n");
-  printf("those pairs with larger cutoffs can be defined individually.\n\n");
+  printf("\nThere are %d atomic types in the current frame. Cutoff distances (ranges) defined\n", one->ntype);
+  printf("here will be used to identify the neighbors. The global cutoff distances should be\n");
+  printf("relative small, while those pairs with larger cutoffs can be defined individually.\n\n");
   printf("You can input a global cutoff (one number), or a global cutoff range (two numbers);\n");
-  printf("in the latter case, pairs with distance within the reange will be set as neighbors.\n");
-  printf("Please input the cutoff distance or range now [2.]: ");
+  printf("in the latter case, pairs with distance within the range will be set as neighbors.\n");
+  printf("Please input the cutoff distance or range now [%3.1f %3.1f]: ", r2, r1);
   fgets(str,MAXLINE, stdin);
   char * ptr = strtok(str, " \n\t\r\f");
   if (ptr) r1 = atof(ptr);
   ptr = strtok(NULL, "  \n\t\r\f");
   if (ptr) r2 = atof(ptr);
-  rc2 = MAX(r1*r1, r2*r2);
-  rs2 = MIN(r1*r1, r2*r2);
+  r1 = r1*r1; r2 = r2*r2;
+  rs2 = MIN(r1, r2); rc2 = MAX(r1, r2);
 
   for (int i = 0; i <= one->ntype; ++i)
   for (int j = 0; j <= one->ntype; ++j){
@@ -1145,8 +1144,8 @@ void Driver::set_r2cuts()
      ptr = strtok(NULL, " \n\t\r\f");
      if (ptr) r2 = atof(ptr);
 
-     rs2 = MIN(r1*r1, r2*r2);
-     rc2 = MAX(r1*r1, r2*r2);
+     r1 = r1*r1; r2 = r2*r2;
+     rs2 = MIN(r1, r2); rc2 = MAX(r1, r2);
      r2cuts[ip][jp][0] = r2cuts[jp][ip][0] = rs2;
      r2cuts[ip][jp][1] = r2cuts[jp][ip][1] = rc2;
   }
