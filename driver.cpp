@@ -24,6 +24,7 @@ Driver::Driver(int narg, char** arg)
   int loop = 1;
   int f_guess_image = 0;
   int f_script = 0;
+  flag_overwrite = 0;
 
   flag_out = 0;
   flag_out |= OutFeff; // by default, feff.inp is written
@@ -71,6 +72,10 @@ Driver::Driver(int narg, char** arg)
 
     } else if (strcmp(arg[iarg], "-save") == 0){ // Flag to save user inputs as stdin.log
       f_script = 1;
+      flag_overwrite = 1;
+
+    } else if (strcmp(arg[iarg], "-y") == 0){    // Yes to overwrite
+      flag_overwrite = 1;
 
     } else {
       break;
@@ -938,7 +943,8 @@ void Driver::help()
   printf("    -mm      To indicate to minimize memory usage;\n");
   printf("    -wrap    To enforce wrapping atoms into the central domain;\n");
   printf("    -gi      To indicate to guess the image info from displacement between consecutive frames;\n");
-  printf("    -save    To save the user input to file `script.inp`, facilitating scripting;\n");
+  printf("    -save    To save the user input to file `script.inp`, facilitating scripting; `-y` will be set automatically;\n");
+  printf("    -y       To skip file overwriting confirmation, facilitating scripting;\n");
   printf("    file     Must be LAMMPS atomic style dump files, or custom style containing id,\n");
   printf("             type, x/xs, y/ys, z/zs, and/or ix, iy, iz information.\n");
   printf("             Default: dump.lammpstrj.\n");
@@ -1218,6 +1224,7 @@ void Driver::choose_neighbor_method(int flag)
  *------------------------------------------------------------------------------ */
 void Driver::ConfirmOverwrite(char *fname)
 {
+  if (flag_overwrite) return;
   struct stat buffer;
   if (stat(fname, &buffer) == 0){
      char str[MAXLINE];
@@ -1226,10 +1233,10 @@ void Driver::ConfirmOverwrite(char *fname)
      char *ptr = strtok(str, " \n\t\r\f");
      if (ptr != NULL && strcmp(ptr, "y") != 0 && strcmp(ptr, "Y") != 0){
         while ( 1 ){
-              printf("Please input the new file name: ");
-              input->read_stdin(str);
-              ptr = strtok(str, " \n\t\r\f");
-              if (ptr) break;
+           printf("Please input the new file name: ");
+           input->read_stdin(str);
+           ptr = strtok(str, " \n\t\r\f");
+           if (ptr) break;
         }
         delete []fname;
         fname = new char [strlen(ptr)+1];

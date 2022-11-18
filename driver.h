@@ -147,6 +147,7 @@ private:
 
   Memory *memory;
   int count_words(const char *);
+  int flag_overwrite;
   void ConfirmOverwrite(char *);
 };
 #endif

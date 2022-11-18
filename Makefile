@@ -18,12 +18,12 @@ LIB    = $(FFTLIB) $(LPKLIB) $(USRLIB) $(VoroLIB) $(GslLIB)
 #LPKLIB = -L/opt/clapack/3.2.1/lib -lclapack -lblas -lf2c -lm
 
 # Voro++, Needed.
-VoroINC = -I/opt/libs/voro/include/voro++
-VoroLIB = -L/opt/libs/voro/lib -lvoro++
+VoroINC = -I/opt/voro/include/voro++
+VoroLIB = -L/opt/voro/lib -lvoro++
 
 # GSL, needed
-GslINC  = -I/opt/libs/gsl/include
-GslLIB  = -L/opt/libs/gsl/lib -lgsl -lgslcblas
+GslINC  = -I/opt/gsl/include
+GslLIB  = -L/opt/gsl/lib -lgsl -lgslcblas
 
 # Parallization related, can be switch off
 PARAINC = -DOMP -fopenmp
@@ -43,7 +43,7 @@ EXE    = ${BASE}
 SRC = $(wildcard *.cpp)
 OBJ = $(SRC:.cpp=.o)
 #====================================================================
-all: ${EXE}
+all: ver ${EXE}
 
 ${EXE}:  $(OBJ)
 	$(LINK) $(OFLAGS) $(OBJ) $(LIB) -o $@

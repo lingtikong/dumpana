@@ -15,8 +15,11 @@ UserInput::UserInput(int flag)
 /* -------------------------------------------------------------------
  * Deconstructor. Output user inputs as required and clear workspace.
  * ---------------------------------------------------------------- */ 
-UserInput::~UserInput(){
+UserInput::~UserInput()
+{
+
    if (fp) fclose(fp);
+   fp = NULL;
 
    return;
 }

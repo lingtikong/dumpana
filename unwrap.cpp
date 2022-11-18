@@ -25,6 +25,8 @@ void Driver::unwrap()
 
     // ntype of different frames must be the same
     if (one->ntype != ntype) continue;
+
+    // Must be in fraction coordinate
     one->car2dir();
 
     // get neighbor list
@@ -36,7 +38,14 @@ void Driver::unwrap()
     for (int id = 0; id <= one->natom; ++id) visited[id] = 0;
 
     for (int id = 1; id <= one->natom; ++id)
-        if (visited[id] == 0) unwrap_neighbors(id, visited);
+        if (visited[id] == 0){
+           for (int idim = 0; idim < 3; ++idim){
+              while (one->atpos[id][idim] >= 0.5) one->atpos[id][idim] -= 1.;
+              while (one->atpos[id][idim] < -0.5) one->atpos[id][idim] += 1.;
+           }
+
+           unwrap_neighbors(id, visited);
+        }
 
     one->dir2car();
     if (min_mem) one->FreeVoro();
@@ -56,6 +65,7 @@ return;
 void Driver::unwrap_neighbors(int id, int *visited)
 {
    visited[id] = 1;
+
    for (int jj = 1; jj <= one->neilist[0][id]; ++jj){
        int jd = one->neilist[jj][id];
        if (visited[jd] == 0){
