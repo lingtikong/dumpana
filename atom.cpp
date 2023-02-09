@@ -961,7 +961,7 @@ void DumpAtom::SelHelp()
   printf("while neithor `=` nor `%%` is available for key=`x-z, X-Z`.\n");
   printf("\n`values` can be one or two numbers, depend on the type of `op`:\n");
   printf("for `<>`, `><`, and `%%` two numbers are need, otherwise one.\n");
-  printf("`key <> num1 num2` selects `num1 <= kye <= num2`, `key >< num1 num2`\n");
+  printf("`key <> num1 num2` selects `num1 <= key <= num2`, `key >< num1 num2`\n");
   printf("selects `key <= num1 or key >= num2`, while `key %% num1 num2` selects\n");
   printf("atoms satisify `key%%num1 == num2`.\n");
   printf("\n`key` could also be `R` or `r`, corresponding to space within (R) or beyond (r)\n");

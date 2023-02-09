@@ -26,7 +26,8 @@ void Driver::compute_msd()
   while (1){
     printf("\nPlease input the selection command for atoms, `h` for help [all]: ");
   
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       strcpy(selcmd, str);
       char *ptr = strtok(str," \n\t\r\f");
       if (strcmp(ptr,"h") == 0){ one->SelHelp(); continue; }
@@ -41,7 +42,8 @@ void Driver::compute_msd()
     printf("  1. the first frame only;\n");
     printf("  2. all frames and get the common selection.\n");
     printf("Your choice [2]: ");
-    if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+    input->read_stdin(str);
+    if (count_words(str) > 0){
       char *ptr = strtok(str," \n\t\r\f");
       flag_sel = MIN(2, MAX(atoi(ptr),1));
     }
@@ -73,7 +75,8 @@ void Driver::compute_msd()
     for (int id = 1; id <= natom; ++id) nsel += insel[id];
     if (nsel < 1){
       printf("It seems that no atom is selected, do you wish to make another selection? (y/n)[n]: ");
-      if (count_words(fgets(str,MAXLINE,stdin)) > 0){
+      input->read_stdin(str);
+      if (count_words(str) > 0){
         char *ptr = strtok(str," \n\t\r\f");
         if (strcmp(ptr,"y")== 0 || strcmp(ptr,"Y")==0) continue;
       }
@@ -156,7 +159,7 @@ void Driver::compute_msd()
 
   // output the result
   printf("Please input the file to output the MSD info [msd.dat]: ");
-  fgets(str,MAXLINE, stdin);
+  input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr == NULL){
      strcpy(str, "msd.dat");

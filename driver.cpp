@@ -875,7 +875,6 @@ void Driver::guess_image()
 {
   // first image
   DumpAtom *prev = all[0];
-  prev->car2dir();
   if (prev->image != NULL) return;
 
   int natom = prev->natom;
@@ -883,6 +882,7 @@ void Driver::guess_image()
 #pragma omp parallel for default(shared)
   for (int id = 0; id <= natom; ++id) prev->image[id][0] = prev->image[id][1] = prev->image[id][2] = 0;
 
+  prev->car2dir();
   // remaining images
   for (int img = 1; img < nframe; img++){
     one = all[img];

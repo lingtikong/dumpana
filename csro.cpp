@@ -8,6 +8,8 @@
  *  eta = 1. - n_j^i/(N_i*c_j)
  * Where n_j^i is the number of type j neighbors of type i, N_i is the total #
  * of neighbors for type i, c_j is the concentration of type j
+ *
+ * Ref.: https://doi.org/10.1107/S0021889871006174
  *----------------------------------------------------------------------------*/
 void Driver::csro()
 {
