@@ -1,0 +1,4 @@
+dumpana
+*.o
+Makefile_*
+
