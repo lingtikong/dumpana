@@ -80,7 +80,10 @@ void Driver::compute_smix()
           double nxf_lk = 0.;
           for (int lp = 1; lp <= one->ntype; ++lp) nxf_lk += ni[lp] * xi[lp] * fij[lp][kp];
           double nxf_jk = ni[jp] * xi[jp] * fij[jp][kp];
-          one->smix += nxf_jk * log(nxf_lk / nxf_jk);
+          if ( nxf_lk != 0 && nxf_jk != 0 )
+          {
+            one->smix += nxf_jk * log(nxf_lk / nxf_jk);
+          }
         }
       }
       one->smix /= nxi;
