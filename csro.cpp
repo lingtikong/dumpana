@@ -128,13 +128,13 @@ void Driver::csro()
   if (type2atnum == NULL){
     for (int ip = 1; ip <= ntype; ++ip) printf("    %2d    ",ip);
     printf("\n"); for (int i = 0; i < 20; ++i) printf("----");
-    printf("\nConcentration:"); for (int ip = 1; ip <= ntype; ++ip) printf("%10.6f", concentration[ip]);
+    printf("\nConcentration:"); for (int ip = 1; ip <= ntype; ++ip) printf(" %10.6f", concentration[ip]);
     printf("\n"); for (int i = 0; i < 20; ++i) printf("____");
     printf("\nCSRO         :"); for (int jp = 1; jp <= ntype; ++jp) printf("    %2d    ",jp);
 
     for (int ip = 1; ip <= ntype; ++ip) fprintf(fp,"    %2d    ",ip);
     fprintf(fp,"\n# "); for (int i = 0; i < 20; ++i) fprintf(fp,"----");
-    fprintf(fp,"\n# Concentration:"); for (int ip = 1; ip <= ntype; ++ip) fprintf(fp,"%10.6f", concentration[ip]);
+    fprintf(fp,"\n# Concentration:"); for (int ip = 1; ip <= ntype; ++ip) fprintf(fp," %10.6f", concentration[ip]);
     fprintf(fp,"\n# "); for (int i = 0; i < 20; ++i) fprintf(fp,"____");
     fprintf(fp,"\n# CSRO         :"); for (int jp = 1; jp <= ntype; ++jp) fprintf(fp,"    %2d    ",jp);
 
@@ -147,7 +147,7 @@ void Driver::csro()
       fprintf(fp,"    %2s    ", ename);
     }
     printf("\n"); for (int i = 0; i < 20; ++i) printf("----");
-    printf("\nConcentration:"); for (int ip = 1; ip <= ntype; ++ip) printf("%10.6f", concentration[ip]);
+    printf("\nConcentration:"); for (int ip = 1; ip <= ntype; ++ip) printf(" %10.6f", concentration[ip]);
     printf("\n"); for (int i = 0; i < 20; ++i) printf("____"); printf("\nCSRO         :");
     for (int jp = 1; jp <= ntype; ++jp){
       element->Num2Name(type2atnum[jp],ename);
@@ -155,7 +155,7 @@ void Driver::csro()
     }
 
     fprintf(fp,"\n# "); for (int i = 0; i < 20; ++i) fprintf(fp,"----");
-    fprintf(fp,"\n# Concentration:"); for (int ip = 1; ip <= ntype; ++ip) fprintf(fp,"%10.6f", concentration[ip]);
+    fprintf(fp,"\n# Concentration:"); for (int ip = 1; ip <= ntype; ++ip) fprintf(fp," %10.6f", concentration[ip]);
     fprintf(fp,"\n# "); for (int i = 0; i < 20; ++i) fprintf(fp,"____"); fprintf(fp,"\n# CSRO         :");
     for (int jp = 1; jp <= ntype; ++jp){
       element->Num2Name(type2atnum[jp],ename);
@@ -178,8 +178,8 @@ void Driver::csro()
     for (int jp = 1; jp <= ntype; ++jp) ntotal += NumNei[ip][jp];
     for (int jp = 1; jp <= ntype; ++jp){
       double alpha = 1. - double(NumNei[ip][jp]) / (double(ntotal) * concentration[jp]);
-      printf("%10.6f", alpha);
-      fprintf(fp, "%10.6f", alpha);
+      printf(" %10.6f", alpha);
+      fprintf(fp, " %10.6f", alpha);
     }
   }
   fprintf(fp,"\n");
