@@ -224,6 +224,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) property_pc();
       break;
 
+    case 23:
+      setrange();
+      if (nsel > 0) ave_dist_same_property();
+      break;
+
     case 31:
       setrange();
       if (nsel > 0) count_selected();
@@ -264,6 +269,7 @@ void Driver::MainMenu()
   printf("---------------------------------------+----------------------------------------\n");
   printf(" 21. Heredity of atomic clusters;      |  31. Count # selected atoms vs time;\n");
   printf(" 22. Pair correlation for atomic prop; |  32. Unwrap PBC bonded atoms;\n");
+  printf(" 23. Average distance for atom pairs;\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 
 return;

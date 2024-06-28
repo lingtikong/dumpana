@@ -98,6 +98,9 @@ private:
   void property_pc();
   void write_prop_pc(double, double, int, double **, int, char *, char *);
 
+  // Average distance for pais of same Property
+  void ave_dist_same_property();
+
   // Prepare for FEFF9
   void FEFF_main();
   void FEFF_input(int, FILE *);
