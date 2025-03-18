@@ -2,9 +2,9 @@
 #include "timer.h"
 
 /*------------------------------------------------------------------------------
- * Method to compute the average distance for pairs of same property
+ * Method to compute the orientation for pairs of same property
  *----------------------------------------------------------------------------*/
-void Driver::ave_dist_same_property()
+void Driver::orient_same_property()
 {
   char str[MAXLINE], header[MAXLINE];
   double rmin = 0., rmax = 0.5*MIN(MIN(all[0]->lx,all[0]->ly), all[0]->lz);
@@ -12,12 +12,12 @@ void Driver::ave_dist_same_property()
   // menu
   int job = 1;
   printf("\n"); for (int i = 0; i < 5; ++i) printf("===");
-  printf(" Average distance for atom pairs of same property ");
+  printf(" Orientation (cosine wrt reference vector) for atom pairs of same property ");
   for (int i = 0; i < 5; ++i) printf("===");
   printf("\nPlease select your desired job:\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
-  printf("  1. Average distance for atom pairs of same property within selection;\n");
-  printf("  2. Average distance for atom pairs of same property between selections;\n");
+  printf("  1. Orientation for atom pairs of same property within selection;\n");
+  printf("  2. Orientation for atom pairs of same property between selections;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
@@ -29,6 +29,21 @@ void Driver::ave_dist_same_property()
   }
   printf("\n");
 
+  // define reference orientation
+  double refOrient[3];
+  int nW = 0;
+  while (nW <= 3){
+    printf("\nPlease input the reference vector (cartesian) to measure the orientation: ");
+    input->read_stdin(str);
+    ptr = strtok(str, " \n\t\r\f");
+    while (ptr && nW < 3){
+      refOrient[nW++] = atof(ptr);
+      ptr = strtok(NULL, " \n\t\r\f");
+    }
+  }
+  double invNorm = 1./sqrt(refOrient[0]*refOrient[0] + refOrient[1]*refOrient[1] + refOrient[2]*refOrient[2]);
+  for (int i = 0; i < 3; ++i) refOrient[i] *= invNorm;
+  
   // selection commands
   char srcsel[MAXLINE], dessel[MAXLINE];
   int *insrc; insrc = NULL;
@@ -64,7 +79,7 @@ void Driver::ave_dist_same_property()
     break;
   }
 
-  if (job == 1) sprintf(header,"# Average distance for atom pairs selected by: %s", srcsel);
+  if (job == 1) sprintf(header,"# Cosine wrt [%f %f %f] for atom pairs selected by: %s", refOrient[0], refOrient[1], refOrient[2], srcsel);
   else {
     // atoms as neighbors
     while (1){
@@ -89,7 +104,7 @@ void Driver::ave_dist_same_property()
       break;
     }
     memory->create(insrc, one->natom+1, "insrc");
-    sprintf(header,"# Average distance for pairs between two selections:\n# source atoms: %s# neighbors: %s", srcsel, dessel);
+    sprintf(header,"# Cosine wrt [%f %f %f] for atom pairs between two selections:\n# source atoms: %s# neighbors: %s", refOrient[0], refOrient[1], refOrient[2], srcsel, dessel);
   }
   
   // property 
@@ -103,50 +118,38 @@ void Driver::ave_dist_same_property()
   pid = MIN(MAX(pid, 0), one->prop_label.size());
   printf("The property chosen is: %s\n", one->prop_label[pid].c_str());
 
-  // output average distance or for each frame
-  printf("\nWould you like to output:\n");
-  printf("  1. the average distance for all frames used;\n");
-  printf("  2. the average distance for each frame;\n");
-  printf("Your choice [1]: ");
-  input->read_stdin(str);
-  ptr = strtok(str, " \n\t\r\f");
-  int flag_each = 0;
-  if (ptr) flag_each = atoi(ptr)-1;
-
   // output file name or prefix
-  printf("\nPlease input the file to output the result [avedist.dat]: ");
+  printf("\nPlease input the file to output the result [orient.dat]: ");
   input->read_stdin(str);
   ptr = strtok(str, " \n\t\r\f");
-  if (ptr == NULL) strcpy(str, "avedist.dat");
+  if (ptr == NULL) strcpy(str, "orient.dat");
 
   ptr = strtok(str, " \n\t\r\f");
   char *fname = new char [strlen(ptr)+1];
   strcpy(fname, ptr);
 
   FILE *fp = fopen(fname,"w");
-  fprintf(fp,"# Average distance for atom pairs with same %s\n", one->prop_label[pid].c_str());
+  fprintf(fp,"# Orientation for atom pairs with same %s\n", one->prop_label[pid].c_str());
+  fprintf(fp,header);
 
   // timer
   Timer * timer = new Timer();
 
   // working space
-  double total_dist = 0.;
+  double com[3];
   int npairs = 0;
 
   int nused = 0;
-  // now to compute the average distance
-  if (job == 1){  // average distance for atom pairs within selected atoms
-    fprintf(fp, "# within selection: %s", srcsel);
-    if (flag_each == 1){
-       fprintf(fp, "# img  pairs average-distance\n");
-    } else {
-       fprintf(fp, "# frames-used pairs average-distance\n");
-    }
+  // now to compute the cosine with respect to the reference vector
+  if (job == 1){  // cosine for atom pairs within selected atoms
 
     for (int img = istr; img <= iend; img += inc){ // loop over frames
       one = all[img];
       one->selection(srcsel);
       if (one->nsel < 1) continue;
+
+      fprintf(fp, "# Frame ID: %d\n", img);
+      fprintf(fp, "# atom-1 atom-2 com_x com_y com_z cosine\n");
 
       // need fractional coordinates
       one->car2dir();
@@ -169,10 +172,18 @@ void Driver::ave_dist_same_property()
           dx[0] = dx[0]*one->lx + dx[1]*one->xy + dx[2]*one->xz;
           dx[1] = dx[1]*one->ly + dx[2]*one->yz;
           dx[2] = dx[2]*one->lz;
-          double r = sqrt(dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2]);
+          double rij = sqrt(dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2]);
 
-#pragma omp atomic
-          total_dist += r;
+          com[0] = one->atpos[i][0];
+          com[1] = one->atpos[i][1];
+          com[2] = one->atpos[i][2];
+          com[0] = com[0]*one->lx + com[1]*one->xy + com[2]*one->xz + dx[0];
+          com[1] = com[1]*one->ly + com[2]*one->yz + dx[1];
+          com[2] = com[2]*one->lz + dx[2];
+
+          double cosine = (dx[0]*refOrient[0] + dx[1]*refOrient[1] + dx[2]*refOrient[2])/rij;
+          fprintf(fp, "%d %d %f %f %f %g\n", i, j, com[0], com[1], com[2], cosine);
+
 #pragma omp atomic
           ++npairs;
         }
@@ -180,22 +191,10 @@ void Driver::ave_dist_same_property()
       ++nused;
 
       if (min_mem) one->FreeVoro();
-      if (flag_each == 1){
-         fprintf(fp, "%d %d %lg\n", img, npairs, total_dist/MAX(1, npairs));
-         total_dist = 0.;
-         npairs = 0;
-      }
     } // end loop over frames
-    if (flag_each != 1) fprintf(fp, "%d %d %lg\n", nused, npairs, total_dist/MAX(1, npairs));
 
-  } else {        // Average distance of atom pairs of same property between two selections
+  } else {        // cosine for atom pairs of same property between two selections
 
-    fprintf(fp, "# between selections: %s# and %s", srcsel, dessel);
-    if (flag_each == 1){
-       fprintf(fp, "# img  pairs average-distance\n");
-    } else {
-       fprintf(fp, "# frames-used pairs average-distance\n");
-    }
     for (int img = istr; img <= iend; img += inc){
       one = all[img];
   
@@ -210,6 +209,8 @@ void Driver::ave_dist_same_property()
       one->selection(dessel);
       if (one->nsel < 1) continue;
 
+      fprintf(fp, "# Frame ID: %d\n", img);
+      fprintf(fp, "# atom-1 atom-2 com_x com_y com_z cosine\n");
       // need fractional coordinates
       one->car2dir();
 
@@ -231,10 +232,18 @@ void Driver::ave_dist_same_property()
           dx[0] = dx[0]*one->lx + dx[1]*one->xy + dx[2]*one->xz;
           dx[1] = dx[1]*one->ly + dx[2]*one->yz;
           dx[2] = dx[2]*one->lz;
-          double r = sqrt(dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2]);
+          double rij = sqrt(dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2]);
 
-#pragma omp atomic
-          total_dist += r;
+          com[0] = one->atpos[i][0];
+          com[1] = one->atpos[i][1];
+          com[2] = one->atpos[i][2];
+          com[0] = com[0]*one->lx + com[1]*one->xy + com[2]*one->xz + dx[0];
+          com[1] = com[1]*one->ly + com[2]*one->yz + dx[1];
+          com[2] = com[2]*one->lz + dx[2];
+
+          double cosine = (dx[0]*refOrient[0] + dx[1]*refOrient[1] + dx[2]*refOrient[2])/rij;
+          fprintf(fp, "%d %d %f %f %f %g\n", i, j, com[0], com[1], com[2], cosine);
+
 #pragma omp atomic
           ++npairs;
         }
@@ -242,13 +251,7 @@ void Driver::ave_dist_same_property()
 
       ++nused;
       if (min_mem) one->FreeVoro();
-      if (flag_each == 1){
-         fprintf(fp, "%d %d %lg\n", img, npairs, total_dist/MAX(1, npairs));
-         total_dist = 0.;
-         npairs = 0;
-      }
     }
-    if (flag_each != 1) fprintf(fp, "%d %d %lg\n", nused, npairs, total_dist/MAX(1, npairs));
   }
 
   timer->stop();
@@ -256,7 +259,7 @@ void Driver::ave_dist_same_property()
   delete timer;
 
   memory->destroy(insrc);
-  if (flag_each == 0) printf("\n%d images were used in the evaluation, which is written to %s\n", nused, fname);
+  printf("\n%d images with %d pairs were used in the evaluation, which is written to %s\n", nused, npairs, fname);
   fclose(fp);
   delete []fname;
 

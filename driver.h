@@ -101,6 +101,9 @@ private:
   // Average distance for pais of same Property
   void ave_dist_same_property();
 
+  // Orientation for pais of same Property
+  void orient_same_property();
+
   // Prepare for FEFF9
   void FEFF_main();
   void FEFF_input(int, FILE *);
