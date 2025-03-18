@@ -5,7 +5,11 @@
  * Method to compute the orientation for pairs of same property
  *----------------------------------------------------------------------------*/
 void Driver::orient_same_property()
-{
+{ 
+  const double pi = 4.*atan(1.);
+  const double halfPi = pi * 0.5;
+  const double rad2deg = 180. / pi;
+
   char str[MAXLINE], header[MAXLINE];
   double rmin = 0., rmax = 0.5*MIN(MIN(all[0]->lx,all[0]->ly), all[0]->lz);
 
@@ -42,6 +46,15 @@ void Driver::orient_same_property()
   }
   double invNorm = 1./sqrt(refOrient[0]*refOrient[0] + refOrient[1]*refOrient[1] + refOrient[2]*refOrient[2]);
   for (int i = 0; i < 3; ++i) refOrient[i] *= invNorm;
+
+  int flagHalfPi = 0;
+  printf("\nDo you prefer to have the absolute values of the cosines measured? (y/n)[n]: ");
+  input->read_stdin(str);
+  ptr = strtok(str, " \n\t\r\f");
+  if (ptr){
+     if (strcmp(ptr, "y") == 0 || strcmp(ptr,"Y") == 0) flagHalfPi = 1;
+  }
+  
   
   // selection commands
   char srcsel[MAXLINE], dessel[MAXLINE];
@@ -148,7 +161,7 @@ void Driver::orient_same_property()
       if (one->nsel < 1) continue;
 
       fprintf(fp, "# Frame ID: %d\n", img);
-      fprintf(fp, "# atom-1 atom-2 com_x com_y com_z cosine\n");
+      fprintf(fp, "# atom-1 atom-2 com_x com_y com_z cosine angle\n");
 
       // need fractional coordinates
       one->car2dir();
@@ -181,7 +194,12 @@ void Driver::orient_same_property()
           com[2] = com[2]*one->lz + dx[2];
 
           double cosine = (dx[0]*refOrient[0] + dx[1]*refOrient[1] + dx[2]*refOrient[2])/rij;
-          fprintf(fp, "%d %d %f %f %f %g\n", i, j, com[0], com[1], com[2], cosine);
+          double angle = acos(cosine);
+          if (flagHalfPi){
+             cosine = fabs(cosine);
+             if (angle > halfPi) angle = pi - angle;
+          }
+          fprintf(fp, "%d %d %f %f %f %g %f\n", i, j, com[0], com[1], com[2], cosine, angle*rad2deg);
 
 #pragma omp atomic
           ++npairs;
@@ -209,7 +227,7 @@ void Driver::orient_same_property()
       if (one->nsel < 1) continue;
 
       fprintf(fp, "# Frame ID: %d\n", img);
-      fprintf(fp, "# atom-1 atom-2 com_x com_y com_z cosine\n");
+      fprintf(fp, "# atom-1 atom-2 com_x com_y com_z cosine angle\n");
       // need fractional coordinates
       one->car2dir();
 
@@ -241,7 +259,12 @@ void Driver::orient_same_property()
           com[2] = com[2]*one->lz + dx[2];
 
           double cosine = (dx[0]*refOrient[0] + dx[1]*refOrient[1] + dx[2]*refOrient[2])/rij;
-          fprintf(fp, "%d %d %f %f %f %g\n", i, j, com[0], com[1], com[2], cosine);
+          double angle = acos(cosine);
+          if (flagHalfPi){
+             cosine = fabs(cosine);
+             if (angle > halfPi) angle = pi - angle;
+          }
+          fprintf(fp, "%d %d %f %f %f %g %f\n", i, j, com[0], com[1], com[2], cosine, angle*rad2deg);
 
 #pragma omp atomic
           ++npairs;
