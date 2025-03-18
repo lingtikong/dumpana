@@ -11,9 +11,8 @@ void Driver::orient_same_property()
 
   // menu
   int job = 1;
-  printf("\n"); for (int i = 0; i < 5; ++i) printf("===");
-  printf(" Orientation (cosine wrt reference vector) for atom pairs of same property ");
-  for (int i = 0; i < 5; ++i) printf("===");
+  printf("\n"); printf("==");
+  printf(" Orientation (cosine wrt. reference vector) for atom pairs of same property ==");
   printf("\nPlease select your desired job:\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
   printf("  1. Orientation for atom pairs of same property within selection;\n");
@@ -32,14 +31,14 @@ void Driver::orient_same_property()
   // define reference orientation
   double refOrient[3];
   int nW = 0;
-  while (nW <= 3){
+  while (nW < 3){
     printf("\nPlease input the reference vector (cartesian) to measure the orientation: ");
     input->read_stdin(str);
     ptr = strtok(str, " \n\t\r\f");
     while (ptr && nW < 3){
       refOrient[nW++] = atof(ptr);
       ptr = strtok(NULL, " \n\t\r\f");
-    }
+    } 
   }
   double invNorm = 1./sqrt(refOrient[0]*refOrient[0] + refOrient[1]*refOrient[1] + refOrient[2]*refOrient[2]);
   for (int i = 0; i < 3; ++i) refOrient[i] *= invNorm;
