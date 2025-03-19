@@ -34,7 +34,7 @@ void Driver::OutputVoroCells( )
   printf("\n");
   
   // thresholds for surface and edges
-  set_cutoffs(1);
+  if (job < 4) set_cutoffs(1);
   one = all[istr];
 
   // selection of atoms for each frame
