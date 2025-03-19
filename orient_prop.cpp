@@ -6,10 +6,7 @@
  *----------------------------------------------------------------------------*/
 void Driver::orient_same_property()
 { 
-  const double pi = 4.*atan(1.);
-  const double halfPi = pi * 0.5;
-  const double rad2deg = 180. / pi;
-
+  const double rad2deg = 45. / atan(1.);
   char str[MAXLINE], header[MAXLINE];
   double rmin = 0., rmax = 0.5*MIN(MIN(all[0]->lx,all[0]->ly), all[0]->lz);
 
@@ -194,11 +191,8 @@ void Driver::orient_same_property()
           com[2] = com[2]*one->lz + dx[2];
 
           double cosine = (dx[0]*refOrient[0] + dx[1]*refOrient[1] + dx[2]*refOrient[2])/rij;
+          if (flagHalfPi) cosine = fabs(cosine);
           double angle = acos(cosine);
-          if (flagHalfPi){
-             cosine = fabs(cosine);
-             if (angle > halfPi) angle = pi - angle;
-          }
           fprintf(fp, "%d %d %f %f %f %g %f\n", i, j, com[0], com[1], com[2], cosine, angle*rad2deg);
 
 #pragma omp atomic
@@ -259,11 +253,9 @@ void Driver::orient_same_property()
           com[2] = com[2]*one->lz + dx[2];
 
           double cosine = (dx[0]*refOrient[0] + dx[1]*refOrient[1] + dx[2]*refOrient[2])/rij;
+          if (flagHalfPi) cosine = fabs(cosine);
           double angle = acos(cosine);
-          if (flagHalfPi){
-             cosine = fabs(cosine);
-             if (angle > halfPi) angle = pi - angle;
-          }
+
           fprintf(fp, "%d %d %f %f %f %g %f\n", i, j, com[0], com[1], com[2], cosine, angle*rad2deg);
 
 #pragma omp atomic
@@ -281,7 +273,7 @@ void Driver::orient_same_property()
   delete timer;
 
   memory->destroy(insrc);
-  printf("\n%d images with %d pairs were used in the evaluation, which is written to %s\n", nused, npairs, fname);
+  printf("\n%d images with %d pairs were used and the results are written to %s\n", nused, npairs, fname);
   fclose(fp);
   delete []fname;
 
