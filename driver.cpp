@@ -244,6 +244,11 @@ Driver::Driver(int narg, char** arg)
       if (nsel > 0) {unwrap(); writesel();}
       break;
 
+    case 33:
+      setrange();
+      if (nsel > 0) DumpSelection();
+      break;
+
     default:
       loop = 0;
       break;
@@ -274,7 +279,7 @@ void Driver::MainMenu()
   printf("---------------------------------------+----------------------------------------\n");
   printf(" 21. Heredity of atomic clusters;      |  31. Count # selected atoms vs time;\n");
   printf(" 22. Pair correlation for atomic prop; |  32. Unwrap PBC bonded atoms;\n");
-  printf(" 23. Average distance for atom pairs;  |\n");
+  printf(" 23. Average distance for atom pairs;  |  33. Dump selection as extra field;\n");
   printf(" 24. Orientation of given atom pairs;  |\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
 

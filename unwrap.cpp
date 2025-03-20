@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "math.h"
+#include "timer.h"
 
 /*------------------------------------------------------------------------------
  * Method to unwrap atoms so that the direct distance between bonded atoms are
@@ -10,15 +11,16 @@
  *----------------------------------------------------------------------------*/
 void Driver::unwrap()
 {
-  printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
-  printf("   To unwrap the atomic positions for the selected frames,\n");
-  printf("So that bonded atoms are neighboring to each other, instead of\n");
-  printf("crossing the PBC boundary. It might only work for molecular systems.");
+  printf("\n"); for (int i = 0; i < 20; ++i) printf("====");
+  printf("\nTo unwrap the atomic positions for the selected frames, so that bonded atoms\n");
+  printf("are neighboring to each other, instead of crossing the PBC boundary. It might\n");
+  printf("only work for molecular systems.\n");
 
   one = all[istr];
   int ntype = one->ntype;
   choose_neighbor_method(0);
 
+  Timer * timer = new Timer();
   // now to do the real method
   for (int img = istr; img <= iend; img += inc){
     one = all[img];
@@ -54,6 +56,9 @@ void Driver::unwrap()
   }
   
   printf("\nSelected frames are now unwrapped, now you can output them.\n");
+  timer->stop();
+  printf("\nTotal CPU time used: %g seconds.\n", timer->cpu_time());
+  delete timer;
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
 return;

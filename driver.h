@@ -78,6 +78,8 @@ private:
 
   // to average up all selected frames
   void avedump();
+  // dump with selection info as extra per atom property
+  void DumpSelection();
 
   // Hondeycutt-Andersen bond type analysis
   void honeycutt_andersen();
