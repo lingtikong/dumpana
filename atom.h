@@ -51,6 +51,7 @@ public:
   void ComputeVoro(double *, FILE *, FILE *, FILE *);
 
   // the following four variables/functions cannot be called before ComputeVoro
+  int neiMethod;         // methoed to generate the neighbor list
   int **neilist;         // Voronoi neighbor list, only available if voro is computed
   map<int,string> voro;  // Voronoi index for each atom
   int bonded(int,int);   // check if two atoms are neighbors to each other

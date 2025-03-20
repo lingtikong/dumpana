@@ -10,8 +10,8 @@
  *----------------------------------------------------------------------------*/
 void Driver::DumpSelection()
 {
-  int job = 0;
   char str[MAXLINE];
+  int job = 0;
   printf("\n"); for (int i = 0; i < 6; ++i) printf("====");
   printf("   Dump selection as property   ");
   for (int i = 0; i < 6; ++i) printf("====");
@@ -105,6 +105,7 @@ void Driver::DumpSelection()
     }
   }
 
+  // options to update the selection
   int updateMethod = 1;
   printf("\nHow would you like to update the selection and neighbors:\n");
   printf("  1. Use selection and neighbors identified from Frame-%d only;\n", istr+1);
@@ -115,9 +116,23 @@ void Driver::DumpSelection()
   if (count_words(str) > 0){
     char *ptr = strtok(str," \n\t\r\f");
     if (ptr) updateMethod = atoi(ptr);
-    updateMethod = MAX(0, MIN(3, updateMethod));
+    updateMethod = MAX(1, MIN(3, updateMethod));
   }
   printf("Your selection : %d\n", updateMethod);
+
+  // options to dump the results
+  int dumpStyle = 1;
+  printf("\nHow would you like to dump the trajectory information:\n");
+  printf("  1. Dump all atoms and append the selection as a property;\n");
+  printf("  2. Dump the selected atoms only;\n");
+  printf("Your choice [%d]: ", dumpStyle);
+  input->read_stdin(str);
+  if (count_words(str) > 0){
+    char *ptr = strtok(str," \n\t\r\f");
+    if (ptr) dumpStyle = atoi(ptr);
+    dumpStyle = MAX(1, MIN(2, dumpStyle));
+  }
+  printf("Your selection : %d\n", dumpStyle);
 
   // ask for output filename
   printf("\nPlease input the output file name [dump2.lammpstrj]: ");
@@ -126,6 +141,7 @@ void Driver::DumpSelection()
   if (ptr == NULL) {strcpy(str,"dump2.lammpstrj"); ptr = strtok(str, " \n\t\r\f");}
   char *fname = new char[strlen(ptr)+1];
   strcpy(fname, ptr);
+
   ConfirmOverwrite(fname);
   FILE *fp = fopen(fname, "w");
   
@@ -139,6 +155,7 @@ void Driver::DumpSelection()
     one = all[img];
     // update selection
     if (updateMethod > 2 || (updateMethod <= 2 && img == istr)){
+      printf("\nUpdate source, img = %d\n", img);
       one->selection(srcSel);
 
       source.clear();
@@ -149,16 +166,18 @@ void Driver::DumpSelection()
     int nSrc = source.size();
 
     // update neighbors
-    if (nSrc > 0 && job > 1 && (updateMethod > 2 || (updateMethod <= 2 && img == istr))){
-      std::set<float> propList;
-      propList.clear();
- 
+    if (nSrc > 0 && job > 1 && (updateMethod > 1 || (updateMethod == 1 && img == istr))){
+      printf("\nUpdate neighbors, img = %d\n", img);
       // get neighbor list
       if (neighbor_method == 1) one->ComputeVoro(mins);
       else one->ComputeNeiList(r2cuts);
 
       outList.clear();
+      std::set<float> propList;
+      propList.clear();
+ 
       if (job == 3) one->selection(desSel);
+      printf("nSrc = %d, job = %d, nsel = %d\n", nSrc, job, one->nsel);
 
       // neighbors of center atoms
       for (it = source.begin(); it != source.end(); ++it){
@@ -166,7 +185,7 @@ void Driver::DumpSelection()
         outList.insert(id);
         for (int jj = 1; jj <= one->neilist[0][id]; ++jj){
           int jd = one->neilist[jj][id];
-          if (job == 3 && one->atsel[jd]){
+          if (job == 2 || (job == 3 && one->atsel[jd])){
             outList.insert(jd);
             if (one->prop_label.size() > 0 && pid >= 0) propList.insert(one->atprop[jd][pid]);
           }
@@ -177,7 +196,9 @@ void Driver::DumpSelection()
         for (int id = 1; id <= one->natom; ++id){
           std::set<float>::iterator jt;
           for (jt = propList.begin(); jt != propList.end(); ++jt){
-            if (fabs(one->atprop[id][pid] - *jt) <= ZERO) outList.insert(id);
+            if ((job == 3 && one->atsel[id] == 1) || job == 2){
+              if (fabs(one->atprop[id][pid] - *jt) <= ZERO) outList.insert(id);
+            }
           }
         }
         propList.clear();
@@ -192,7 +213,9 @@ void Driver::DumpSelection()
     one->car2dir();
 
     fprintf(fp,"ITEM: TIMESTEP\n%d\n", one->tstep);
-    fprintf(fp,"ITEM: NUMBER OF ATOMS\n%d\n", one->natom);
+    if (dumpStyle == 1) fprintf(fp,"ITEM: NUMBER OF ATOMS\n%d\n", one->natom);
+    else fprintf(fp,"ITEM: NUMBER OF ATOMS\n%d\n", nlist);
+
     if (one->triclinic){
       fprintf(fp,"ITEM: BOX BOUNDS pp pp pp xy xz yz\n");
       double xl = one->xlo + MIN(MIN(0., one->xy), MIN(one->xz, one->xy+one->xz));
@@ -214,15 +237,29 @@ void Driver::DumpSelection()
     }
     for (int i = 0; i < one->prop_label.size(); ++i) fprintf(fp, " %s", one->prop_label[i].c_str());
     fprintf(fp, " sel\n");
-
-    for (int id = 1; id <= one->natom; ++id){
-      int flag = outList.count(id);
-      fprintf(fp,"%d %d %lg %lg %lg", id, one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
-      if (one->image){
-        fprintf(fp, " %d %d %d", one->image[id][0], one->image[id][1], one->image[id][2]);
+  
+    if (dumpStyle == 1){
+      for (int id = 1; id <= one->natom; ++id){
+        int flag = outList.count(id);
+        fprintf(fp,"%d %d %lg %lg %lg", id, one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
+        if (one->image){
+          fprintf(fp, " %d %d %d", one->image[id][0], one->image[id][1], one->image[id][2]);
+        }
+        for (int i = 0; i < one->prop_label.size(); ++i) fprintf(fp, " %g", one->atprop[id][i]);
+        fprintf(fp, " %d\n", flag);
       }
-      for (int i = 0; i < one->prop_label.size(); ++i) fprintf(fp, " %g", one->atprop[id][i]);
-      fprintf(fp, " %d\n", flag);
+
+    } else {
+      for (int id = 1; id <= one->natom; ++id){
+        int flag = outList.count(id);
+        if (flag == 0) continue;
+        fprintf(fp,"%d %d %lg %lg %lg", id, one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
+        if (one->image){
+          fprintf(fp, " %d %d %d", one->image[id][0], one->image[id][1], one->image[id][2]);
+        }
+        for (int i = 0; i < one->prop_label.size(); ++i) fprintf(fp, " %g", one->atprop[id][i]);
+        fprintf(fp, " %d\n", flag);
+      }
     }
      ++nused;
   }

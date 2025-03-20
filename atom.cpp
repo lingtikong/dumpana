@@ -33,6 +33,7 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
 
   wted = 0;
   voro.clear();
+  neiMethod = 0;
   neilist = image = NULL;
   prop = volume = NULL;
   MaxNei = 16;
@@ -1313,6 +1314,7 @@ void DumpAtom::ComputeVoro(double *mins, FILE *fp, FILE *fpsurf, FILE *fpedge)
   if (type2radius) Radica_Voro(mins, fp, fpsurf, fpedge);
   else Direct_Voro(mins, fp, fpsurf, fpedge);
 
+  neiMethod = 1;
 return;
 }
 

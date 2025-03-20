@@ -25,6 +25,7 @@ Driver::Driver(int narg, char** arg)
   int f_guess_image = 0;
   int f_script = 0;
   flag_overwrite = 0;
+  neighbor_method = 0;
 
   flag_out = 0;
   flag_out |= OutFeff; // by default, feff.inp is written
@@ -1214,6 +1215,8 @@ return;
  *------------------------------------------------------------------------------ */
 void Driver::choose_neighbor_method(int flag)
 {
+  if (neighbor_method > 0) return;
+
   char str[MAXLINE];
   neighbor_method = 1;
 
@@ -1225,7 +1228,7 @@ void Driver::choose_neighbor_method(int flag)
   input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
   if (ptr) neighbor_method = atoi(ptr);
-  if (neighbor_method < 1 || neighbor_method > 2) neighbor_method = 1;
+  neighbor_method = MAX(1, MIN(2, neighbor_method));
   printf("Your selection : %d\n", neighbor_method);
 
   one = all[istr];

@@ -11,6 +11,8 @@
  *----------------------------------------------------------------------------*/
 void DumpAtom::ComputeNeiList(double ***rcut_sq)
 {
+  if (neiMethod == 2 && neilist) return;
+
   if (neilist) memory->destroy(neilist);
   memory->create(neilist, MaxNei+1, natom+1, "neilist");
 
@@ -43,5 +45,7 @@ void DumpAtom::ComputeNeiList(double ***rcut_sq)
           neilist[nj][jd] = id;
       }
   }
+  neiMethod = 2;
+
 return;
 }
