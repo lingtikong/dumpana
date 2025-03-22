@@ -155,7 +155,6 @@ void Driver::DumpSelection()
     one = all[img];
     // update selection
     if (updateMethod > 2 || (updateMethod <= 2 && img == istr)){
-      printf("\nUpdate source, img = %d\n", img);
       one->selection(srcSel);
 
       source.clear();
@@ -167,7 +166,6 @@ void Driver::DumpSelection()
 
     // update neighbors
     if (nSrc > 0 && job > 1 && (updateMethod > 1 || (updateMethod == 1 && img == istr))){
-      printf("\nUpdate neighbors, img = %d\n", img);
       // get neighbor list
       if (neighbor_method == 1) one->ComputeVoro(mins);
       else one->ComputeNeiList(r2cuts);
@@ -177,7 +175,6 @@ void Driver::DumpSelection()
       propList.clear();
  
       if (job == 3) one->selection(desSel);
-      printf("nSrc = %d, job = %d, nsel = %d\n", nSrc, job, one->nsel);
 
       // neighbors of center atoms
       for (it = source.begin(); it != source.end(); ++it){
