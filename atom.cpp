@@ -677,7 +677,7 @@ void DumpAtom::selection(const char *line)
       for (int id = 1; id <= natom; ++id) nsel += atsel[id];
       int ndel = nsel - ilow;
       while (ndel > 0){
-        int id = MIN(random->uniform()*(natom+1), natom);
+        int id = MAX(1, MIN(random->uniform()*(natom+1), natom));
         if (atsel[id] == 1){
           atsel[id] = 0;
           ndel--;

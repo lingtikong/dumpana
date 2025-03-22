@@ -229,9 +229,8 @@ void Driver::DumpSelection()
       fprintf(fp,"%lg %lg\n", one->zlo, one->zhi);
     }
     fprintf(fp,"ITEM: ATOMS id type xs ys zs");
-    if (one->image){
-      fprintf(fp, " ix iy iz");
-    }
+    if (one->image) fprintf(fp, " ix iy iz");
+    if (type2atnum) fprintf(fp, " element");
     for (int i = 0; i < one->prop_label.size(); ++i) fprintf(fp, " %s", one->prop_label[i].c_str());
     fprintf(fp, " sel\n");
   
@@ -241,6 +240,11 @@ void Driver::DumpSelection()
         fprintf(fp,"%d %d %lg %lg %lg", id, one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
         if (one->image){
           fprintf(fp, " %d %d %d", one->image[id][0], one->image[id][1], one->image[id][2]);
+        }
+        if (type2atnum){
+          char ename[3];
+          element->Num2Name(type2atnum[one->attyp[id]], ename);
+          fprintf(fp, " %s", ename);
         }
         for (int i = 0; i < one->prop_label.size(); ++i) fprintf(fp, " %g", one->atprop[id][i]);
         fprintf(fp, " %d\n", flag);
@@ -253,6 +257,11 @@ void Driver::DumpSelection()
         fprintf(fp,"%d %d %lg %lg %lg", id, one->attyp[id], one->atpos[id][0], one->atpos[id][1], one->atpos[id][2]);
         if (one->image){
           fprintf(fp, " %d %d %d", one->image[id][0], one->image[id][1], one->image[id][2]);
+        }
+        if (type2atnum){
+          char ename[3];
+          element->Num2Name(type2atnum[one->attyp[id]], ename);
+          fprintf(fp, " %s", ename);
         }
         for (int i = 0; i < one->prop_label.size(); ++i) fprintf(fp, " %g", one->atprop[id][i]);
         fprintf(fp, " %d\n", flag);

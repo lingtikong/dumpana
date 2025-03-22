@@ -1010,8 +1010,8 @@ void Driver::MapType2Elem(const int flag, const int ntype)
 
   char str[MAXLINE];
   if (flag == 0){
-    printf("\nIf you want to map the atomic types to elements, input the element\n");
-    printf("symbols (and radii) in sequence now: ");
+    printf("\nIf you want to map the atomic types to elements, input the element symbols\n");
+    printf("(and radii) in sequence now: ");
   } else {
     printf("Total number of atomic types in the system are %d.\n", ntype); 
     printf("Please input the element symbol for each atomic type in sequence: ");
@@ -1222,8 +1222,8 @@ void Driver::choose_neighbor_method(int flag)
 
   printf("\nPlease select the method to generate the neighbor list:\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
-  printf("  1. Voronoi method;\n");
-  printf("  2. Cutoff distances;\n");
+  printf("  1. By Voronoi method;\n");
+  printf("  2. By cutoff distances;\n");
   printf("Your choice [%d]: ", neighbor_method);
   input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
