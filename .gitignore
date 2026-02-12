@@ -1,4 +1,4 @@
-dumpana
 *.o
+dumpana
 Makefile_*
-
+test/
