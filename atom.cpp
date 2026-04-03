@@ -13,6 +13,9 @@
  *----------------------------------------------------------------------------*/
 DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
 {
+#ifdef DEBUG
+  printf("\nEntering DumpAtom to read atoms from %s ...\n", dumpfile);
+#endif
   iframe = natom = ntype = tstep = 0;
   initialized = triclinic = 0;
   xy = xz = yz = 0.;
@@ -20,9 +23,10 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   type2radius = NULL;
   flag_smix = 0; smix = 0.;
 
-  int flag_wrap = 0;
+  int flag_wrap = 0, flag_reset_id = 0;
   if (flag & 1) least_memory = 1;
   if (flag & 2) flag_wrap = 1;
+  if (flag & 4) flag_reset_id = 1;
 
   realcmd = NULL;
   attyp = atsel = numtype = env = NULL;
@@ -83,6 +87,9 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
     yhi -= MAX(0., yz);
   }
 
+#ifdef DEBUG
+  printf("Header read. %d atoms for the current frame.\n", natom);
+#endif
   // fields info
   int dcols[9], fcord = 7;
   for (int i = 0; i <= 5; ++i) dcols[i] = i;
@@ -143,6 +150,10 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
   int nprop = prop_label.size();
   if (nprop >= 1) memory->create(atprop, natom+1, nprop, "atprop");
   
+#ifdef DEBUG
+  printf("Memory for positions of %d atoms allocated.\n", natom);
+#endif
+
   // read coordinate
   int id, ip, ix, iy, iz;
   double xp, yp, zp;
@@ -168,6 +179,10 @@ DumpAtom::DumpAtom(FILE *fp, const char *dumpfile, const int flag)
       ptr = strtok(NULL," \n\t\r\f"); ++ic;
     }
     if (frd == 31){
+      if (flag_reset_id == 1) id = i+1;
+#ifdef DEBUG
+      if (id > natom) printf("ERROR: id=%d > natom=%d\n", id, natom);
+#endif
       attyp[id] = ip; ntype = MAX(ip, ntype);
       atpos[id][0] = xp;
       atpos[id][1] = yp;

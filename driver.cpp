@@ -75,6 +75,9 @@ Driver::Driver(int narg, char** arg)
       f_script = 1;
       flag_overwrite = 1;
 
+    } else if (strcmp(arg[iarg], "-reset") == 0){ // Flag to reset atom-id; this is useful when used with fix-evaporate
+      flag_dump |= 4;
+
     } else if (strcmp(arg[iarg], "-y") == 0){    // Yes to overwrite
       flag_overwrite = 1;
 
@@ -964,6 +967,7 @@ void Driver::help()
   printf("    -save    To save the user input to file `script.inp`, facilitating scripting;\n");
   printf("             `-y` will be set automatically;\n\n");
   printf("    -y       To skip file overwriting confirmation, facilitating scripting;\n\n");
+  printf("    -reset   To enable reset atom id; this is useful when id is not continuous in the dump file.\n");
   printf("    file     Must be LAMMPS atomic style dump files, or custom style containing id,\n");
   printf("             type, x/xs, y/ys, z/zs, and/or ix, iy, iz information.\n");
   printf("             Default: dump.lammpstrj.\n");
