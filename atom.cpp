@@ -851,6 +851,13 @@ void DumpAtom::selection(const char *line)
           }
         }
 
+      } else if (strcmp(oper,"=") == 0 || strcmp(oper,"==") == 0){
+        if (volume){
+          if (logand){ for (int id = 1; id <= natom; ++id) if (fabs(volume[id]-rlow)<=ZERO) atsel[id] = 0;
+          } else { for (int id = 1; id <= natom; ++id) if (fabs(volume[id]-rlow)> ZERO) atsel[id] = 1;
+          }
+        }
+
       } else if (strcmp(oper,"><") == 0){
         ptr = strtok(NULL, " \n\t\r\f");
         if (ptr == NULL) break;
@@ -922,7 +929,62 @@ void DumpAtom::selection(const char *line)
       strcpy(onecmd,key);
       for (int id = 1; id <= natom; ++id) atsel[id] = 1 - atsel[id];
 
-    } else break;
+    } else {  // try property first, otherwise break;
+      int ip = -1;
+      for (int i = 0; i < prop_label.size(); ++i){
+          if (strcmp(key, prop_label[i].c_str()) == 0) ip = i;
+      }
+      if (ip < 0) break;
+      // property based selection
+
+      oper = strtok(NULL, " \n\t\r\f");
+      if (oper == NULL) break;
+      ptr = strtok(NULL, " \n\t\r\f");
+      if (ptr == NULL) break;
+      rlow = atof(ptr);
+
+      strcat(onecmd," "); strcat(onecmd,oper);
+      strcat(onecmd," "); strcat(onecmd,ptr);
+
+      if (strcmp(oper,">")==0 || strcmp(oper,">=")==0){
+         if (logand){ for (int id = 1; id <= natom; ++id) if (atprop[id][ip] < rlow) atsel[id] = 0;
+         } else { for (int id = 1; id <= natom; ++id) if (atprop[id][ip] >= rlow) atsel[id] = 1;
+         }
+
+      } else if (strcmp(oper,"<")==0 || strcmp(oper,"<=")==0){
+        if (logand){ for (int id = 1; id <= natom; ++id) if (atprop[id][ip] > rlow) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (atprop[id][ip] <= rlow) atsel[id] = 1;
+        }
+
+      } else if (strcmp(oper,"<>") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        rhigh = atof(ptr);
+
+        if (logand){ for (int id = 1; id <= natom; ++id) if (atprop[id][ip]<rlow || atprop[id][ip]>rhigh) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (atprop[id][ip]>=rlow && atprop[id][ip]<=rhigh) atsel[id] = 1;
+        }
+
+      } else if (strcmp(oper,"=") == 0 || strcmp(oper,"==") == 0){
+        if (logand){ for (int id = 1; id <= natom; ++id) if (fabs(atprop[id][ip]-rlow)<=ZERO) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (fabs(atprop[id][ip]-rlow)> ZERO) atsel[id] = 1;
+        }
+
+      } else if (strcmp(oper,"><") == 0){
+        ptr = strtok(NULL, " \n\t\r\f");
+        if (ptr == NULL) break;
+        strcat(onecmd," "); strcat(onecmd,ptr);
+        rhigh = atof(ptr);
+
+        if (logand){ for (int id = 1; id <= natom; ++id) if (atprop[id][ip]>rlow && atprop[id][ip]<rhigh) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (atprop[id][ip]<=rlow || atprop[id][ip]>=rhigh) atsel[id] = 1;
+        }
+
+      } else break;
+
+
+    }
 
     strcat(realcmd," "); strcat(realcmd,onecmd);
     key = strtok(NULL, " \n\t\r\f");
@@ -993,7 +1055,9 @@ void DumpAtom::SelHelp()
   printf("`type = 1 | type = 2` will select atoms of type 1 or 2; while `type = 1 & type = 2`\n");
   printf("will select nothing. `type = 1 & ran 100 0` will randomly select 100 atoms\n");
   printf("from all of type 1. `X <> 0 10 & voro 0 0 0 1 0,0,12,0' will select all atoms\n");
-  printf("that have a Voronoi index of 0,0,12,0 within [0,10] along the x direction.\n");
+  printf("that have a Voronoi index of 0,0,12,0 within [0,10] along the x direction.\n\n");
+  printf("If the key is a property label, it can also make selections based on the atomic\n");
+  printf("  property read. The syntax is the same as volume.\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n\n");
     
 return;
