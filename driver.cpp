@@ -395,6 +395,11 @@ void Driver::readdump(const int narg, int inow, char **arg)
     printf("\n");
 
     MapType2Elem(0, one->ntype);
+    if (one->prop_label.size() > 0){
+       printf("  List of property labels read  : ");
+       for (int i = 0; i < one->prop_label.size(); ++i) printf("%d) %s; ", i+1, one->prop_label[i].c_str());
+       printf("\n");
+    }
   }
   for (int i = 0; i < 20; ++i) printf("===="); printf("\n");
 
