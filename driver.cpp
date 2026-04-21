@@ -396,7 +396,7 @@ void Driver::readdump(const int narg, int inow, char **arg)
 
     MapType2Elem(0, one->ntype);
     if (one->prop_label.size() > 0){
-       printf("  List of property labels read  : ");
+       printf("\n  List of property labels read  : ");
        for (int i = 0; i < one->prop_label.size(); ++i) printf("%d) %s; ", i+1, one->prop_label[i].c_str());
        printf("\n");
     }
@@ -1019,8 +1019,8 @@ void Driver::MapType2Elem(const int flag, const int ntype)
 
   char str[MAXLINE];
   if (flag == 0){
-    printf("\nIf you want to map the atomic types to elements, input the element symbols\n");
-    printf("(and radii) in sequence now: ");
+    printf("\n  If you want to map the atomic types to elements, input the element symbols\n");
+    printf("  (and radii) in sequence now: ");
   } else {
     printf("Total number of atomic types in the system are %d.\n", ntype); 
     printf("Please input the element symbol for each atomic type in sequence: ");

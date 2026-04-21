@@ -16,8 +16,8 @@ void Driver::orient_same_property()
   printf(" Orientation (cosine wrt. reference vector) for atom pairs of same property ==");
   printf("\nPlease select your desired job:\n");
   for (int i = 0; i < 20; ++i) printf("----"); printf("\n");
-  printf("  1. Orientation for atom pairs of same property within selection;\n");
-  printf("  2. Orientation for atom pairs of same property between selections;\n");
+  printf("  1. Orientation order parameter for atom pairs of same property within selection;\n");
+  printf("  2. Orientation order parameter for atom pairs of same property between selections;\n");
   printf("  0. Return;\nYour choice [%d]: ", job);
   input->read_stdin(str);
   char *ptr = strtok(str, " \n\t\r\f");
@@ -51,7 +51,6 @@ void Driver::orient_same_property()
   if (ptr){
      if (strcmp(ptr, "y") == 0 || strcmp(ptr,"Y") == 0) flagHalfPi = 1;
   }
-  
   
   // selection commands
   char srcsel[MAXLINE], dessel[MAXLINE];
@@ -88,8 +87,10 @@ void Driver::orient_same_property()
     break;
   }
 
-  if (job == 1) sprintf(header,"# Cosine wrt [%f %f %f] for atom pairs selected by: %s", refOrient[0], refOrient[1], refOrient[2], srcsel);
-  else {
+  if (job == 1){
+     sprintf(header,"# Orientation order parameter w.r.t. [%f %f %f] for atom pairs selected by: %s", refOrient[0], refOrient[1], refOrient[2], srcsel);
+
+  } else {
     // atoms as neighbors
     while (1){
       printf("\nPlease input the selection command for neighbors, `h` for help [all]: ");
@@ -113,7 +114,9 @@ void Driver::orient_same_property()
       break;
     }
     memory->create(insrc, one->natom+1, "insrc");
-    sprintf(header,"# Cosine wrt [%f %f %f] for atom pairs between two selections:\n# source atoms: %s# neighbors: %s", refOrient[0], refOrient[1], refOrient[2], srcsel, dessel);
+
+    sprintf(header,"# Orientation order parameter w.r.t. [%f %f %f] for atom pairs between two selections:\n# source atoms: %s# neighbors: %s",
+            refOrient[0], refOrient[1], refOrient[2], srcsel, dessel);
   }
   
   // property 
@@ -138,7 +141,7 @@ void Driver::orient_same_property()
   strcpy(fname, ptr);
 
   FILE *fp = fopen(fname,"w");
-  fprintf(fp,"# Orientation for atom pairs with same %s\n", one->prop_label[pid].c_str());
+  fprintf(fp,"# Orientation order parameters for atom pairs with same %s, S = 2*cos^t - 1.\n", one->prop_label[pid].c_str());
   fprintf(fp,header);
 
   // timer
@@ -149,8 +152,7 @@ void Driver::orient_same_property()
   int npairs = 0;
 
   int nused = 0;
-  // now to compute the cosine with respect to the reference vector
-  if (job == 1){  // cosine for atom pairs within selected atoms
+  if (job == 1){  // Orientation order parametr for atom pairs within selected atoms
 
     for (int img = istr; img <= iend; img += inc){ // loop over frames
       one = all[img];
@@ -158,11 +160,13 @@ void Driver::orient_same_property()
       if (one->nsel < 1) continue;
 
       fprintf(fp, "# Frame ID: %d\n", img);
-      fprintf(fp, "# atom-1 atom-2 com_x com_y com_z cosine angle\n");
+      fprintf(fp, "# atom-1 atom-2 com_x com_y com_z S cosine angle\n");
 
       // need fractional coordinates
       one->car2dir();
   
+      int npair = 0;
+      double Ssum = 0.;
       // set local variables
 #pragma omp parallel for default(shared)
       for (int i = 1; i < one->natom; ++i){
@@ -191,14 +195,19 @@ void Driver::orient_same_property()
           com[2] = com[2]*one->lz + dx[2];
 
           double cosine = (dx[0]*refOrient[0] + dx[1]*refOrient[1] + dx[2]*refOrient[2])/rij;
+          double S = 2.*cosine*cosine-1.;
           if (flagHalfPi) cosine = fabs(cosine);
           double angle = acos(cosine);
-          fprintf(fp, "%d %d %f %f %f %g %f\n", i, j, com[0], com[1], com[2], cosine, angle*rad2deg);
+          fprintf(fp, "%d %d %f %f %f %lg %g %f\n", i, j, com[0], com[1], com[2], S, cosine, angle);
+#pragma omp atomic
+          Ssum = Ssum + S;
 
 #pragma omp atomic
-          ++npairs;
+          ++npair;
         }
       }
+      fprintf(fp, "## Frame ID: %d  <S>: %lg\n", img, Ssum/double(MAX(1,npair)));
+      npairs = npairs + npair;
       ++nused;
 
       if (min_mem) one->FreeVoro();
@@ -221,11 +230,13 @@ void Driver::orient_same_property()
       if (one->nsel < 1) continue;
 
       fprintf(fp, "# Frame ID: %d\n", img);
-      fprintf(fp, "# atom-1 atom-2 com_x com_y com_z cosine angle\n");
+      fprintf(fp, "# atom-1 atom-2 com_x com_y com_z S cosine angle\n");
       // need fractional coordinates
       one->car2dir();
 
-      // set local variables
+      int npair = 0;
+      double Ssum = 0.;
+
 #pragma omp parallel for default(shared)
       for (int i = 1; i <= one->natom; ++i){
         if (insrc[i] == 0) continue;
@@ -253,15 +264,18 @@ void Driver::orient_same_property()
           com[2] = com[2]*one->lz + dx[2];
 
           double cosine = (dx[0]*refOrient[0] + dx[1]*refOrient[1] + dx[2]*refOrient[2])/rij;
+          double S = 2.*cosine*cosine-1.;
           if (flagHalfPi) cosine = fabs(cosine);
           double angle = acos(cosine);
-
-          fprintf(fp, "%d %d %f %f %f %g %f\n", i, j, com[0], com[1], com[2], cosine, angle*rad2deg);
+          fprintf(fp, "%d %d %f %f %f %lg %g %f\n", i, j, com[0], com[1], com[2], S, cosine, angle);
 
 #pragma omp atomic
-          ++npairs;
+          ++npair;
         }
       }
+
+      fprintf(fp, "## Frame ID: %d  <S>: %lg\n", img, Ssum/double(MAX(npair,1)));
+      npairs = npairs + npair;
 
       ++nused;
       if (min_mem) one->FreeVoro();
