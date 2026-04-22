@@ -853,8 +853,8 @@ void DumpAtom::selection(const char *line)
 
       } else if (strcmp(oper,"=") == 0 || strcmp(oper,"==") == 0){
         if (volume){
-          if (logand){ for (int id = 1; id <= natom; ++id) if (fabs(volume[id]-rlow)<=ZERO) atsel[id] = 0;
-          } else { for (int id = 1; id <= natom; ++id) if (fabs(volume[id]-rlow)> ZERO) atsel[id] = 1;
+          if (logand){ for (int id = 1; id <= natom; ++id) if (fabs(volume[id]-rlow)>ZERO) atsel[id] = 0;
+          } else { for (int id = 1; id <= natom; ++id) if (fabs(volume[id]-rlow)<= ZERO) atsel[id] = 1;
           }
         }
 
@@ -967,8 +967,8 @@ void DumpAtom::selection(const char *line)
         }
 
       } else if (strcmp(oper,"=") == 0 || strcmp(oper,"==") == 0){
-        if (logand){ for (int id = 1; id <= natom; ++id) if (fabs(atprop[id][ip]-rlow)<=ZERO) atsel[id] = 0;
-        } else { for (int id = 1; id <= natom; ++id) if (fabs(atprop[id][ip]-rlow)> ZERO) atsel[id] = 1;
+        if (logand){ for (int id = 1; id <= natom; ++id) if (fabs(atprop[id][ip]-rlow)>ZERO) atsel[id] = 0;
+        } else { for (int id = 1; id <= natom; ++id) if (fabs(atprop[id][ip]-rlow)<= ZERO) atsel[id] = 1;
         }
 
       } else if (strcmp(oper,"><") == 0){

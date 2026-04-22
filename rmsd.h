@@ -50,6 +50,8 @@ void fast_rmsd(double ref_xlist[][3],
                int n_list,
                double* rmsd); 
 
+int jacobi3(double a[3][3], double d[3], double v[3][3], int* n_rot);
+
 private:
   void normalize(double a[3]);
   double dot(double a[3], double b[3]);
@@ -61,7 +63,6 @@ private:
                     double mov_to_ref[3],
                     double R[3][3],
                     double* E0);
-  int jacobi3(double a[3][3], double d[3], double v[3][3], int* n_rot);
   int diagonalize_symmetric(double matrix[3][3], 
                           double eigen_vec[3][3], 
                           double eigenval[3]);
