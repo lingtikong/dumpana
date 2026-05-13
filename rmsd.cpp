@@ -159,8 +159,22 @@ int RMSD::jacobi3(double a[3][3], double d[3], double v[3][3], int* n_rot)
     }
 
     /* if converged to machine underflow */
-    if (sum == 0.0) 
-      return(1);
+    if (sum == 0.0){ 
+       // sort d and v
+       for (int ii = 0; ii < 3; ++ii)
+           for (int jj =  ii+1; jj < 3; ++jj){
+               if (d[ii] < d[jj]){
+                  t = d[ii]; d[ii] = d[jj]; d[jj] = t;
+                  for (int kk = 0; kk < 3; ++kk){
+                      t = v[ii][kk];
+                      v[ii][kk] = v[jj][kk];
+                      v[jj][kk] = t;
+                  }
+               }
+           }
+      
+       return(1);
+    }
 
     /* on 1st three sweeps... */
     if (count < 3) 

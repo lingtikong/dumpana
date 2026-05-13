@@ -131,6 +131,37 @@ void Driver::orient_same_property()
   pid = MIN(MAX(pid, 0), one->prop_label.size());
   printf("The property chosen is: %s\n", one->prop_label[pid].c_str());
 
+  // Constraints
+  printf("\nConstraints on distance between the atom pairs, available options: \n");
+  printf("  > rmin; < rmax; <> rmin rmax; >< rmin rmax. Please input your choice now,\n");
+  printf("enter for no constaints: "); 
+  input->read_stdin(str);
+
+  char *constr_oper = NULL;
+  double constr_cutoffs[2];
+  ptr = strtok(str, " \n\t\r\f");
+  int nNum = 0;
+  if (ptr){
+     constr_oper = new char [strlen(ptr)+1];
+     strcpy(constr_oper, ptr);
+     if (strcmp(ptr, "<>")== 0 || strcmp(ptr, "><")==0) nNum = 2;
+     else nNum = 1;
+  }
+
+  nW = 0;
+  while (ptr != NULL){
+     ptr = strtok(NULL, " \n\t\r\f");
+     if (ptr){
+        constr_cutoffs[nW] = atof(ptr);
+        ++nW;
+     }
+  }
+  if (nW != nNum) {
+     printf("ERROR: %d number(s) expected, while %d provided, constraints cannot be applied!\n", nNum, nW);
+     if (constr_oper) delete []constr_oper;
+     constr_oper = NULL;
+  }
+
   // output file name or prefix
   printf("\nPlease input the file to output the result [orient.dat]: ");
   input->read_stdin(str);
@@ -147,8 +178,9 @@ void Driver::orient_same_property()
   fprintf(fp,header);
   fprintf(fp,"# Definitions of the order parameters:\n#   v      : unit vector connecting the atom pair;\n");
   fprintf(fp,"#   n      : reference unit vector;\n#   t      : angle between v and t;\n");
-  fprintf(fp,"#   S2     : cos(2t)\n#   Sch    : (3*cos(t)**2 - 1)/2;\n");
-  fprintf(fp,"#   Sab    : v_a * v_b - 1/3*delta_ab.\n");
+  fprintf(fp,"#   S2     : cos(2t); 1, v // n; -1, v _|_ n;\n");
+  fprintf(fp,"#   Sch    : (3*cos(t)**2 - 1)/2; 1, v // n; -0.5, v _|_n;\n");
+  fprintf(fp,"#   Sab    : v_a * v_b - 1/3*delta_ab. EigVal~1, //EigVec; EigVal~ -1, _|_EigVec.\n");
   fprintf(fp,"# For reference: https://doi.org/10.1007/978-3-319-77745-0.\n");
   fprintf(fp,"##-----------------------------------------------------------------------------------------------##\n");
 
@@ -196,7 +228,15 @@ void Driver::orient_same_property()
           dx[1] = dx[1]*one->ly + dx[2]*one->yz;
           dx[2] = dx[2]*one->lz;
           double rij = sqrt(dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2]);
-          for (int ii = 0; ii < 3; ++ii) dx[ii] = dx[ii] / rij;
+
+          if (constr_oper){
+             if (strcmp(constr_oper, ">") == 0 && rij <= constr_cutoffs[0]) continue;
+             else if (strcmp(constr_oper, "<") == 0 && rij >= constr_cutoffs[0]) continue;
+             else if (strcmp(constr_oper, "<>") == 0 && (rij <= constr_cutoffs[0] || rij >= constr_cutoffs[1])) continue;
+             else if (strcmp(constr_oper, "><") == 0 && (rij >= constr_cutoffs[0] || rij <= constr_cutoffs[1])) continue;
+          }
+          double inv_rij = 1./rij;
+          for (int ii = 0; ii < 3; ++ii) dx[ii] = dx[ii] * inv_rij;
           double st[9], ss;
           int id = 0;
           for (int ii = 0; ii < 3; ++ii)
@@ -231,7 +271,7 @@ void Driver::orient_same_property()
         }
       }
       for (int ii = 0; ii < 9; ++ii) sTensor[ii] = sTensor[ii] / double(MAX(1, npair));
-      fprintf(fp, "## Frame: %d nPairs: %d <S2>: %g <Sch>: %g <Sij>:[[ %g %g %g ][ %g %g %g ][ %g %g %g ]]\n", img, npair, sTensor[6], sTensor[7],
+      fprintf(fp, "## Frame: %d TimeStep: %d nPairs: %d <S2>: %g <Sch>: %g <Sij>:[[ %g %g %g ][ %g %g %g ][ %g %g %g ]]\n", img, one->tstep, npair, sTensor[6], sTensor[7],
               sTensor[0], sTensor[1], sTensor[2], sTensor[1], sTensor[3], sTensor[4], sTensor[2], sTensor[4], sTensor[5]);
       // calculate eigenvalues
       double st[3][3], ev[3][3], eig[3];
@@ -244,7 +284,7 @@ void Driver::orient_same_property()
       RMSD *rmsd = new RMSD();
       rmsd->jacobi3(st, eig, ev, &nrot);
       delete rmsd;
-      fprintf(fp, "## Frame: %d EigVal: %g %g %g EigVec: [[ %g %g %g ][ %g %g %g ][ %g %g %g ]]\n\n", img, eig[0], eig[1], eig[2],
+      fprintf(fp, "## Frame: %d TimeStep: %d EigVal: %g %g %g EigVec: [[ %g %g %g ][ %g %g %g ][ %g %g %g ]]\n\n", img, one->tstep, eig[0], eig[1], eig[2],
              ev[0][0], ev[0][1], ev[0][2], ev[1][0], ev[1][1], ev[1][2], ev[2][0], ev[2][1], ev[2][2]);
 
       npairs = npairs + npair;
@@ -295,7 +335,14 @@ void Driver::orient_same_property()
           dx[1] = dx[1]*one->ly + dx[2]*one->yz;
           dx[2] = dx[2]*one->lz;
           double rij = sqrt(dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2]);
-          for (int ii = 0; ii < 3; ++ii) dx[ii] = dx[ii] / rij;
+          if (constr_oper){
+             if (strcmp(constr_oper, ">") == 0 && rij <= constr_cutoffs[0]) continue;
+             else if (strcmp(constr_oper, "<") == 0 && rij >= constr_cutoffs[0]) continue;
+             else if (strcmp(constr_oper, "<>") == 0 && (rij <= constr_cutoffs[0] || rij >= constr_cutoffs[1])) continue;
+             else if (strcmp(constr_oper, "><") == 0 && (rij >= constr_cutoffs[0] || rij <= constr_cutoffs[1])) continue;
+          }
+          double inv_rij = 1. / rij;
+          for (int ii = 0; ii < 3; ++ii) dx[ii] = dx[ii] * inv_rij;
           double st[9], ss;
           int id = 0;
           for (int ii = 0; ii < 3; ++ii)
@@ -330,7 +377,7 @@ void Driver::orient_same_property()
         }
       }
       for (int ii = 0; ii < 9; ++ii) sTensor[ii] = sTensor[ii] / double(MAX(1, npair));
-      fprintf(fp, "## Frame: %d nPairs: %d <S2>: %g <Sch>: %g <Sij>:[[ %g %g %g ][ %g %g %g ][ %g %g %g ]]\n", img, npair, sTensor[6], sTensor[7],
+      fprintf(fp, "## Frame: %d TimeStep: %d nPairs: %d <S2>: %g <Sch>: %g <Sij>:[[ %g %g %g ][ %g %g %g ][ %g %g %g ]]\n", img, one->tstep, npair, sTensor[6], sTensor[7],
               sTensor[0], sTensor[1], sTensor[2], sTensor[1], sTensor[3], sTensor[4], sTensor[2], sTensor[4], sTensor[5]);
       // calculate eigenvalues
       double st[3][3], ev[3][3], eig[3];
@@ -343,7 +390,7 @@ void Driver::orient_same_property()
       RMSD *rmsd = new RMSD();
       rmsd->jacobi3(st, eig, ev, &nrot);
       delete rmsd;
-      fprintf(fp, "## Frame: %d EigVal: %g %g %g EigVec: [[ %g %g %g ][ %g %g %g ][ %g %g %g ]]\n\n", img, eig[0], eig[1], eig[2],
+      fprintf(fp, "## Frame: %d Step: %d EigVal: %g %g %g EigVec: [[ %g %g %g ][ %g %g %g ][ %g %g %g ]]\n\n", img, one->tstep, eig[0], eig[1], eig[2],
              ev[0][0], ev[0][1], ev[0][2], ev[1][0], ev[1][1], ev[1][2], ev[2][0], ev[2][1], ev[2][2]);
 
       npairs = npairs + npair;
