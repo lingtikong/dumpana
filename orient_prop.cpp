@@ -160,6 +160,10 @@ void Driver::orient_same_property()
      printf("ERROR: %d number(s) expected, while %d provided, constraints cannot be applied!\n", nNum, nW);
      if (constr_oper) delete []constr_oper;
      constr_oper = NULL;
+
+  } else if (nW > 0){
+    printf("Your desired constraint on distance between the selected atom pairs is: %s", constr_oper);
+    for (int i = 0; i < nW; ++i) printf(" %lg", constr_cutoffs[i]); printf("\n");
   }
 
   // output file name or prefix
